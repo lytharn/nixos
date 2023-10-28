@@ -23,6 +23,9 @@ wayland.windowManager.hyprland = {
       shadow_offset = "0 5";
       "col.shadow" = "rgba(00000099)";
     };
+    input = {
+      kb_layout = "us,se";
+    };
     "$mod" = "SUPER";
     bind = [
       "$mod, O, exec, firefox"
@@ -32,7 +35,8 @@ wayland.windowManager.hyprland = {
       "$mod CTRL, F, fakefullscreen"
       "$mod, RETURN, exec, alacritty"
       "$mod CTRL, Q, exec, wlogout"
-      "$mod, SPACE, exec, fuzzel"
+      "$mod, D, exec, fuzzel"
+      "$mod, SPACE, exec, hyprctl switchxkblayout corsair-corsair-k70-rgb-tkl-champion-series-mechanical-gaming-keyboard next"
       "$mod, PRINT, exec, cd /home/lytharn/Pictures; wayshot"
       "$mod, N, exec, nautilus"
       "$mod, F1, exec, systemctl suspend"
