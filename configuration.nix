@@ -145,6 +145,7 @@
     gnome.eog
     hyprpaper
     wayshot
+    discord
   ];
 
   # Prefer progams instead of packages, works better, more settings
