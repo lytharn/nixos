@@ -51,12 +51,14 @@
     LC_TIME = "sv_SE.UTF-8";
   };
 
-  # Enable SDDM display manager
-  services.xserver = {
-    layout = "us";
-    xkbVariant = "";
+  # Enable ReGreet display manager
+  programs.regreet = {
     enable = true;
-    displayManager.sddm.enable = true;
+    settings = {
+      GTK = {
+        application_prefer_dark_theme = true;
+      };
+    };
   };
 
   # This will enable extra things necessary which is not enabled in Home Manager
