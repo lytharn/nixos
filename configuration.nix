@@ -148,6 +148,7 @@
     hyprpaper
     wayshot
     discord
+    gnome3.adwaita-icon-theme # Missing icons in GTK applications without a theme
   ];
 
   # Prefer progams instead of packages, works better, more settings
