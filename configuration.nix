@@ -139,6 +139,7 @@
     playerctl # For controlling playback
     popsicle # USB flasher
     protonup-qt
+    ripgrep
     rust-analyzer
     rustc
     rustfmt
