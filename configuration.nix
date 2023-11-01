@@ -116,12 +116,6 @@
     isNormalUser = true;
     description = "lytharn";
     extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-      firefox
-      spotify
-      protonup-qt
-      keepassxc
-    ];
   };
 
   # Allow unfree packages
@@ -130,25 +124,29 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    dropbox-cli
-    vlc
-    fastfetch
-    popsicle # USB flasher
-    neovim
-    rustc
     cargo
     clippy
-    rust-analyzer
-    rustfmt
-    xdg-utils # For opening default programs when clicking links
-    playerctl # For controlling playback
-    swayidle
-    gnome.nautilus
-    gnome.eog
-    hyprpaper
-    wayshot
     discord
+    dropbox-cli
+    fastfetch
+    firefox
+    gnome.eog
+    gnome.nautilus
     gnome3.adwaita-icon-theme # Missing icons in GTK applications without a theme
+    hyprpaper
+    keepassxc
+    neovim
+    playerctl # For controlling playback
+    popsicle # USB flasher
+    protonup-qt
+    rust-analyzer
+    rustc
+    rustfmt
+    spotify
+    swayidle
+    vlc
+    wayshot
+    xdg-utils # For opening default programs when clicking links
   ];
 
   # Prefer progams instead of packages, works better, more settings
