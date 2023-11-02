@@ -150,11 +150,12 @@
     xdg-utils # For opening default programs when clicking links
   ];
 
-  # Prefer progams instead of packages, works better, more settings
+  # Prefer programs over packages, works better, more settings
   programs = {
     steam.enable = true;
     gamescope.enable = true;
     gamemode.enable = true;
+    fish.enable = true; # Have fish source necessary files not done by Home Manager
   };
 
   # Open ports for dropbox
