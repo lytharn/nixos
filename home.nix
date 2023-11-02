@@ -204,6 +204,13 @@ programs.eza = {
   icons = true;
 };
 
+programs.bat = {
+  enable = true;
+  config = {
+    theme = "Visual Studio Dark+";
+  };
+};
+
 programs.helix = {
   enable = true;
   defaultEditor = true;
