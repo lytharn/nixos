@@ -197,6 +197,12 @@ programs.fish = {
   };
 };
 
+programs.eza = {
+  enable = true;
+  enableAliases = true;
+  git = true;
+};
+
 programs.helix = {
   enable = true;
   defaultEditor = true;
