@@ -193,6 +193,7 @@ programs.fish = {
   enable = true;
   functions = {
     fish_greeting = "fastfetch";
+    nix-shell = "command nix-shell --run fish $argv";
   };
 };
 
