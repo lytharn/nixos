@@ -39,7 +39,7 @@ wayland.windowManager.hyprland = {
       "$mod, D, exec, fuzzel"
       "$mod, SPACE, exec, hyprctl switchxkblayout corsair-corsair-k70-rgb-tkl-champion-series-mechanical-gaming-keyboard next"
       "$mod, PRINT, exec, cd /home/lytharn/Pictures; wayshot"
-      "$mod, N, exec, nautilus"
+      "$mod, N, exec, kitty yazi"
       "$mod, F1, exec, systemctl suspend"
       "$mod, F2, exec, loginctl lock-session $XDG_SESSION_ID"
       "$mod, F5, exec, systemctl reboot"
@@ -190,6 +190,26 @@ programs.alacritty = {
     font.normal = {
       family = "Hack Nerd Font";
       style = "Regular";
+    };
+  };
+};
+
+programs.kitty = {
+  enable = true;
+  theme = "Tomorrow Night";
+};
+
+programs.yazi = {
+  enable = true;
+  settings = {
+    opener = {
+      image = [
+        {exec = "eog \"$@\"";}
+      ];
+    };
+    preview = {
+      max_height = 1000;
+      max_width = 1000;
     };
   };
 };
