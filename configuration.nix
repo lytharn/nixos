@@ -159,6 +159,8 @@
     fish.enable = true; # Have fish source necessary files not done by Home Manager
   };
 
+  services.devmon.enable = true; # Needed to auto mount usb drives
+
   # Open ports for dropbox
   networking.firewall = {
     allowedTCPPorts = [ 17500 ];
