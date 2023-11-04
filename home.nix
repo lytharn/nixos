@@ -137,6 +137,14 @@ programs.fuzzel = {
   enable = true;
 };
 
+services.mako = {
+  enable = true;
+  backgroundColor = "#162633FF";
+  borderRadius = 5;
+  defaultTimeout = 2000;
+  width = 500;
+};
+
 programs.swaylock = {
   enable = true;
   settings = {
