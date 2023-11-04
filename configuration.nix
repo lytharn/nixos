@@ -136,6 +136,7 @@
     keepassxc
     neovim
     playerctl # For controlling playback
+    polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
     popsicle # USB flasher
     protonup-qt
     ripgrep
@@ -146,8 +147,8 @@
     swayidle
     vlc
     wayshot
+    wl-clipboard
     xdg-utils # For opening default programs when clicking links
-    polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
   ];
 
   # Prefer programs over packages, works better, more settings
