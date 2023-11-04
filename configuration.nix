@@ -131,7 +131,6 @@
     fastfetch
     firefox
     gnome.eog
-    gnome.nautilus
     gnome3.adwaita-icon-theme # Missing icons in GTK applications without a theme
     hyprpaper
     keepassxc
