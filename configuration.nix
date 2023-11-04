@@ -159,7 +159,7 @@
     fish.enable = true; # Have fish source necessary files not done by Home Manager
   };
 
-  services.devmon.enable = true; # Needed to auto mount usb drives
+  services.udisks2.enable = true; # Start Udisk2 DBus service to be able to auto mount removable disks
 
   # Open ports for dropbox
   networking.firewall = {
