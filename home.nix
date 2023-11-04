@@ -20,7 +20,12 @@ wayland.windowManager.hyprland = {
       "swayidle -w timeout 10 'if pgrep -x swaylock; then hyprctl dispatch dpms off; fi' resume 'hyprctl dispatch dpms on' before-sleep 'loginctl lock-session $XDG_SESSION_ID' lock 'swaylock -f'"
       "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
     ];
+    general = {
+      border_size = 2;
+      "col.active_border" = "rgba(fb3c67ff) rgba(1f5d8dff) 45deg";
+    };
     decoration = {
+      rounding = 5;
       shadow_offset = "0 5";
       "col.shadow" = "rgba(00000099)";
     };
