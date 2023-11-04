@@ -148,6 +148,7 @@
     vlc
     wayshot
     xdg-utils # For opening default programs when clicking links
+    polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
   ];
 
   # Prefer programs over packages, works better, more settings
