@@ -145,6 +145,8 @@ services.mako = {
   width = 500;
 };
 
+services.udiskie.enable = true; # Auto mount removable disks
+
 programs.swaylock = {
   enable = true;
   settings = {
