@@ -137,7 +137,7 @@
     neovim
     playerctl # For controlling playback
     polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
-    popsicle # USB flasher
+    mediawriter # USB flasher
     protonup-qt
     ripgrep
     rust-analyzer
