@@ -22,12 +22,25 @@
         quex = lib.nixosSystem {
 	  inherit system;
 	  modules = [
-	    ./configuration.nix
+	    ./quex/configuration.nix
 	    home-manager.nixosModules.home-manager {
 	      home-manager.useGlobalPkgs = true;
 	      home-manager.useUserPackages = true;
 	      home-manager.users.lytharn = {
-	        imports = [ ./home.nix ];
+	        imports = [ ./quex/home.nix ];
+	      };
+	    }
+	  ];
+	};
+        mewx = lib.nixosSystem {
+	  inherit system;
+	  modules = [
+	    ./mewx/configuration.nix
+	    home-manager.nixosModules.home-manager {
+	      home-manager.useGlobalPkgs = true;
+	      home-manager.useUserPackages = true;
+	      home-manager.users.lytharn = {
+	        imports = [ ./mewx/home.nix ];
 	      };
 	    }
 	  ];
