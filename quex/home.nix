@@ -32,6 +32,11 @@ wayland.windowManager.hyprland = {
     input = {
       kb_layout = "us,se";
     };
+    # Context menu fix for steam
+    windowrulev2 = [
+      "stayfocused, title:^()$,class:^(steam)$"
+      "minsize 1 1, title:^()$,class:^(steam)$"
+    ];
     "$mod" = "SUPER";
     bind = [
       "$mod, O, exec, firefox"
