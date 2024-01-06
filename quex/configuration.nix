@@ -6,7 +6,8 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
+      # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
 
@@ -16,7 +17,7 @@
     loader = {
       systemd-boot = {
         enable = true;
-	configurationLimit = 10; # Useful to prevent boot partition running out of disk space.
+        configurationLimit = 10; # Useful to prevent boot partition running out of disk space.
       };
       efi.canTouchEfiVariables = true;
       timeout = 7;
@@ -65,7 +66,7 @@
   programs.hyprland.enable = true;
 
   # PAM must be configured to enable swaylock to perform authentication.
-  security.pam.services.swaylock = {};
+  security.pam.services.swaylock = { };
 
   # xdg-desktop-portal works by exposing a series of D-Bus interfaces
   # known as portals under a well-known name
@@ -79,7 +80,7 @@
     wlr.enable = true;
     # gtk portal needed to make gtk apps happy
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-  };  
+  };
 
   # Enable CUPS to print documents.
   services.printing.enable = true;

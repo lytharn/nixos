@@ -14,37 +14,41 @@
       system = "x86_64-linux";
       pkgs = import nixpkgs {
         inherit system;
-	config.allowUnfree = true;
+        config.allowUnfree = true;
       };
       lib = nixpkgs.lib;
-    in {
+    in
+    {
+      formatter.x86_64-linux = pkgs.nixpkgs-fmt;
       nixosConfigurations = {
         quex = lib.nixosSystem {
-	  inherit system;
-	  modules = [
-	    ./quex/configuration.nix
-	    home-manager.nixosModules.home-manager {
-	      home-manager.useGlobalPkgs = true;
-	      home-manager.useUserPackages = true;
-	      home-manager.users.lytharn = {
-	        imports = [ ./quex/home.nix ];
-	      };
-	    }
-	  ];
-	};
+          inherit system;
+          modules = [
+            ./quex/configuration.nix
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.lytharn = {
+                imports = [ ./quex/home.nix ];
+              };
+            }
+          ];
+        };
         mewx = lib.nixosSystem {
-	  inherit system;
-	  modules = [
-	    ./mewx/configuration.nix
-	    home-manager.nixosModules.home-manager {
-	      home-manager.useGlobalPkgs = true;
-	      home-manager.useUserPackages = true;
-	      home-manager.users.lytharn = {
-	        imports = [ ./mewx/home.nix ];
-	      };
-	    }
-	  ];
-	};
+          inherit system;
+          modules = [
+            ./mewx/configuration.nix
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.lytharn = {
+                imports = [ ./mewx/home.nix ];
+              };
+            }
+          ];
+        };
       };
     };
 }
