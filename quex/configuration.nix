@@ -135,6 +135,7 @@
     gnome3.adwaita-icon-theme # Missing icons in GTK applications without a theme
     hyprpaper
     keepassxc
+    lua-language-server
     neovim
     playerctl # For controlling playback
     polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
