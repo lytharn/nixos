@@ -105,6 +105,11 @@
   # Enable Vulkan support for 32-bit applications such as Wine
   hardware.opengl.driSupport32Bit = true;
 
+  # Enable ROCm
+  hardware.opengl.extraPackages = with pkgs; [
+    rocmPackages.clr.icd
+  ];
+
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
@@ -116,11 +121,14 @@
   users.users.lytharn = {
     isNormalUser = true;
     description = "lytharn";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "render" "video" ];
   };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
+
+  # Use packages with ROCm support
+  nixpkgs.config.rocmSupport = true;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -137,6 +145,7 @@
     keepassxc
     lua-language-server
     neovim
+    (ollama.override { acceleration = "rocm"; })
     playerctl # For controlling playback
     polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
     mediawriter # USB flasher
