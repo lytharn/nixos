@@ -36,7 +36,6 @@
         padding.x = 10;
         padding.y = 10;
       };
-      dynamic_padding = true;
       font.normal = {
         family = "Hack Nerd Font";
         style = "Regular";
@@ -78,7 +77,6 @@
 
   programs.eza = {
     enable = true;
-    enableAliases = true;
     git = true;
     icons = true;
   };
