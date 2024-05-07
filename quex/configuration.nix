@@ -138,6 +138,7 @@
     discord
     dropbox-cli
     fastfetch
+    fd
     firefox
     gnome.eog
     gnome3.adwaita-icon-theme # Missing icons in GTK applications without a theme
