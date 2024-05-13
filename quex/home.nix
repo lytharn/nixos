@@ -32,10 +32,13 @@
       input = {
         kb_layout = "us,se";
       };
-      # Context menu fix for steam
       windowrulev2 = [
+        # Context menu fix for steam
         "stayfocused, title:^()$,class:^(steam)$"
         "minsize 1 1, title:^()$,class:^(steam)$"
+        # No freeze fix for steam
+        "noblur, class:^(steam)$"
+        "forcergbx, class:^(steam)$"
       ];
       "$mod" = "SUPER";
       bind = [
