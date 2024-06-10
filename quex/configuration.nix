@@ -171,6 +171,8 @@
     fish.enable = true; # Have fish source necessary files not done by Home Manager
   };
 
+  services.flatpak.enable = true;
+
   services.udisks2.enable = true; # Start Udisk2 DBus service to be able to auto mount removable disks
 
   # Open ports for dropbox
