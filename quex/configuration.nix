@@ -103,10 +103,10 @@
   };
 
   # Enable Vulkan support for 32-bit applications such as Wine
-  hardware.opengl.driSupport32Bit = true;
+  hardware.graphics.enable32Bit = true;
 
   # Enable ROCm
-  hardware.opengl.extraPackages = with pkgs; [
+  hardware.graphics.extraPackages = with pkgs; [
     rocmPackages.clr.icd
   ];
 
