@@ -124,6 +124,7 @@
     fastfetch
     git
     keepassxc
+    lua-language-server
     neovim
     ripgrep
     xclip
