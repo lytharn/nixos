@@ -119,6 +119,7 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    clang # For building parsers for treesitter
     dropbox-cli
     fastfetch
     git
