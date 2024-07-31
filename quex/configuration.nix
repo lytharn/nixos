@@ -203,6 +203,15 @@
     };
   };
 
+  # Automatically delete older generations and garbage collect
+  nix = {
+    gc = {
+      automatic = true; 
+      dates = "weekly"; 
+      options = "--delete-older-than 90d";
+    };
+  };
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Some programs need SUID wrappers, can be configured further or are
