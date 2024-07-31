@@ -86,7 +86,6 @@
   services.printing.enable = true;
 
   # Enable sound with pipewire.
-  sound.enable = true;
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -143,8 +142,8 @@
     fastfetch
     fd
     firefox
-    gnome.eog
-    gnome3.adwaita-icon-theme # Missing icons in GTK applications without a theme
+    eog
+    adwaita-icon-theme # Missing icons in GTK applications without a theme
     hyprpaper
     keepassxc
     lua-language-server
