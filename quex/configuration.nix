@@ -110,6 +110,9 @@
     rocmPackages.clr.icd
   ];
 
+  # Enable microcode updates for the AMD CPU
+  hardware.cpu.amd.updateMicrocode = true;
+
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
