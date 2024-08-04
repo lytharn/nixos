@@ -205,8 +205,8 @@
   # Automatically delete older generations and garbage collect
   nix = {
     gc = {
-      automatic = true; 
-      dates = "weekly"; 
+      automatic = true;
+      dates = "weekly";
       options = "--delete-older-than 90d";
     };
   };
