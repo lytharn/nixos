@@ -2,14 +2,18 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
-  imports =
-    [
-      # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   # Bootloader.
   boot = {
@@ -105,9 +109,7 @@
   hardware.graphics.enable32Bit = true;
 
   # Enable ROCm
-  hardware.graphics.extraPackages = with pkgs; [
-    rocmPackages.clr.icd
-  ];
+  hardware.graphics.extraPackages = with pkgs; [ rocmPackages.clr.icd ];
 
   # Enable microcode updates for the AMD CPU
   hardware.cpu.amd.updateMicrocode = true;
@@ -115,15 +117,18 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
-  fonts.packages = with pkgs; [
-    (nerdfonts.override { fonts = [ "Hack" ]; })
-  ];
+  fonts.packages = with pkgs; [ (nerdfonts.override { fonts = [ "Hack" ]; }) ];
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.lytharn = {
     isNormalUser = true;
     description = "lytharn";
-    extraGroups = [ "networkmanager" "wheel" "render" "video" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "render"
+      "video"
+    ];
   };
 
   # Allow unfree packages
@@ -211,7 +216,10 @@
     };
   };
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

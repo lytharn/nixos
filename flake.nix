@@ -9,7 +9,13 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      home-manager,
+      ...
+    }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -19,7 +25,7 @@
       lib = nixpkgs.lib;
     in
     {
-      formatter.x86_64-linux = pkgs.nixpkgs-fmt;
+      formatter.x86_64-linux = pkgs.nixfmt-rfc-style;
       nixosConfigurations = {
         quex = lib.nixosSystem {
           inherit system;
