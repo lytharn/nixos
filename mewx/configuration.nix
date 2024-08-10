@@ -16,8 +16,15 @@
   ];
 
   # Bootloader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot = {
+    loader = {
+      systemd-boot = {
+        enable = true;
+        configurationLimit = 10; # Useful to prevent boot partition running out of disk space.
+      };
+      efi.canTouchEfiVariables = true;
+    };
+  };
 
   networking.hostName = "mewx"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
