@@ -115,9 +115,6 @@
     };
   };
 
-  # Enable microcode updates for the Intel CPU
-  hardware.cpu.intel.updateMicrocode = true;
-
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
