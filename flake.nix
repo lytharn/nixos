@@ -1,60 +1,40 @@
 {
-  description = "A very basic flake";
+  description = "My NixOS flake";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
     home-manager = {
       url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    snowfall-lib = {
+      url = "github:snowfallorg/lib";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      home-manager,
-      ...
-    }:
-    let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-      };
-      lib = nixpkgs.lib;
-    in
-    {
-      formatter.x86_64-linux = pkgs.nixfmt-rfc-style;
-      nixosConfigurations = {
-        quex = lib.nixosSystem {
-          inherit system;
-          modules = [
-            ./quex/configuration.nix
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.lytharn = {
-                imports = [ ./quex/home.nix ];
-              };
-            }
-          ];
+    inputs:
+    inputs.snowfall-lib.mkFlake {
+      inherit inputs;
+      src = ./.;
+      snowfall = {
+        meta = {
+          name = "slask";
+          title = "slask";
         };
-        mewx = lib.nixosSystem {
-          inherit system;
-          modules = [
-            ./mewx/configuration.nix
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.lytharn = {
-                imports = [ ./mewx/home.nix ];
-              };
-            }
-          ];
-        };
+
+        namespace = "slask";
       };
+
+      channels-config = {
+        allowUnfree = true;
+      };
+
+      systems.modules.nixos = with inputs; [ home-manager.nixosModules.home-manager ];
+
+      outputs-builder = channels: { formatter = channels.nixpkgs.nixfmt-rfc-style; };
     };
 }
