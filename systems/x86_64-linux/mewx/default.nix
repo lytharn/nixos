@@ -1,11 +1,8 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
-
 {
   config,
   lib,
   pkgs,
+  namespace,
   ...
 }:
 
@@ -17,18 +14,16 @@
 
   # Bootloader.
   boot = {
-    kernelPackages = pkgs.linuxPackages_latest; # Use latest kernel.
     loader = {
       systemd-boot = {
         enable = true;
         configurationLimit = 10; # Useful to prevent boot partition running out of disk space.
       };
       efi.canTouchEfiVariables = true;
-      timeout = 7;
     };
   };
 
-  networking.hostName = "quex"; # Define your hostname.
+  networking.hostName = "mewx"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -56,34 +51,17 @@
     LC_TIME = "sv_SE.UTF-8";
   };
 
-  # Enable ReGreet display manager
-  programs.regreet = {
-    enable = true;
-    settings = {
-      GTK = {
-        application_prefer_dark_theme = true;
-      };
-    };
-  };
+  # Enable the X11 windowing system.
+  services.xserver.enable = true;
 
-  # This will enable extra things necessary which is not enabled in Home Manager
-  programs.hyprland.enable = true;
+  # Enable the GNOME Desktop Environment.
+  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.desktopManager.gnome.enable = true;
 
-  # PAM must be configured to enable swaylock to perform authentication.
-  security.pam.services.swaylock = { };
-
-  # xdg-desktop-portal works by exposing a series of D-Bus interfaces
-  # known as portals under a well-known name
-  # (org.freedesktop.portal.Desktop) and object path
-  # (/org/freedesktop/portal/desktop).
-  # The portal interfaces include APIs for file access, opening URIs,
-  # printing and others.
-  services.dbus.enable = true;
-  xdg.portal = {
-    enable = true;
-    wlr.enable = true;
-    # gtk portal needed to make gtk apps happy
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  # Configure keymap in X11
+  services.xserver.xkb = {
+    layout = "us";
+    variant = "";
   };
 
   # Enable CUPS to print documents.
@@ -97,19 +75,49 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    jack.enable = true;
-    wireplumber.enable = true;
+    # If you want to use JACK applications, uncomment this
+    #jack.enable = true;
 
     # use the example session manager (no others are packaged yet so this is enabled by default,
     # no need to redefine it in your config for now)
     #media-session.enable = true;
   };
 
-  # Enable Vulkan support for 32-bit applications such as Wine
-  hardware.graphics.enable32Bit = true;
+  # Enable OpenGL
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
 
-  # Enable ROCm
-  hardware.graphics.extraPackages = with pkgs; [ rocmPackages.clr.icd ];
+  # Load nvidia driver for Xorg and Wayland
+  services.xserver.videoDrivers = [ "nvidia" ];
+
+  # Enable firmware updates
+  # 
+  # USAGE:
+  # To display all devices detected by fwupd:
+  # $ fwupdmgr get-devices
+  #
+  # To download the latest metadata from the Linux Vendor firmware Service (LVFS):
+  # $ fwupdmgr refresh
+  #
+  # To list updates available for any devices on the system:
+  # $ fwupdmgr get-updates
+  #
+  # To install updates:
+  # $ fwupdmgr update
+  services.fwupd.enable = true;
+
+  hardware.nvidia = {
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    prime = {
+      sync.enable = true;
+
+      # Make sure to use the correct Bus ID values for your system!
+      intelBusId = "PCI:0:2:0";
+      nvidiaBusId = "PCI:1:0:0";
+    };
+  };
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
@@ -123,49 +131,27 @@
     extraGroups = [
       "networkmanager"
       "wheel"
-      "render"
-      "video"
     ];
+    packages = with pkgs; [ firefox ];
   };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # Use packages with ROCm support
-  nixpkgs.config.rocmSupport = true;
-
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    cargo
-    clippy
-    discord
-    dropbox-cli
+    clang # For building parsers for treesitter
     fastfetch
-    fd
-    firefox
-    eog
-    adwaita-icon-theme # Missing icons in GTK applications without a theme
-    hyprpaper
+    git
     keepassxc
     lua-language-server
     neovim
-    (ollama.override { acceleration = "rocm"; })
-    playerctl # For controlling playback
-    polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
-    mediawriter # USB flasher
-    protonup-qt
     ripgrep
-    rust-analyzer
-    rustc
-    rustfmt
-    spotify
-    swayidle
-    vlc
-    wayshot
-    wl-clipboard
-    xdg-utils # For opening default programs when clicking links
+    xclip
   ];
+
+  ${namespace}.services.dropbox.enable = true;
 
   # Prefer programs over packages, works better, more settings
   programs = {
@@ -173,35 +159,6 @@
     gamescope.enable = true;
     gamemode.enable = true;
     fish.enable = true; # Have fish source necessary files not done by Home Manager
-  };
-
-  services.flatpak.enable = true;
-
-  services.udisks2.enable = true; # Start Udisk2 DBus service to be able to auto mount removable disks
-
-  # Open ports for dropbox
-  networking.firewall = {
-    allowedTCPPorts = [ 17500 ];
-    allowedUDPPorts = [ 17500 ];
-  };
-
-  # Add dropbox service, no official exist
-  systemd.user.services.dropbox = {
-    description = "Dropbox";
-    wantedBy = [ "graphical-session.target" ];
-    environment = {
-      QT_PLUGIN_PATH = "/run/current-system/sw/" + pkgs.qt5.qtbase.qtPluginPrefix;
-      QML2_IMPORT_PATH = "/run/current-system/sw/" + pkgs.qt5.qtbase.qtQmlPrefix;
-    };
-    serviceConfig = {
-      ExecStart = "${lib.getBin pkgs.dropbox}/bin/dropbox";
-      ExecReload = "${lib.getBin pkgs.coreutils}/bin/kill -HUP $MAINPID";
-      KillMode = "control-group";
-      Restart = "on-failure";
-      PrivateTmp = true;
-      ProtectSystem = "full";
-      Nice = 10;
-    };
   };
 
   # Automatically delete older generations and garbage collect
@@ -244,5 +201,4 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.05"; # Did you read the comment?
-
 }
