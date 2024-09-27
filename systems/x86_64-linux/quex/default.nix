@@ -151,6 +151,7 @@
     polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
     mediawriter # USB flasher
     protonup-qt
+    prismlauncher
     ripgrep
     rust-analyzer
     rustc
