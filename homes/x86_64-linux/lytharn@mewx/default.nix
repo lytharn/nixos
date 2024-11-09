@@ -25,7 +25,7 @@
   programs.alacritty = {
     enable = true;
     settings = {
-      shell = {
+      terminal.shell = {
         program = "/usr/bin/env";
         args = [
           "bash"
@@ -48,7 +48,7 @@
 
   programs.kitty = {
     enable = true;
-    theme = "Tomorrow Night";
+    themeFile = "Tomorrow_Night";
   };
 
   programs.yazi = {
@@ -80,7 +80,7 @@
   programs.eza = {
     enable = true;
     git = true;
-    icons = true;
+    icons = "auto";
   };
 
   programs.bat = {

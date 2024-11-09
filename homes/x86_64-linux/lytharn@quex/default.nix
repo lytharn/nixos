@@ -49,7 +49,7 @@
         "$mod, Q, killactive"
         "$mod, T, togglefloating"
         "$mod, F, fullscreen"
-        "$mod CTRL, F, fakefullscreen"
+        "$mod CTRL, F, fullscreenstate, -1 2"
         "$mod, RETURN, exec, alacritty"
         "$mod CTRL, Q, exec, wlogout"
         "$mod, D, exec, fuzzel"
@@ -185,7 +185,7 @@
   programs.alacritty = {
     enable = true;
     settings = {
-      shell = {
+      terminal.shell = {
         program = "/usr/bin/env";
         args = [
           "bash"
@@ -208,7 +208,7 @@
 
   programs.kitty = {
     enable = true;
-    theme = "Tomorrow Night";
+    themeFile = "Tomorrow_Night";
   };
 
   programs.yazi = {
@@ -240,7 +240,7 @@
   programs.eza = {
     enable = true;
     git = true;
-    icons = true;
+    icons = "auto";
   };
 
   programs.bat = {
