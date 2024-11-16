@@ -152,6 +152,12 @@
     xclip
   ];
 
+  # A set of environment variables used in the global environment.
+  # These variables will be set by PAM early in the login process.
+  environment.sessionVariables = {
+    GSK_RENDERER = "gl"; # Fix rendering issues in gnome
+  };
+
   ${namespace}.services.dropbox.enable = true;
 
   # Prefer programs over packages, works better, more settings
