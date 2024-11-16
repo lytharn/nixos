@@ -109,6 +109,7 @@
   services.fwupd.enable = true;
 
   hardware.nvidia = {
+    open = false;
     package = config.boot.kernelPackages.nvidiaPackages.stable;
     prime = {
       sync.enable = true;
