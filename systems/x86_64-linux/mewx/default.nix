@@ -123,7 +123,9 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
-  fonts.packages = with pkgs; [ (nerdfonts.override { fonts = [ "Hack" ]; }) ];
+  fonts.packages = with pkgs; [
+    nerd-fonts.hack
+  ];
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.lytharn = {
