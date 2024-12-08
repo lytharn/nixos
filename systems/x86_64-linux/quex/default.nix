@@ -161,6 +161,7 @@
     spotify
     swayidle
     vlc
+    vscode-extensions.vadimcn.vscode-lldb # For rust debugging
     wayshot
     wl-clipboard
     xdg-utils # For opening default programs when clicking links
