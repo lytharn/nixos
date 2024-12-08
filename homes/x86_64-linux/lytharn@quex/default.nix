@@ -214,9 +214,6 @@
   programs.yazi = {
     enable = true;
     settings = {
-      opener = {
-        image = [ { exec = "eog \"$@\""; } ];
-      };
       preview = {
         max_height = 1000;
         max_width = 1000;
