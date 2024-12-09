@@ -29,8 +29,6 @@
       };
       decoration = {
         rounding = 5;
-        shadow_offset = "0 5";
-        "col.shadow" = "rgba(00000099)";
       };
       input = {
         kb_layout = "us,se";
