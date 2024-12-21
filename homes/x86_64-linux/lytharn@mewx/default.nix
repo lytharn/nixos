@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  namespace, # Waiting for https://github.com/snowfallorg/lib/pull/147
   ...
 }:
 
@@ -22,29 +23,7 @@
     };
   };
 
-  programs.alacritty = {
-    enable = true;
-    settings = {
-      terminal.shell = {
-        program = "/usr/bin/env";
-        args = [
-          "bash"
-          "-l"
-          "-c"
-          "tmux attach || tmux"
-        ];
-      };
-      window = {
-        startup_mode = "Maximized";
-        padding.x = 10;
-        padding.y = 10;
-      };
-      font.normal = {
-        family = "Hack Nerd Font";
-        style = "Regular";
-      };
-    };
-  };
+  slask.apps.alacritty.enable = true;
 
   programs.kitty = {
     enable = true;
