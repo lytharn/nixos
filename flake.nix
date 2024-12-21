@@ -17,18 +17,22 @@
 
   outputs =
     inputs:
-    inputs.snowfall-lib.mkFlake {
-      inherit inputs;
-      src = ./.;
-      snowfall = {
-        meta = {
-          name = "slask";
-          title = "slask";
+    let
+      lib = inputs.snowfall-lib.mkLib {
+        inherit inputs;
+        src = ./.;
+
+        snowfall = {
+          meta = {
+            name = "slask";
+            title = "Slask";
+          };
+
+          namespace = "slask";
         };
-
-        namespace = "slask";
       };
-
+    in
+    lib.mkFlake {
       channels-config = {
         allowUnfree = true;
       };
