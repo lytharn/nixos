@@ -145,7 +145,6 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     clang # For building parsers for treesitter
-    fastfetch
     git
     keepassxc
     lua-language-server
@@ -160,14 +159,16 @@
     GSK_RENDERER = "gl"; # Fix rendering issues in gnome
   };
 
-  ${namespace}.services.dropbox.enable = true;
+  ${namespace} = {
+    services.dropbox.enable = true;
+    apps.fish.enable = true;
+  };
 
   # Prefer programs over packages, works better, more settings
   programs = {
     steam.enable = true;
     gamescope.enable = true;
     gamemode.enable = true;
-    fish.enable = true; # Have fish source necessary files not done by Home Manager
   };
 
   # Automatically delete older generations and garbage collect

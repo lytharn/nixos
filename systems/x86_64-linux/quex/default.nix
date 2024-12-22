@@ -139,7 +139,6 @@
     cargo
     clippy
     discord
-    fastfetch
     fd
     firefox
     eog
@@ -167,14 +166,16 @@
     xdg-utils # For opening default programs when clicking links
   ];
 
-  ${namespace}.services.dropbox.enable = true;
+  ${namespace} = {
+    services.dropbox.enable = true;
+    apps.fish.enable = true;
+  };
 
   # Prefer programs over packages, works better, more settings
   programs = {
     steam.enable = true;
     gamescope.enable = true;
     gamemode.enable = true;
-    fish.enable = true; # Have fish source necessary files not done by Home Manager
   };
 
   services.flatpak.enable = true;
