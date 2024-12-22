@@ -17,7 +17,6 @@ in
     programs.tmux = {
       enable = true;
       aggressiveResize = true;
-      baseIndex = 1;
       clock24 = true;
       escapeTime = 0;
       historyLimit = 100000;
