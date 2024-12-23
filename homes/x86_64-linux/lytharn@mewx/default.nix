@@ -15,17 +15,10 @@
   # Packages that should be installed to the user profile.
   home.packages = [ pkgs.htop ];
 
-  programs.mangohud = {
-    enable = true;
-    enableSessionWide = true;
-    settings = {
-      fps_only = true;
-    };
-  };
-
   slask.apps = {
     alacritty.enable = true;
     git.enable = true;
+    mangohud.enable = true;
     tmux.enable = true;
   };
 
