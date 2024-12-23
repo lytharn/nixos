@@ -175,42 +175,15 @@
 
   slask.apps = {
     alacritty.enable = true;
-    helix.enable = true;
+    bat.enable = true;
+    eza.enable = true;
     git.enable = true;
+    helix.enable = true;
+    kitty.enable = true;
     mangohud.enable = true;
+    starship.enable = true;
     tmux.enable = true;
-  };
-
-  programs.kitty = {
-    enable = true;
-    themeFile = "Tomorrow_Night";
-  };
-
-  programs.yazi = {
-    enable = true;
-    settings = {
-      preview = {
-        max_height = 1000;
-        max_width = 1000;
-      };
-    };
-  };
-
-  programs.starship = {
-    enable = true;
-  };
-
-  programs.eza = {
-    enable = true;
-    git = true;
-    icons = "auto";
-  };
-
-  programs.bat = {
-    enable = true;
-    config = {
-      theme = "Visual Studio Dark+";
-    };
+    yazi.enable = true;
   };
 
   # This value determines the Home Manager release that your
