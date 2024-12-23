@@ -159,7 +159,8 @@
     GSK_RENDERER = "gl"; # Fix rendering issues in gnome
   };
 
-  ${namespace} = {
+  # Enable internal modules
+  slask = {
     services.dropbox.enable = true;
     apps.fish.enable = true;
   };
