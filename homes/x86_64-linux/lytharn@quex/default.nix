@@ -15,6 +15,21 @@
   # Packages that should be installed to the user profile.
   home.packages = [ pkgs.htop ];
 
+  # Enable internal modules
+  slask.apps = {
+    alacritty.enable = true;
+    bat.enable = true;
+    eza.enable = true;
+    git.enable = true;
+    helix.enable = true;
+    kitty.enable = true;
+    mangohud.enable = true;
+    starship.enable = true;
+    tmux.enable = true;
+    yazi.enable = true;
+  };
+
+  # Desktop environment configuration
   wayland.windowManager.hyprland = {
     enable = true;
     settings = {
@@ -172,19 +187,6 @@
     #set the default wallpaper(s) seen on inital workspace(s) --depending on the number of monitors used
     wallpaper = ,/home/lytharn/Dropbox/wallpapers/road-scenery.jpg
   '';
-
-  slask.apps = {
-    alacritty.enable = true;
-    bat.enable = true;
-    eza.enable = true;
-    git.enable = true;
-    helix.enable = true;
-    kitty.enable = true;
-    mangohud.enable = true;
-    starship.enable = true;
-    tmux.enable = true;
-    yazi.enable = true;
-  };
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage

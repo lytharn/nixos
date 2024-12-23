@@ -166,7 +166,8 @@
     xdg-utils # For opening default programs when clicking links
   ];
 
-  ${namespace} = {
+  # Enable internal modules
+  slask = {
     services.dropbox.enable = true;
     apps.fish.enable = true;
   };

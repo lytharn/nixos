@@ -15,6 +15,7 @@
   # Packages that should be installed to the user profile.
   home.packages = [ pkgs.htop ];
 
+  # Enable internal modules
   slask.apps = {
     alacritty.enable = true;
     bat.enable = true;
