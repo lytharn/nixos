@@ -17,6 +17,7 @@
 
   slask.apps = {
     alacritty.enable = true;
+    helix.enable = true;
     git.enable = true;
     mangohud.enable = true;
     tmux.enable = true;
@@ -51,18 +52,6 @@
     enable = true;
     config = {
       theme = "Visual Studio Dark+";
-    };
-  };
-
-  programs.helix = {
-    enable = true;
-    defaultEditor = true;
-    settings = {
-      theme = "dark_plus";
-      editor = {
-        cursorline = true;
-        cursor-shape.insert = "bar";
-      };
     };
   };
 
