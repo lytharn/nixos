@@ -145,6 +145,7 @@
     firefox
     hyprpaper
     keepassxc
+    lldb # For rust/c/c++ debugging
     lua-language-server
     mediawriter # USB flasher
     neovim
@@ -160,7 +161,6 @@
     spotify
     swayidle
     vlc
-    vscode-extensions.vadimcn.vscode-lldb # For rust debugging
     wayshot
     wl-clipboard
     xdg-utils # For opening default programs when clicking links
