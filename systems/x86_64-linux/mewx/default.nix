@@ -151,6 +151,7 @@
     lldb # For rust/c/c++ debugging
     lua-language-server
     neovim
+    nil # Language server for Nix
     ripgrep
     rust-analyzer
     rustc
