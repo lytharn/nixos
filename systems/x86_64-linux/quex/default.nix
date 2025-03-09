@@ -149,6 +149,7 @@
     lua-language-server
     mediawriter # USB flasher
     neovim
+    nil # Language server for Nix
     (ollama.override { acceleration = "rocm"; })
     playerctl # For controlling playback
     polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
