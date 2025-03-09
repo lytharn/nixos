@@ -155,6 +155,7 @@
     rust-analyzer
     rustc
     rustfmt
+    taplo # Language server for TOML
     xclip
   ];
 
