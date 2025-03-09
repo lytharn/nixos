@@ -136,23 +136,23 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    adwaita-icon-theme # Missing icons in GTK applications without a theme
     cargo
     clippy
     discord
+    eog
     fd
     firefox
-    eog
-    adwaita-icon-theme # Missing icons in GTK applications without a theme
     hyprpaper
     keepassxc
     lua-language-server
+    mediawriter # USB flasher
     neovim
     (ollama.override { acceleration = "rocm"; })
     playerctl # For controlling playback
     polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
-    mediawriter # USB flasher
-    protonup-qt
     prismlauncher
+    protonup-qt
     ripgrep
     rust-analyzer
     rustc
