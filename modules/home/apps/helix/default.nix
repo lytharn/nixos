@@ -20,8 +20,19 @@ in
       settings = {
         theme = "dark_plus";
         editor = {
+          color-modes = true;
           cursorline = true;
-          cursor-shape.insert = "bar";
+          cursor-shape = {
+            normal = "block";
+            insert = "bar";
+            select = "underline";
+          };
+          lsp.display-progress-messages = true;
+          statusline = {
+            mode.normal = "NORMAL";
+            mode.insert = "INSERT";
+            mode.select = "SELECT";
+          };
         };
       };
     };
