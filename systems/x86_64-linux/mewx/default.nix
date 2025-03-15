@@ -152,6 +152,7 @@
     lua-language-server
     neovim
     nil # Language server for Nix
+    nixfmt-tree
     ripgrep
     rust-analyzer
     rustc

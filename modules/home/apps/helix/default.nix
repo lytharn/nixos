@@ -17,6 +17,17 @@ in
     programs.helix = {
       enable = true;
       defaultEditor = true;
+      languages = {
+        language = [
+          {
+            name = "nix";
+            auto-format = true;
+            formatter = {
+              command = "nixfmt";
+            };
+          }
+        ];
+      };
       settings = {
         theme = "dark_plus";
         editor = {
