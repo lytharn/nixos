@@ -145,11 +145,16 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     clang # For building parsers for treesitter
+    clippy
     git
     keepassxc
+    lldb # For rust/c/c++ debugging
     lua-language-server
     neovim
     ripgrep
+    rust-analyzer
+    rustc
+    rustfmt
     xclip
   ];
 
