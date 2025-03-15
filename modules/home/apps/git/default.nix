@@ -32,9 +32,6 @@ in
       userName = "lytharn";
       difftastic.enable = true;
       extraConfig = {
-        core = {
-          editor = "nvim";
-        };
         merge = {
           conflictstyle = "diff3";
         };
