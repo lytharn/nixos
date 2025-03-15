@@ -27,11 +27,22 @@ in
             insert = "bar";
             select = "underline";
           };
+          end-of-line-diagnostics = "info";
           lsp.display-progress-messages = true;
           statusline = {
             mode.normal = "NORMAL";
             mode.insert = "INSERT";
             mode.select = "SELECT";
+          };
+        };
+        keys = {
+          normal = {
+            space = {
+              i = {
+                h = ":toggle lsp.display-inlay-hints";
+                d = ":toggle inline-diagnostics.cursor-line disable hint";
+              };
+            };
           };
         };
       };
