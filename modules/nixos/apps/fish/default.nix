@@ -20,18 +20,18 @@ in
     programs.fish.enable = true;
 
     snowfallorg.users.lytharn = {
-        home = {
-            config = {
-              programs.fish = {
-                enable = true;
-                functions = {
-                  fish_greeting = "fastfetch";
-                  # Start nix-shell with fish without greeting if available, otherwise start bash which is always available, even in a pure nix-shell.
-                  nix-shell = ''command nix-shell --run 'if type fish &> /dev/null; then fish -C "functions -e fish_greeting"; else bash; fi' $argv'';
-                };
-              };
+      home = {
+        config = {
+          programs.fish = {
+            enable = true;
+            functions = {
+              fish_greeting = "fastfetch";
+              # Start nix-shell with fish without greeting if available, otherwise start bash which is always available, even in a pure nix-shell.
+              nix-shell = ''command nix-shell --run 'if type fish &> /dev/null; then fish -C "functions -e fish_greeting"; else bash; fi' $argv'';
             };
+          };
         };
+      };
     };
   };
 }

@@ -93,7 +93,7 @@
   services.xserver.videoDrivers = [ "nvidia" ];
 
   # Enable firmware updates
-  # 
+  #
   # USAGE:
   # To display all devices detected by fwupd:
   # $ fwupdmgr get-devices
