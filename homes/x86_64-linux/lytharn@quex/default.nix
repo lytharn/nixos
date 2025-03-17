@@ -19,6 +19,7 @@
   slask.apps = {
     alacritty.enable = true;
     bat.enable = true;
+    direnv.enable = true;
     eza.enable = true;
     git.enable = true;
     helix.enable = true;
