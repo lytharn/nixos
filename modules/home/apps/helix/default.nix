@@ -51,7 +51,10 @@ in
             space = {
               i = {
                 h = ":toggle lsp.display-inlay-hints";
-                d = ":toggle inline-diagnostics.cursor-line disable hint";
+                d = [
+                  ":toggle inline-diagnostics.cursor-line disable hint"
+                  ":toggle inline-diagnostics.other-lines disable hint"
+                ];
               };
             };
           };
