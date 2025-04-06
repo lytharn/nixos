@@ -143,11 +143,13 @@
     eog
     fd
     firefox
+    gcc
     hyprpaper
     keepassxc
     lldb # For rust/c/c++ debugging
     lua-language-server
     mediawriter # USB flasher
+    mold
     neovim
     nil # Language server for Nix
     nixfmt-tree
