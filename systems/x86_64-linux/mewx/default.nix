@@ -145,11 +145,12 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     clang # For building parsers for treesitter
+    cargo
     clippy
-    git
     keepassxc
     lldb # For rust/c/c++ debugging
     lua-language-server
+    mold
     neovim
     nil # Language server for Nix
     nixfmt-tree
