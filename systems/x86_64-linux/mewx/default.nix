@@ -147,6 +147,7 @@
     clang # For building parsers for treesitter
     cargo
     clippy
+    gcc
     keepassxc
     lldb # For rust/c/c++ debugging
     lua-language-server
