@@ -173,7 +173,6 @@
 
   # Enable internal modules
   slask = {
-    services.dropbox.enable = true;
     apps.fish.enable = true;
   };
 
