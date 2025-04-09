@@ -174,6 +174,8 @@
 
   services.udiskie.enable = true; # Auto mount removable disks
 
+  services.dropbox.enable = true;
+
   programs.swaylock = {
     enable = true;
     settings = {
