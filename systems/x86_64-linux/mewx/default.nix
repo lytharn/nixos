@@ -160,6 +160,7 @@
     rustc
     rustfmt
     taplo # Language server for TOML
+    wl-clipboard
     xclip
   ];
 
