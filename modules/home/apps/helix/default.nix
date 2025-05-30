@@ -16,7 +16,6 @@ in
   config = lib.mkIf cfg.enable {
     programs.helix = {
       enable = true;
-      defaultEditor = true;
       languages = {
         language = [
           {
