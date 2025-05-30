@@ -150,7 +150,6 @@
     lua-language-server
     mediawriter # USB flasher
     mold
-    neovim
     nil # Language server for Nix
     nixfmt-tree
     (ollama.override { acceleration = "rocm"; })
@@ -174,6 +173,7 @@
   # Enable internal modules
   slask = {
     apps.fish.enable = true;
+    apps.neovim.enable = true;
   };
 
   # Prefer programs over packages, works better, more settings

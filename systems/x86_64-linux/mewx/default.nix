@@ -152,7 +152,6 @@
     lldb # For rust/c/c++ debugging
     lua-language-server
     mold
-    neovim
     nil # Language server for Nix
     nixfmt-tree
     ripgrep
@@ -173,6 +172,7 @@
   # Enable internal modules
   slask = {
     apps.fish.enable = true;
+    apps.neovim.enable = true;
   };
 
   # Prefer programs over packages, works better, more settings
