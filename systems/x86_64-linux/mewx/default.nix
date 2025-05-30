@@ -153,7 +153,7 @@
     lua-language-server
     mold
     nil # Language server for Nix
-    nixfmt-tree
+    nixfmt-rfc-style
     ripgrep
     rust-analyzer
     rustc
