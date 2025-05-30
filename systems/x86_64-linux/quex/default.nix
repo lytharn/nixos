@@ -151,7 +151,7 @@
     mediawriter # USB flasher
     mold
     nil # Language server for Nix
-    nixfmt-tree
+    nixfmt-rfc-style
     (ollama.override { acceleration = "rocm"; })
     playerctl # For controlling playback
     polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
