@@ -166,10 +166,12 @@
 
   services.mako = {
     enable = true;
-    backgroundColor = "#162633FF";
-    borderRadius = 5;
-    defaultTimeout = 2000;
-    width = 500;
+    settings = {
+      background-color = "#162633FF";
+      border-radius = 5;
+      default-timeout = 2000;
+      width = 500;
+    };
   };
 
   services.udiskie.enable = true; # Auto mount removable disks
