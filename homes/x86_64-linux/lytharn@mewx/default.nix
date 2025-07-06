@@ -32,6 +32,23 @@
 
   services.dropbox.enable = true;
 
+  # Set keyboard layouts
+  dconf.settings = {
+    "org/gnome/desktop/input-sources" = {
+      show-all-sources = true;
+      sources = [
+        (lib.hm.gvariant.mkTuple [
+          "xkb"
+          "us"
+        ])
+        (lib.hm.gvariant.mkTuple [
+          "xkb"
+          "se"
+        ])
+      ];
+    };
+  };
+
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage
   # when a new Home Manager release introduces backwards
