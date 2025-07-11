@@ -149,7 +149,7 @@
     rust-analyzer
     rustc
     rustfmt
-    taplo # Language server for TOML
+    tombi # Language server for TOML
     wl-clipboard
     xclip
   ];
