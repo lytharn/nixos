@@ -163,7 +163,7 @@
     rustfmt
     spotify
     swayidle
-    taplo # Language server for TOML
+    tombi # Language server for TOML
     vlc
     wayshot
     wl-clipboard
