@@ -80,6 +80,7 @@
   slask = {
     apps.fish.enable = true;
     apps.neovim.enable = true;
+    services.minecraft.enable = true;
   };
 
   # Enable the OpenSSH daemon.

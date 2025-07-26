@@ -13,6 +13,8 @@
       url = "github:snowfallorg/lib";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-minecraft.url = "github:Infinidoge/nix-minecraft";
   };
 
   outputs =
@@ -37,7 +39,12 @@
         allowUnfree = true;
       };
 
-      systems.modules.nixos = with inputs; [ home-manager.nixosModules.home-manager ];
+      overlays = with inputs; [ nix-minecraft.overlay ];
+
+      systems.modules.nixos = with inputs; [
+        home-manager.nixosModules.home-manager
+        nix-minecraft.nixosModules.minecraft-servers
+      ];
 
       outputs-builder = channels: { formatter = channels.nixpkgs.nixfmt-tree; };
     };
