@@ -91,6 +91,34 @@ in
                   url = "https://cdn.modrinth.com/data/aqYNR6rI/versions/zuDV9GQp/create_copper_and_zinc-1.6.0-fabric-1.20.1.jar";
                   hash = "sha256-2h8t9OBzYC/61/I1cQqbAyEVHeEMmcZ7e5qneTJrsIE=";
                 };
+                createSliceAndDice = pkgs.fetchurl {
+                  url = "https://cdn.modrinth.com/data/GmjmRQ0A/versions/EzpVcwYV/sliceanddice-fabric-3.3.1.jar";
+                  hash = "sha256-uSj2mDQNvOhtV5b/LjqZ9taQGapd4uWJD1yYxrcfxSE=";
+                };
+                fabricLanguageKotlin = pkgs.fetchurl {
+                  url = "https://cdn.modrinth.com/data/Ha28R6CL/versions/mccDBWqV/fabric-language-kotlin-1.13.4%2Bkotlin.2.2.0.jar";
+                  hash = "sha256-KjxW/B3W6SKpvuNaTAukvA2Wd2Py6VL/SbdOw8ZB9Qs=";
+                };
+                createManOfManyPlanes = pkgs.fetchurl {
+                  url = "https://cdn.modrinth.com/data/F4Rdk2PX/versions/XUkRA6F4/create-man-of-many-planes-1.0.jar";
+                  hash = "sha256-Up2oTNQtJCTyS4IRAWUj2jc96TTzoQ81Q8NSABF8Oyg=";
+                };
+                ManOfManyPlanes = pkgs.fetchurl {
+                  url = "https://cdn.modrinth.com/data/9qdTHi0q/versions/BiO2Uv4J/man_of_many_planes-0.2.0%2B1.20.1-fabric.jar";
+                  hash = "sha256-z/QjvQt8ogVQ4O5BT/dwK0gW9F0oQCH7VROh6B3bd48=";
+                };
+                immersiveAircraft = pkgs.fetchurl {
+                  url = "https://cdn.modrinth.com/data/x3HZvrj6/versions/hXtuenCl/immersive_aircraft-1.3.3%2B1.20.1-fabric.jar";
+                  hash = "sha256-du2NbJ1FAkalS8L8Scqxe8LNUSGTIj3uV/HT4F20fzQ=";
+                };
+                jade = pkgs.fetchurl {
+                  url = "https://cdn.modrinth.com/data/nvQzSEkH/versions/drol2x1P/Jade-1.20-Fabric-11.13.1.jar";
+                  hash = "sha256-Atow0X06HYkv9WV+Kt2OAShUV1rtNOT5XcmzuLoge4w=";
+                };
+                jadeAddons = pkgs.fetchurl {
+                  url = "https://cdn.modrinth.com/data/fThnVRli/versions/DSkzT8Ma/JadeAddons-1.20.1-Fabric-5.4.0.jar";
+                  hash = "sha256-jkJHiWaL4jPFjmDdcGYK0Pj7+jP/O3WkwwSlGLY8S00=";
+                };
               }
             );
           };
