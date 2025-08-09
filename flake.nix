@@ -15,6 +15,11 @@
     };
 
     nix-minecraft.url = "github:Infinidoge/nix-minecraft";
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -44,6 +49,7 @@
       systems.modules.nixos = with inputs; [
         home-manager.nixosModules.home-manager
         nix-minecraft.nixosModules.minecraft-servers
+        disko.nixosModules.disko
       ];
 
       outputs-builder = channels: { formatter = channels.nixpkgs.nixfmt-tree; };

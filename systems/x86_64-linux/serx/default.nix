@@ -8,19 +8,8 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./disko-config.nix
   ];
-
-  # Additional disk settings
-  fileSystems = {
-    "/".options = [ "compress=zstd" ];
-    "/home".options = [ "compress=zstd" ];
-    "/nix".options = [
-      "compress=zstd"
-      "noatime"
-    ];
-    "/swap".options = [ "noatime" ];
-  };
-  swapDevices = [ { device = "/swap/swapfile"; } ];
 
   # Bootloader.
   boot = {
@@ -63,6 +52,10 @@
       "networkmanager"
       "wheel"
     ];
+    initialPassword = "slaskfisk";
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJART1vYgHpeweIlQ4hpcJQQ12WnKJydXaSSkvehteCC lytharn@users.noreply.github.com"
+    ];
   };
 
   # Allow unfree packages
@@ -84,7 +77,10 @@
   };
 
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    settings.PasswordAuthentication = false;
+  };
 
   # Automatically delete older generations and garbage collect
   nix = {
