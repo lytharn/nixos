@@ -31,7 +31,7 @@ in
             level-seed = 2800096416986572871; # Island Villages
             server-port = 43000;
           };
-          jvmOpts = "-Xms6g -Xmx6g"; # Set to same value to prevent resize of the heap (garbage collection pauses)
+          jvmOpts = "-Xms8g -Xmx8g"; # Set to same value to prevent resize of the heap (garbage collection pauses)
           symlinks = {
             mods = pkgs.linkFarmFromDrvs "mods" (
               builtins.attrValues {
