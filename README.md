@@ -10,7 +10,7 @@ passwd
 ```
 
 ### On source machine
-Replace <system> and <ip> and run command:
+Replace \<system> and \<ip> and run command:
 ```bash
 nix run github:nix-community/nixos-anywhere -- --generate-hardware-config nixos-generate-config ./systems/x86_64-linux/<system>/hardware-configuration.nix --flake .#<system> --target-host nixos@<ip>
 ```
