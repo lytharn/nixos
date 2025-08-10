@@ -114,6 +114,25 @@ in
               }
             );
           };
+          files."config/gravestones.json" = {
+            value = {
+              aesthetic_gravestones = "false";
+              decay_with_time = "false";
+              decay_with_deaths = "false";
+              decay_time = "576000";
+              decay_time_type = "TICKS";
+              store_experience = "true";
+              experience_cap = "true";
+              experience_kept = "VANILLA";
+              experience_decay = "false";
+              gravestone_accessible_owner_only = "true";
+              spawn_gravestone_skeletons = "false";
+              broadcast_collect_in_chat = "true";
+              broadcast_coordinates_in_chat = "false";
+              console_info = "false";
+              time_format = "YYYYMMDD";
+            };
+          };
         };
       };
     };
