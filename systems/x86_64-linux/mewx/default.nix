@@ -164,13 +164,7 @@
   slask = {
     apps.fish.enable = true;
     apps.neovim.enable = true;
-  };
-
-  # Prefer programs over packages, works better, more settings
-  programs = {
-    steam.enable = true;
-    gamescope.enable = true;
-    gamemode.enable = true;
+    apps.steam.enable = true;
   };
 
   # Automatically delete older generations and garbage collect

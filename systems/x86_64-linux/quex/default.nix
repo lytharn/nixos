@@ -174,13 +174,7 @@
   slask = {
     apps.fish.enable = true;
     apps.neovim.enable = true;
-  };
-
-  # Prefer programs over packages, works better, more settings
-  programs = {
-    steam.enable = true;
-    gamescope.enable = true;
-    gamemode.enable = true;
+    apps.steam.enable = true;
   };
 
   services.flatpak.enable = true;
