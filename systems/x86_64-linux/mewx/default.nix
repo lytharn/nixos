@@ -126,7 +126,33 @@
       "networkmanager"
       "wheel"
     ];
-    packages = with pkgs; [ firefox ];
+    packages = with pkgs; [
+      cargo
+      clang # For building parsers for treesitter
+      clippy
+      gcc
+      keepassxc
+      lldb # For rust/c/c++ debugging
+      lua-language-server
+      mold
+      nil # Language server for Nix
+      nixfmt-rfc-style
+      prismlauncher
+      ripgrep
+      rust-analyzer
+      rustc
+      rustfmt
+      tombi # Language server for TOML
+    ];
+  };
+
+  users.users.guest = {
+    isNormalUser = true;
+    description = "guest";
+    extraGroups = [
+      "networkmanager"
+    ];
+    packages = with pkgs; [ prismlauncher ];
   };
 
   # Allow unfree packages
@@ -135,23 +161,8 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    clang # For building parsers for treesitter
-    cargo
-    clippy
-    gcc
-    keepassxc
-    lldb # For rust/c/c++ debugging
-    lua-language-server
-    mold
-    nil # Language server for Nix
-    nixfmt-rfc-style
-    ripgrep
-    rust-analyzer
-    rustc
-    rustfmt
-    tombi # Language server for TOML
+    firefox
     wl-clipboard
-    xclip
   ];
 
   # A set of environment variables used in the global environment.
