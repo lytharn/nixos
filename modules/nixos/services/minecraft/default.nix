@@ -22,6 +22,48 @@ in
 
       servers = {
         # Can attach to a server using tmux -S /run/minecraft/<server>.sock attach
+        vanilla = {
+          enable = true;
+          package = pkgs.fabricServers.fabric-1_21_10.override { loaderVersion = "0.18.1"; };
+          serverProperties = {
+            difficulty = "normal";
+            gamemode = "survival";
+            level-seed = 3703410692761387670; # Oak forest with plaines
+            server-port = 43001;
+          };
+          jvmOpts = "-Xms6g -Xmx6g"; # Set to same value to prevent resize of the heap (garbage collection pauses)
+          symlinks = {
+            mods = pkgs.linkFarmFromDrvs "mods" (
+              builtins.attrValues {
+                simpleVoiceChat = pkgs.fetchurl {
+                  url = "https://cdn.modrinth.com/data/9eGKb6K1/versions/BjR2lc4k/voicechat-fabric-1.21.10-2.6.6.jar";
+                  hash = "sha256-yC5pMBLsi4BnUq4CxTfwe4MGTqoBg04ZaRrsBC3Ds3Y=";
+                };
+              }
+            );
+          };
+          files."config/voicechat/voicechat-server.properties" = {
+            value = {
+              port = 24454;
+              bind_address = "";
+              max_voice_distance = 48.0;
+              whisper_distance = 24.0;
+              codec = "VOIP";
+              mtu_size = 1024;
+              keep_alive = 1000;
+              enable_groups = true;
+              voice_host = "";
+              allow_recording = true;
+              spectator_interaction = false;
+              spectator_player_possession = false;
+              force_voice_chat = false;
+              login_timeout = 10000;
+              broadcast_range = -1.0;
+              allow_pings = true;
+              use_natives = true;
+            };
+          };
+        };
         alviria = {
           enable = true;
           package = pkgs.fabricServers.fabric-1_20_1.override { loaderVersion = "0.16.14"; };
@@ -133,9 +175,34 @@ in
               time_format = "YYYYMMDD";
             };
           };
+          files."config/voicechat/voicechat-server.properties" = {
+            value = {
+              port = 24453;
+              bind_address = "";
+              max_voice_distance = 48.0;
+              crouch_distance_multiplier = 1.0;
+              whisper_distance_multiplier = 0.5;
+              codec = "VOIP";
+              mtu_size = 1024;
+              keep_alive = 1000;
+              enable_groups = true;
+              voice_host = "";
+              allow_recording = true;
+              spectator_interaction = false;
+              spectator_player_possession = false;
+              force_voice_chat = false;
+              login_timeout = 10000;
+              broadcast_range = -1.0;
+              allow_pings = true;
+              use_natives = true;
+            };
+          };
         };
       };
     };
-    networking.firewall.allowedUDPPorts = [ 24454 ]; # For Simple Voice Chat
+    networking.firewall.allowedUDPPorts = [
+      24454
+      24453
+    ]; # For Simple Voice Chat
   };
 }
