@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }:
 
@@ -75,13 +76,18 @@
     apps.fish.enable = true;
     apps.neovim.enable = true;
     services.minecraft.enable = true;
+    services.tailscale.enable = true;
   };
 
-  # Enable the OpenSSH daemon.
+  # Enable the OpenSSH daemon. Needed for ssh host keys used by sops.
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;
   };
+
+  # Enable sops
+  sops.defaultSopsFile = inputs.self + /secrets/serx/secrets.yaml;
+  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   # Automatically delete older generations and garbage collect
   nix = {

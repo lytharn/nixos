@@ -20,6 +20,11 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -50,6 +55,7 @@
         home-manager.nixosModules.home-manager
         nix-minecraft.nixosModules.minecraft-servers
         disko.nixosModules.disko
+        sops-nix.nixosModules.sops
       ];
 
       outputs-builder = channels: { formatter = channels.nixpkgs.nixfmt-tree; };
