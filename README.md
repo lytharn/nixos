@@ -1,5 +1,6 @@
-# My nixos configuration
-This is my nixos configuration with Home Manager using a flake.
+# My NixOS configuration
+It's a flake based configuration using [Snowfall Lib](https://github.com/snowfallorg/lib) as bases for the structure,
+[disko](https://github.com/nix-community/disko) for disk partitioning and [Home Manager](https://github.com/nix-community/home-manager) for managing a user environments.
 
 ## Installation
 
