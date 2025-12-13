@@ -134,7 +134,7 @@
   nixpkgs.config.rocmSupport = true;
 
   # List packages installed in system profile. To search, run:
-  # $ nix search wget
+  # $ nix search nixpkgs wget
   environment.systemPackages = with pkgs; [
     adwaita-icon-theme # Missing icons in GTK applications without a theme
     cargo

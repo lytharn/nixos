@@ -126,6 +126,8 @@
       "networkmanager"
       "wheel"
     ];
+    # List packages installed in user profile. To search, run:
+    # $ nix search nixpkgs wget
     packages = with pkgs; [
       cargo
       clang # For building parsers for treesitter
@@ -160,7 +162,7 @@
   nixpkgs.config.allowUnfree = true;
 
   # List packages installed in system profile. To search, run:
-  # $ nix search wget
+  # $ nix search nixpkgs wget
   environment.systemPackages = with pkgs; [
     firefox
     wl-clipboard
