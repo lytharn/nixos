@@ -148,6 +148,7 @@
     keepassxc
     lldb # For rust/c/c++ debugging
     lua-language-server
+    marksman # Language server for Markdown
     mediawriter # USB flasher
     mold
     nil # Language server for Nix
