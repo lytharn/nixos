@@ -75,6 +75,7 @@
   slask = {
     apps.fish.enable = true;
     apps.neovim.enable = true;
+    services.actual.enable = true;
     services.minecraft.enable = true;
     services.tailscale.enable = true;
   };
