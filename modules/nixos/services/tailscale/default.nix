@@ -18,6 +18,7 @@ in
     services.tailscale = {
       enable = true;
       authKeyFile = "/run/secrets/tailscale-key";
+      openFirewall = true; # To enable direct peer-to-peer connections
     };
     sops.secrets.tailscale-key = { };
   };
