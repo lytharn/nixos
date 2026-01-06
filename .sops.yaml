@@ -1,6 +1,8 @@
 keys:
   - &lytharn_mewx age1h4hrxfrd9dyegqjmvgdw0zdenkpfgpavw57q5djcf2l8lg3e3vtse7npwm
   - &machine_mewx age1fyuudaqszs4yk6r7w77aszp0ynsget3h34gqh7zkpv4hqqul6dkqlyhrsn
+  - &lytharn_quex age1zrdn505tq2rlsflzfn4fatzzc8t7g0x372cxyj0mgwvnu6vzpsrqnyvgwx
+  - &machine_quex age1fgnae7fld6xpg942yxpsa4gjsv688u5thfwjed59kd5nd5w37urszd7shj
   - &machine_serx age1c6hftmen4jkst37q3e9gq9uqr6etcwsdvllk3gdafuayxhzz7v2smrhsn2
 creation_rules:
   # This is a regex, so it could look like this
@@ -10,6 +12,11 @@ creation_rules:
     - age:
       - *lytharn_mewx
       - *machine_mewx
+  - path_regex: secrets/quex/secrets.yaml$
+    key_groups:
+    - age:
+      - *lytharn_quex
+      - *machine_quex
   - path_regex: secrets/serx/secrets.yaml$
     key_groups:
     - age:
