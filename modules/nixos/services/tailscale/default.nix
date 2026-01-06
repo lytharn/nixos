@@ -1,9 +1,7 @@
 {
   config,
   lib,
-  pkgs,
   namespace,
-  inputs,
   ...
 }:
 let
@@ -18,7 +16,11 @@ in
     services.tailscale = {
       enable = true;
       authKeyFile = "/run/secrets/tailscale-key";
-      openFirewall = true; # To enable direct peer-to-peer connections
+      # To enable direct peer-to-peer connections
+      openFirewall = true;
+      # To enable automatic discovery of new subnet routes.
+      # Needed to discover tailscale services.
+      extraSetFlags = [ "--accept-routes" ];
     };
     sops.secrets.tailscale-key = { };
   };
