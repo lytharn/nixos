@@ -181,6 +181,23 @@
     services.tailscale.enable = true;
   };
 
+  # Enable distributed builds on serx
+  nix.distributedBuilds = true;
+  nix.buildMachines = [
+    {
+      hostName = "serx";
+      sshUser = "remotebuilder";
+      sshKey = "/root/.ssh/remotebuilder";
+      system = pkgs.stdenv.hostPlatform.system;
+      supportedFeatures = [
+        "benchmark" # Machine can generate metrics (means the builds usually takes the same amount of time)
+        "big-parallel" # kernel config, libreoffice, evolution, llvm and chromium
+        "kvm" # Everything which builds inside a vm, like NixOS tests
+        "nixos-test" # Machine can run NixOS tests
+      ];
+    }
+  ];
+
   # Enable the OpenSSH daemon. Needed for ssh host keys used by sops.
   services.openssh = {
     enable = true;
