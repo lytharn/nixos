@@ -140,7 +140,7 @@
       marksman # Language server for Markdown
       mold
       nil # Language server for Nix
-      nixfmt-rfc-style
+      nixfmt
       prismlauncher
       ripgrep
       rust-analyzer

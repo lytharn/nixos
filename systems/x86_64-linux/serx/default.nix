@@ -67,7 +67,7 @@
     fd
     lua-language-server
     nil # Language server for Nix
-    nixfmt-rfc-style
+    nixfmt
     ripgrep
   ];
 

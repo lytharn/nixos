@@ -115,6 +115,19 @@
     };
   };
 
+  services.hyprpaper = {
+    enable = true;
+    settings = {
+      ipc = true; # Enables: hyprctl hyprpaper wallpaper '[mon], [path], [fit_mode]'
+      splash = false;
+      wallpaper = {
+        monitor = "";
+        path = "/home/lytharn/Dropbox/wallpapers/road-scenery.jpg";
+        fit_mode = "cover";
+      };
+    };
+  };
+
   programs.waybar = {
     enable = true;
     settings = {
@@ -177,13 +190,6 @@
       ignore-empty-password = true;
     };
   };
-
-  xdg.configFile."hypr/hyprpaper.conf".text = ''
-    preload = /home/lytharn/Dropbox/wallpapers/road-scenery.jpg
-
-    #set the default wallpaper(s) seen on inital workspace(s) --depending on the number of monitors used
-    wallpaper = ,/home/lytharn/Dropbox/wallpapers/road-scenery.jpg
-  '';
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage
