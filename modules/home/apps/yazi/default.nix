@@ -16,6 +16,7 @@ in
   config = lib.mkIf cfg.enable {
     programs.yazi = {
       enable = true;
+      shellWrapperName = "y";
       settings = {
         preview = {
           max_height = 1000;
