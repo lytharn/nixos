@@ -90,6 +90,18 @@
   sops.defaultSopsFile = inputs.self + /secrets/serx/secrets.yaml;
   sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
+  # Enable this machine to be a remote builder
+  users.users.remotebuilder = {
+    isSystemUser = true;
+    group = "remotebuilder";
+    useDefaultShell = true;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAING+bnzNyg29Bo/5XFg/BW0Jauh6/rETiHrRhCMfuxe3 root@quex"
+    ];
+  };
+  users.groups.remotebuilder = { };
+  nix.settings.trusted-users = [ "remotebuilder" ];
+
   # Automatically delete older generations and garbage collect
   nix = {
     gc = {
