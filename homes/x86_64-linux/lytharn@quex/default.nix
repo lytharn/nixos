@@ -28,6 +28,7 @@
     starship.enable = true;
     tmux.enable = true;
     yazi.enable = true;
+    zed.enable = true;
   };
 
   # Desktop environment configuration
