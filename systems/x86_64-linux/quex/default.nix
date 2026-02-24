@@ -165,7 +165,6 @@
     rustfmt
     sops
     spotify
-    swayidle
     tombi # Language server for TOML
     vlc
     wayshot
