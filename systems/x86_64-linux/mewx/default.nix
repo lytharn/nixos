@@ -139,7 +139,7 @@
       lua-language-server
       marksman # Language server for Markdown
       mold
-      nil # Language server for Nix
+      nixd # Language server for Nix
       nixfmt
       prismlauncher
       ripgrep

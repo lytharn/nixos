@@ -152,7 +152,7 @@
     marksman # Language server for Markdown
     mediawriter # USB flasher
     mold
-    nil # Language server for Nix
+    nixd # Language server for Nix
     nixfmt
     (ollama.override { acceleration = "rocm"; })
     playerctl # For controlling playback

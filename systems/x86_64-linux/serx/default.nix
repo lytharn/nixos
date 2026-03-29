@@ -66,7 +66,7 @@
   environment.systemPackages = with pkgs; [
     fd
     lua-language-server
-    nil # Language server for Nix
+    nixd # Language server for Nix
     nixfmt
     ripgrep
   ];
