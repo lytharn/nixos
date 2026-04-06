@@ -21,6 +21,7 @@ in
       };
       git = {
         enable = true;
+        signing.format = null; # Default in 25.05
         settings = {
           alias = {
             co = "checkout";
