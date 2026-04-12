@@ -37,19 +37,21 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        TimeoutStartSec = 60;
+        ExecStartPre = "${pkgs.bash}/bin/bash -c 'until ${lib.getExe pkgs.tailscale} status > /dev/null 2>&1; do sleep 2; done'";
         ExecStart = ''
-          ${pkgs.tailscale}/bin/tailscale serve \
+          ${lib.getExe pkgs.tailscale} serve \
             --service=svc:actual \
             --https=443 \
             --yes \
-            http://localhost:${toString internalPort} 
+            http://localhost:${toString internalPort}
         '';
         # drain, stops it from accepting new incoming connections
         #   while letting existing connections to close gracefully.
         # clear, removes all endpoint mappings for a service.
         ExecStop = ''
-          ${pkgs.tailscale}/bin/tailscale serve drain svc:actual
-          ${pkgs.tailscale}/bin/tailscale serve clear svc:actual
+          ${lib.getExe pkgs.tailscale} serve drain svc:actual
+          ${lib.getExe pkgs.tailscale} serve clear svc:actual
         '';
       };
     };
