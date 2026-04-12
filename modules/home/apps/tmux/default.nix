@@ -22,7 +22,7 @@ in
       historyLimit = 100000;
       prefix = "C-a";
       sensibleOnTop = true;
-      shell = "${pkgs.fish}/bin/fish";
+      shell = "${lib.getExe pkgs.fish}";
       terminal = "tmux-256color";
       plugins = with pkgs; [ tmuxPlugins.pain-control ];
       extraConfig = builtins.readFile ./tmux.conf;

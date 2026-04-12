@@ -38,7 +38,7 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         TimeoutStartSec = 60;
-        ExecStartPre = "${pkgs.bash}/bin/bash -c 'until ${lib.getExe pkgs.tailscale} status > /dev/null 2>&1; do sleep 2; done'";
+        ExecStartPre = "${lib.getExe pkgs.bash} -c 'until ${lib.getExe pkgs.tailscale} status > /dev/null 2>&1; do sleep 2; done'";
         ExecStart = ''
           ${lib.getExe pkgs.tailscale} serve \
             --service=svc:actual \
