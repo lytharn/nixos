@@ -15,6 +15,7 @@
   # Enable internal modules
   slask.apps = {
     bat.enable = true;
+    claude.enable = true;
     direnv.enable = true;
     eza.enable = true;
     git.enable = true;
