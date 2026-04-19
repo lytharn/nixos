@@ -134,11 +134,11 @@
     firefox
     gcc
     hyprpaper
+    impression # USB flasher
     keepassxc
     lldb # For rust/c/c++ debugging
     lua-language-server
     marksman # Language server for Markdown
-    mediawriter # USB flasher
     mold
     nixd # Language server for Nix
     nixfmt
