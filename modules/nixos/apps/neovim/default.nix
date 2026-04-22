@@ -14,6 +14,9 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    environment.systemPackages = with pkgs; [
+      luajitPackages.tree-sitter-cli # To compile tree-sitter parsers
+    ];
     programs.neovim = {
       enable = true;
       defaultEditor = true;
