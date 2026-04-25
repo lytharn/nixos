@@ -119,6 +119,7 @@
       cargo
       clang # For building parsers for treesitter
       clippy
+      fd
       gcc
       keepassxc
       lldb # For rust/c/c++ debugging
