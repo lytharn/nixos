@@ -97,6 +97,7 @@
     useDefaultShell = true;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAING+bnzNyg29Bo/5XFg/BW0Jauh6/rETiHrRhCMfuxe3 root@quex"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXV4yBwwih/nXTrFAszLDoR4yRET2ZJ+LJpc6YyDu/W root@mewx"
     ];
   };
   users.groups.remotebuilder = { };
