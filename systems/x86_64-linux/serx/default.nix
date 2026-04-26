@@ -28,6 +28,21 @@
   networking.hostName = "serx";
   networking.networkmanager.enable = true;
 
+  # Make zeroconf devices discoverable, e.g. Chromecast
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    publish = {
+      enable = true;
+      userServices = true;
+    };
+  };
+
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
+
   time.timeZone = "Europe/Stockholm";
 
   # Select internationalisation properties.
@@ -72,11 +87,38 @@
     ripgrep
   ];
 
+  # Required for OTBR to forward packets between Thread (wpan0) and backbone (enp86s0)
+  boot.kernel.sysctl = {
+    "net.ipv6.conf.all.forwarding" = 1;
+    "net.ipv6.conf.default.forwarding" = 1;
+    "net.ipv4.ip_forward" = 1;
+  };
+
+  # OpenThread Border Router — exposes ZBT-2 as a Thread border router for HA
+  services.dbus.packages = [ pkgs.openthread-border-router ];
+
+  systemd.services.otbr-agent = {
+    description = "OpenThread Border Router Agent";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    before = [ "home-assistant.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.openthread-border-router}/bin/otbr-agent -I wpan0 -B enp86s0 spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=460800";
+      Restart = "on-failure";
+      RestartSec = 5;
+      SupplementaryGroups = "dialout";
+      AmbientCapabilities = "CAP_NET_ADMIN CAP_NET_RAW CAP_SYS_ADMIN";
+      CapabilityBoundingSet = "CAP_NET_ADMIN CAP_NET_RAW CAP_SYS_ADMIN";
+    };
+  };
+
   # Enable internal modules
   slask = {
     apps.fish.enable = true;
     apps.neovim.enable = true;
     services.actual.enable = true;
+    services.home-assistant.enable = true;
     services.minecraft.enable = true;
     services.tailscale.enable = true;
   };
