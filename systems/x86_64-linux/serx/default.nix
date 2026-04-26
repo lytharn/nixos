@@ -65,6 +65,7 @@
 
   environment.systemPackages = with pkgs; [
     fd
+    gcc
     lua-language-server
     nixd # Language server for Nix
     nixfmt
