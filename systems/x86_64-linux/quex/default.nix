@@ -170,6 +170,8 @@
 
   # Enable distributed builds on serx
   nix.distributedBuilds = true;
+  programs.ssh.knownHosts."serx".publicKey =
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHA94CzkE/GsVvqsPkUyFCwuA+MXQXSBposOrq4HxSHB";
   nix.buildMachines = [
     {
       hostName = "serx";
