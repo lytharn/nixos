@@ -120,6 +120,7 @@
     services.actual.enable = true;
     services.home-assistant.enable = true;
     services.minecraft.enable = true;
+    services.nextcloud.enable = true;
     services.tailscale.enable = true;
   };
 
