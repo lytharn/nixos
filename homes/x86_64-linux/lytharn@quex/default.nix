@@ -35,6 +35,7 @@
   # Desktop environment configuration
   wayland.windowManager.hyprland = {
     enable = true;
+    configType = "hyprlang"; # Todo change to lua config
     settings = {
       exec-once = [
         "waybar"
