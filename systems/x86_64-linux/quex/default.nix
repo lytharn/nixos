@@ -97,9 +97,6 @@
   # Enable Vulkan support for 32-bit applications such as Wine
   hardware.graphics.enable32Bit = true;
 
-  # Enable ROCm
-  hardware.graphics.extraPackages = with pkgs; [ rocmPackages.clr.icd ];
-
   fonts.packages = with pkgs; [
     nerd-fonts.hack
   ];
@@ -118,9 +115,6 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-
-  # Use packages with ROCm support
-  nixpkgs.config.rocmSupport = true;
 
   # List packages installed in system profile. To search, run:
   # $ nix search nixpkgs wget
@@ -142,7 +136,6 @@
     mold
     nixd # Language server for Nix
     nixfmt
-    (ollama.override { acceleration = "rocm"; })
     playerctl # For controlling playback
     polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
     prismlauncher
