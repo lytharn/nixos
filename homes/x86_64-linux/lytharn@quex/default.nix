@@ -18,6 +18,7 @@
   # Enable internal modules
   slask.apps = {
     alacritty.enable = true;
+    nextcloud-client.enable = true;
     bat.enable = true;
     claude.enable = true;
     direnv.enable = true;
