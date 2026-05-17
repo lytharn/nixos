@@ -119,13 +119,11 @@ in
             --yes \
             http://localhost:${toString internalPort}
         '';
-        # drain, stops it from accepting new incoming connections
-        #   while letting existing connections to close gracefully.
-        # clear, removes all endpoint mappings for a service.
-        ExecStop = ''
-          ${lib.getExe pkgs.tailscale} serve drain svc:hass
-          ${lib.getExe pkgs.tailscale} serve clear svc:hass
-        '';
+        # drain stops accepting new incoming connections while letting existing ones close
+        # gracefully. We deliberately do NOT `clear` — that unregisters the service from the
+        # tailnet control plane, which also drops its admin approval and requires re-approval
+        # in the admin panel on the next start.
+        ExecStop = "${lib.getExe pkgs.tailscale} serve drain svc:hass";
       };
     };
   };
