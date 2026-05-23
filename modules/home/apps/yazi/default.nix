@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  pkgs,
   namespace,
   ...
 }:
@@ -18,9 +17,18 @@ in
       enable = true;
       shellWrapperName = "y";
       settings = {
+        mgr = {
+          ratio = [
+            # Layout width for:
+            1 # parent
+            1 # current
+            3 # preview
+          ];
+        };
         preview = {
-          max_height = 1000;
-          max_width = 1000;
+          max_height = 2500;
+          max_width = 2500;
+          image_filter = "lanczos3";
         };
       };
     };
