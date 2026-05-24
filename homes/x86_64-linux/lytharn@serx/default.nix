@@ -1,8 +1,4 @@
 {
-  config,
-  pkgs,
-  lib,
-  namespace, # Waiting for https://github.com/snowfallorg/lib/pull/147
   ...
 }:
 
