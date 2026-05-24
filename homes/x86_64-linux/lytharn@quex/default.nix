@@ -122,7 +122,7 @@
       splash = false;
       wallpaper = {
         monitor = "";
-        path = "/home/lytharn/Dropbox/wallpapers/road-scenery.jpg";
+        path = "/home/lytharn/Nextcloud/wallpapers/road-scenery.jpg";
         fit_mode = "cover";
       };
     };
@@ -181,12 +181,10 @@
 
   services.udiskie.enable = true; # Auto mount removable disks
 
-  services.dropbox.enable = true;
-
   programs.swaylock = {
     enable = true;
     settings = {
-      image = "/home/lytharn/Dropbox/wallpapers/astronaut-landscape-sci-fi-city.jpg";
+      image = "/home/lytharn/Nextcloud/wallpapers/astronaut-landscape-sci-fi-city.jpg";
       ignore-empty-password = true;
     };
   };
