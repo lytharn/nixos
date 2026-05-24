@@ -15,6 +15,12 @@ in
   config = lib.mkIf cfg.enable {
     programs.claude-code = {
       enable = true;
+      settings = {
+        attribution = {
+          commit = "";
+          pr = "";
+        };
+      };
     };
   };
 }
