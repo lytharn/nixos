@@ -33,14 +33,14 @@ No manual import is needed — Snowfall picks it up from the path.
 
 ## Common commands
 
-Build/switch a host (run on that host):
+Build/switch the current host (preferred — `nixos-rebuild` picks the flake attribute matching the local hostname):
 ```bash
-sudo nixos-rebuild switch --flake .#<host>
+sudo nixos-rebuild switch --flake .
 ```
 
-Build a host remotely from another machine (e.g. building `serx` from `quex`):
+Only pass `.#<host>` when targeting a different host than the one you're on, e.g. building `serx` from `quex`:
 ```bash
-nixos-rebuild switch --flake .#<host> --target-host <user>@<host> --use-remote-sudo
+nixos-rebuild switch --flake .#serx --target-host <user>@serx --use-remote-sudo
 ```
 
 Format all Nix files (formatter is `nixfmt-tree`, declared in `flake.nix`):
