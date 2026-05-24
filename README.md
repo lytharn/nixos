@@ -2,6 +2,13 @@
 It's a flake based configuration using [Snowfall Lib](https://github.com/snowfallorg/lib) as bases for the structure,
 [disko](https://github.com/nix-community/disko) for disk partitioning and [Home Manager](https://github.com/nix-community/home-manager) for managing a user environments.
 
+See [CLAUDE.md](./CLAUDE.md) for how the flake is organized (Snowfall layout, namespace, module convention).
+
+## Hosts
+- `mewx` — Laptop
+- `quex` — Desktop
+- `serx` — Headless server
+
 ## Installation
 
 ### On target machine
@@ -11,11 +18,14 @@ passwd
 ```
 
 ### On source machine
-Replace \<system> and \<ip> and run command:
+Replace \<system> (host name, e.g. `serx`) and \<ip> and run command:
 ```bash
-nix run github:nix-community/nixos-anywhere -- --generate-hardware-config nixos-generate-config ./systems/x86_64-linux/<system>/hardware-configuration.nix --flake .#<system> --target-host nixos@<ip>
+nix run github:nix-community/nixos-anywhere -- \
+  --generate-hardware-config nixos-generate-config ./systems/x86_64-linux/<system>/hardware-configuration.nix \
+  --flake .#<system> \
+  --target-host nixos@<ip>
 ```
-Type the password set on the target machine and wait for the installation to finish
+This wipes the target's disks (disko-driven) and writes the generated hardware config into the repo in place — commit it afterwards. Type the password set on the target machine and wait for the installation to finish.
 
 
 ## Secret management
@@ -39,9 +49,9 @@ sops updatekeys secrets/example.yaml
 ```
 
 ### Add a machine that can use secret
-The machine needs to have SSH host keys, so OpenSSH needs to be enabled.
+Machines use their SSH host key as the age key via `sops.age.sshKeyPaths` (set in each host's config), so no key file needs to be provisioned on the machine — OpenSSH just needs to be enabled. Only the *public* age key has to be derived and added to `.sops.yaml`.
 
-Replace \<ip> and generate public age key for machine:
+Replace \<ip> and derive the machine's public age key:
 ```bash
 ssh-keyscan <ip> | nix run nixpkgs#ssh-to-age
 ```
@@ -52,11 +62,8 @@ Update the keys for all secrets that are used by the new machine:
 sops updatekeys secrets/example.yaml
 ```
 
-*NOTE*: there is a nix option to add SSH host keys as age keys using `sops.age.sshKeyPaths`.
-So no need to generate keys manually for sops to function.
-
 ### Create new secret
-Create a new secret and edit with $EDITOR:
+First add a matching `creation_rules` entry in `.sops.yaml` (path regex + age keys allowed to decrypt) — otherwise sops won't know how to encrypt the new file. Then create and edit with $EDITOR:
 ```bash
 sops secrets/example.yaml
 ```
