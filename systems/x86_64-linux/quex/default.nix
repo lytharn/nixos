@@ -62,6 +62,13 @@
   # PAM must be configured to enable swaylock to perform authentication.
   security.pam.services.swaylock = { };
 
+  # Secret service for storing app credentials (e.g. Nextcloud client).
+  # Unlocked automatically on login via PAM.
+  services.gnome.gnome-keyring.enable = true;
+  security.pam.services.greetd.enableGnomeKeyring = true;
+  # Keep keyring password in sync when changing the login password via `passwd`.
+  security.pam.services.passwd.enableGnomeKeyring = true;
+
   # xdg-desktop-portal works by exposing a series of D-Bus interfaces
   # known as portals under a well-known name
   # (org.freedesktop.portal.Desktop) and object path
