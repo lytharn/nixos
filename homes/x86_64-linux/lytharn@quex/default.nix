@@ -18,7 +18,6 @@
   # Enable internal modules
   slask.apps = {
     alacritty.enable = true;
-    nextcloud-client.enable = true;
     bat.enable = true;
     claude.enable = true;
     direnv.enable = true;
@@ -27,6 +26,7 @@
     helix.enable = true;
     kitty.enable = true;
     mangohud.enable = true;
+    nextcloud-client.enable = true;
     starship.enable = true;
     tmux.enable = true;
     yazi.enable = true;

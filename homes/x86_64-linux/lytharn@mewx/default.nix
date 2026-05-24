@@ -26,6 +26,7 @@
     helix.enable = true;
     kitty.enable = true;
     mangohud.enable = true;
+    nextcloud-client.enable = true;
     starship.enable = true;
     tmux.enable = true;
     yazi.enable = true;
