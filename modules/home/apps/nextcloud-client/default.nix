@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   config,
   namespace,
   ...
@@ -17,5 +18,6 @@ in
       enable = true;
       startInBackground = true;
     };
+    home.packages = [ pkgs.nextcloud-client ];
   };
 }
