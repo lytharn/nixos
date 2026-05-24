@@ -30,8 +30,6 @@
     yazi.enable = true;
   };
 
-  services.dropbox.enable = true;
-
   # Set keyboard layouts
   dconf.settings = {
     "org/gnome/desktop/input-sources" = {
