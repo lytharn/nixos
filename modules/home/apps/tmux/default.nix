@@ -27,7 +27,10 @@ in
       sensibleOnTop = true;
       shell = "${lib.getExe pkgs.fish}";
       terminal = "tmux-256color";
-      plugins = with pkgs; [ tmuxPlugins.pain-control ];
+      plugins = with pkgs; [
+        tmuxPlugins.pain-control
+        tmuxPlugins.vim-tmux-navigator
+      ];
       extraConfig = builtins.readFile ./tmux.conf;
     };
   };
