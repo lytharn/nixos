@@ -14,9 +14,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # wl-copy is invoked transparently by Alacritty when tmux emits an OSC 52
-    # sequence (via `copy-pipe-and-cancel`), so make the dependency explicit.
-    home.packages = [ pkgs.wl-clipboard ];
+    # Runtime dependencies of tmux plugins / bindings:
+    # - wl-clipboard: Alacritty calls wl-copy when tmux emits an OSC 52
+    #   sequence via `copy-pipe-and-cancel`.
+    # - fzf, python3: required by the extrakto plugin.
+    home.packages = with pkgs; [
+      wl-clipboard
+      fzf
+      python3
+    ];
 
     programs.tmux = {
       enable = true;
@@ -32,6 +38,7 @@ in
         tmuxPlugins.vim-tmux-navigator
         tmuxPlugins.resurrect
         tmuxPlugins.continuum
+        tmuxPlugins.extrakto
       ];
       extraConfig = builtins.readFile ./tmux.conf;
     };
