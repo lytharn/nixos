@@ -57,6 +57,10 @@ in
         # Hint-label tokens visible on screen: <prefix>+Space activates.
         # lowercase hint copies; UPPERCASE (shift) hint copies + pastes.
         tmuxPlugins.tmux-thumbs
+
+        # Easymotion-style cursor jump in copy mode (enter with <prefix>+[ ):
+        # <prefix>+j, then one char, then the hint label to move cursor there.
+        tmuxPlugins.jump
       ];
       extraConfig = builtins.readFile ./tmux.conf;
     };
