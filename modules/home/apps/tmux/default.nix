@@ -39,6 +39,7 @@ in
         tmuxPlugins.resurrect
         tmuxPlugins.continuum
         tmuxPlugins.extrakto
+        tmuxPlugins.tmux-thumbs
       ];
       extraConfig = builtins.readFile ./tmux.conf;
     };
