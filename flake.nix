@@ -14,6 +14,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # No `follows = "nixpkgs"` here on purpose: nix-minecraft publishes a
+    # binary cache (nix-community Cachix) keyed against its own pinned
+    # nixpkgs. Overriding it would invalidate those cache hits and force
+    # local rebuilds of JREs and server bundles.
     nix-minecraft.url = "github:Infinidoge/nix-minecraft";
 
     disko = {
