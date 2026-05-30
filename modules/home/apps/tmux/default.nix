@@ -34,11 +34,28 @@ in
       shell = "${lib.getExe pkgs.fish}";
       terminal = "tmux-256color";
       plugins = with pkgs; [
+        # Pane management: <prefix>+|/- splits, <prefix>+h/j/k/l navigate,
+        # <prefix>+H/J/K/L resize.
         tmuxPlugins.pain-control
+
+        # Seamless nvim<->tmux pane navigation: Ctrl+h/j/k/l (no prefix).
         tmuxPlugins.vim-tmux-navigator
+
+        # Manual session save/restore:
+        # <prefix>+Ctrl+s save, <prefix>+Ctrl+r restore.
         tmuxPlugins.resurrect
+
+        # Auto-saves resurrect state every 15 min and auto-restores on tmux
+        # start. No user bindings.
         tmuxPlugins.continuum
+
+        # Fuzzy extract tokens from scrollback:
+        # <prefix>+Tab all, <prefix>+Ctrl+f paths, <prefix>+Ctrl+u URLs.
+        # In picker: Enter copies, Ctrl+Y inserts at cursor, Ctrl+O opens.
         tmuxPlugins.extrakto
+
+        # Hint-label tokens visible on screen: <prefix>+Space activates.
+        # lowercase hint copies; UPPERCASE (shift) hint copies + pastes.
         tmuxPlugins.tmux-thumbs
       ];
       extraConfig = builtins.readFile ./tmux.conf;
