@@ -34,6 +34,15 @@ in
           family = "Hack Nerd Font";
           style = "Regular";
         };
+        # Send ESC + CR on Shift+Enter so TUI prompts can
+        # distinguish it from a plain Enter and insert a newline.
+        keyboard.bindings = [
+          {
+            key = "Return";
+            mods = "Shift";
+            chars = "\\u001B\\u000D";
+          }
+        ];
       };
     };
   };
