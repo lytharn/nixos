@@ -20,6 +20,7 @@
     claude.enable = true;
     direnv.enable = true;
     eza.enable = true;
+    fzf.enable = true;
     git.enable = true;
     helix.enable = true;
     kitty.enable = true;
