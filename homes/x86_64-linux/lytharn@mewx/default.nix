@@ -29,6 +29,7 @@
     starship.enable = true;
     tmux.enable = true;
     yazi.enable = true;
+    zoxide.enable = true;
   };
 
   # Set keyboard layouts
