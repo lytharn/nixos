@@ -29,6 +29,7 @@
     tmux.enable = true;
     yazi.enable = true;
     zed.enable = true;
+    zoxide.enable = true;
   };
 
   # Desktop environment configuration

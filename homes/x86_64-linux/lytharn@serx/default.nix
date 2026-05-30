@@ -19,6 +19,7 @@
     helix.enable = true;
     starship.enable = true;
     tmux.enable = true;
+    zoxide.enable = true;
   };
 
   home.stateVersion = "25.05"; # DO NOT TOUCH
