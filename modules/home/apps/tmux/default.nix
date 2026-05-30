@@ -14,12 +14,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # wl-copy is invoked transparently by Alacritty when tmux emits an OSC 52
+    # sequence (via `copy-pipe-and-cancel`), so make the dependency explicit.
+    home.packages = [ pkgs.wl-clipboard ];
+
     programs.tmux = {
       enable = true;
-      aggressiveResize = true;
       clock24 = true;
-      escapeTime = 0;
       historyLimit = 100000;
+      mouse = true;
       prefix = "C-a";
       sensibleOnTop = true;
       shell = "${lib.getExe pkgs.fish}";
