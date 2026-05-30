@@ -30,6 +30,8 @@ in
       plugins = with pkgs; [
         tmuxPlugins.pain-control
         tmuxPlugins.vim-tmux-navigator
+        tmuxPlugins.resurrect
+        tmuxPlugins.continuum
       ];
       extraConfig = builtins.readFile ./tmux.conf;
     };
