@@ -65,8 +65,33 @@ in
         # Open the selected text in copy mode:
         # o = xdg-open (file/URL), Ctrl-o = $EDITOR, Shift-s = web search.
         tmuxPlugins.open
+
+        # Discoverable action menu: <prefix>+? opens a popup whose contents
+        # are defined in which-key.yaml. XDG mode points the plugin at
+        # ~/.config/tmux/plugins/tmux-which-key/config.yaml (deployed below).
+        {
+          plugin = tmuxPlugins.tmux-which-key;
+          extraConfig = "set -g @tmux-which-key-xdg-enable 1";
+        }
       ];
       extraConfig = builtins.readFile ./tmux.conf;
     };
+
+    xdg.configFile."tmux/plugins/tmux-which-key/config.yaml".source = ./which-key.yaml;
+
+    # tmux-which-key's plugin.sh.tmux does `cp init.example.tmux init.tmux`
+    # on first run, which inherits the source's read-only mode (the example
+    # lives in the read-only nix store). The subsequent build.py write then
+    # fails silently with PermissionError, leaving the example bindings
+    # (prefix+Space) in place instead of ours from config.yaml. Pre-stage a
+    # writable empty init.tmux so the cp is skipped and build.py can succeed.
+    home.activation.tmuxWhichKeyInit = config.lib.dag.entryAfter [ "writeBoundary" ] ''
+      init_file="$HOME/.local/share/tmux/plugins/tmux-which-key/init.tmux"
+      if [ ! -w "$init_file" ]; then
+        run mkdir -m 0700 -p "$(dirname "$init_file")"
+        run rm -f "$init_file"
+        run touch "$init_file"
+      fi
+    '';
   };
 }

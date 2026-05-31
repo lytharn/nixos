@@ -1,0 +1,177 @@
+# yaml-language-server: $schema=config.schema.yaml
+#
+# tmux-which-key menu config.
+# Opened with <prefix>+? (overrides tmux's default list-keys binding,
+# which is re-exposed inside the menu under `?`).
+#
+# Plugins with their own dedicated bindings (extrakto, tmux-thumbs, jump,
+# open, resurrect) are documented in default.nix and not duplicated here.
+
+command_alias_start_index: 200
+
+keybindings:
+  prefix_table: "?"
+
+title:
+  style: align=centre,bold
+  prefix: tmux
+  prefix_style: fg=green,align=centre,bold
+
+position:
+  x: R
+  y: P
+
+custom_variables:
+  - name: log_info
+    value: "#[fg=green,italics] [info]#[default]#[italics]"
+
+macros:
+  - name: reload-config
+    commands:
+      - source-file $HOME/.config/tmux/tmux.conf
+      - display "#{log_info} Config reloaded"
+
+items:
+  - name: Last window
+    key: tab
+    command: last-window
+  - name: Last pane
+    key: "`"
+    command: last-pane
+  - name: Copy mode
+    key: c
+    command: copy-mode
+  - separator: true
+
+  - name: +Windows
+    key: w
+    menu:
+      - name: Choose
+        key: w
+        command: choose-tree -Zw
+      - name: Previous
+        key: p
+        command: previous-window
+      - name: Next
+        key: n
+        command: next-window
+      - name: New
+        key: c
+        command: "neww -c #{pane_current_path}"
+      - separator: true
+      - name: Split horizontal
+        key: "/"
+        command: "splitw -h -c #{pane_current_path}"
+      - name: Split vertical
+        key: "-"
+        command: "splitw -v -c #{pane_current_path}"
+      - separator: true
+      - name: +Move
+        key: m
+        menu:
+          # swap-window with :-1 / :+1 wraps at session boundaries, and the
+          # follow-up select-window keeps focus on the moved window.
+          - name: Left
+            key: h
+            command: 'swap-window -t :-1 \; select-window -t :-1'
+            transient: true
+          - name: Right
+            key: l
+            command: 'swap-window -t :+1 \; select-window -t :+1'
+            transient: true
+      - separator: true
+      - name: Rename
+        key: r
+        command: command-prompt -I "#W" "renamew -- \"%%\""
+      - name: Kill
+        key: X
+        command: 'confirm -p "Kill window #W? (y/n)" killw'
+
+  - name: +Panes
+    key: p
+    menu:
+      - name: Choose
+        key: p
+        command: displayp -d 0
+      - name: Zoom
+        key: z
+        command: resizep -Z
+      - separator: true
+      - name: Left
+        key: h
+        command: selectp -L
+      - name: Down
+        key: j
+        command: selectp -D
+      - name: Up
+        key: k
+        command: selectp -U
+      - name: Right
+        key: l
+        command: selectp -R
+      - separator: true
+      - name: +Resize
+        key: r
+        menu:
+          - name: Left
+            key: h
+            command: resizep -L 5
+            transient: true
+          - name: Down
+            key: j
+            command: resizep -D 5
+            transient: true
+          - name: Up
+            key: k
+            command: resizep -U 5
+            transient: true
+          - name: Right
+            key: l
+            command: resizep -R 5
+            transient: true
+      - name: Break to window
+        key: "!"
+        command: break-pane
+      - name: Kill
+        key: X
+        command: 'confirm -p "Kill pane #P? (y/n)" killp'
+
+  - name: +Sessions
+    key: s
+    menu:
+      - name: Choose
+        key: s
+        command: choose-tree -Zs
+      - name: New
+        key: N
+        command: new
+      - name: Rename
+        key: r
+        command: command-prompt -I "#S" "rename-session -- \"%%\""
+      - name: Detach
+        key: d
+        command: detach
+      - name: Kill
+        key: X
+        command: 'confirm -p "Kill session #S? (y/n)" kill-session'
+
+  - name: +Buffers
+    key: b
+    menu:
+      - name: Choose
+        key: b
+        command: choose-buffer -Z
+      - name: List
+        key: l
+        command: list-buffers
+      - name: Paste
+        key: p
+        command: paste-buffer
+
+  - separator: true
+  - name: Reload config
+    key: r
+    macro: reload-config
+  - name: List keys
+    key: "?"
+    command: list-keys -N
