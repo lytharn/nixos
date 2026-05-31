@@ -61,6 +61,10 @@ in
         # Easymotion-style cursor jump in copy mode (enter with <prefix>+[ ):
         # <prefix>+j, then one char, then the hint label to move cursor there.
         tmuxPlugins.jump
+
+        # Open the selected text in copy mode:
+        # o = xdg-open (file/URL), Ctrl-o = $EDITOR, Shift-s = web search.
+        tmuxPlugins.open
       ];
       extraConfig = builtins.readFile ./tmux.conf;
     };
