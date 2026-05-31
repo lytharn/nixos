@@ -46,43 +46,6 @@
     LC_TIME = "sv_SE.UTF-8";
   };
 
-  # Enable ReGreet display manager
-  programs.regreet = {
-    enable = true;
-    settings = {
-      GTK = {
-        application_prefer_dark_theme = true;
-      };
-    };
-  };
-
-  # This will enable extra things necessary which is not enabled in Home Manager
-  programs.hyprland.enable = true;
-
-  # PAM must be configured to enable swaylock to perform authentication.
-  security.pam.services.swaylock = { };
-
-  # Secret service for storing app credentials (e.g. Nextcloud client).
-  # Unlocked automatically on login via PAM.
-  services.gnome.gnome-keyring.enable = true;
-  security.pam.services.greetd.enableGnomeKeyring = true;
-  # Keep keyring password in sync when changing the login password via `passwd`.
-  security.pam.services.passwd.enableGnomeKeyring = true;
-
-  # xdg-desktop-portal works by exposing a series of D-Bus interfaces
-  # known as portals under a well-known name
-  # (org.freedesktop.portal.Desktop) and object path
-  # (/org/freedesktop/portal/desktop).
-  # The portal interfaces include APIs for file access, opening URIs,
-  # printing and others.
-  services.dbus.enable = true;
-  xdg.portal = {
-    enable = true;
-    wlr.enable = true;
-    # gtk portal needed to make gtk apps happy
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-  };
-
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
@@ -123,7 +86,6 @@
   # List packages installed in system profile. To search, run:
   # $ nix search nixpkgs wget
   environment.systemPackages = with pkgs; [
-    adwaita-icon-theme # Missing icons in GTK applications without a theme
     cargo
     clippy
     discord
@@ -131,7 +93,6 @@
     fd
     firefox
     gcc
-    hyprpaper
     impression # USB flasher
     keepassxc
     lldb # For rust/c/c++ debugging
@@ -141,7 +102,6 @@
     nixd # Language server for Nix
     nixfmt
     playerctl # For controlling playback
-    polkit_gnome # Athentication agent to elevate privileges by ask for password pop up
     prismlauncher
     protonup-qt
     ripgrep
@@ -152,14 +112,13 @@
     spotify
     tombi # Language server for TOML
     vlc
-    wayshot
-    wl-clipboard
     xdg-utils # For opening default programs when clicking links
   ];
 
   # Enable internal modules
   slask = {
     apps.fish.enable = true;
+    apps.hyprland.enable = true;
     apps.neovim.enable = true;
     apps.steam.enable = true;
     services.tailscale.enable = true;
