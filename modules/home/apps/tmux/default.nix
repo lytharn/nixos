@@ -17,7 +17,8 @@ in
     # Runtime dependencies of tmux plugins / bindings:
     # - wl-clipboard: Alacritty calls wl-copy when tmux emits an OSC 52
     #   sequence via `copy-pipe-and-cancel`.
-    # - fzf, python3: required by the extrakto plugin.
+    # - fzf: required by the extrakto and tmux-fzf plugins.
+    # - python3: required by the extrakto and tmux-which-key plugins.
     home.packages = with pkgs; [
       wl-clipboard
       fzf
@@ -73,6 +74,11 @@ in
           plugin = tmuxPlugins.tmux-which-key;
           extraConfig = "set -g @tmux-which-key-xdg-enable 1";
         }
+
+        # fzf-driven inspector over tmux's live state: <prefix>+F opens a
+        # category picker (session/window/pane/command/keybinding/clipboard/
+        # process), then a second fzf prompt to act on the chosen item.
+        tmuxPlugins.tmux-fzf
       ];
       extraConfig = builtins.readFile ./tmux.conf;
     };
