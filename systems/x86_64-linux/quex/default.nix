@@ -104,6 +104,7 @@
     playerctl # For controlling playback
     prismlauncher
     protonup-qt
+    ouch
     ripgrep
     rust-analyzer
     rustc
