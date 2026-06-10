@@ -62,6 +62,10 @@
         sops-nix.nixosModules.sops
       ];
 
+      homes.modules = with inputs; [
+        sops-nix.homeManagerModules.sops
+      ];
+
       outputs-builder = channels: { formatter = channels.nixpkgs.nixfmt-tree; };
     };
 }
