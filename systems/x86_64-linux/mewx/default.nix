@@ -127,6 +127,7 @@
       nixd # Language server for Nix
       nixfmt
       prismlauncher
+      ouch
       ripgrep
       rust-analyzer
       rustc
