@@ -27,7 +27,6 @@
       wallpaper = "/home/lytharn/Nextcloud/wallpapers/road-scenery.jpg";
       swaylockImage = "/home/lytharn/Nextcloud/wallpapers/astronaut-landscape-sci-fi-city.jpg";
       kbLayout = "us,se";
-      keyboardSwitchDevice = "corsair-corsair-k70-rgb-tkl-champion-series-mechanical-gaming-keyboard";
     };
     kitty.enable = true;
     mangohud.enable = true;
