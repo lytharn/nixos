@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  inputs,
   ...
 }:
 
@@ -9,6 +10,8 @@
   # paths it should manage.
   home.username = "lytharn";
   home.homeDirectory = "/home/lytharn";
+
+  sops.defaultSopsFile = inputs.self + /secrets/mewx/secrets.yaml;
 
   # Packages that should be installed to the user profile.
   home.packages = [ pkgs.htop ];
@@ -21,6 +24,7 @@
     direnv.enable = true;
     eza.enable = true;
     fzf.enable = true;
+    gh.enable = true;
     git.enable = true;
     helix.enable = true;
     kitty.enable = true;
