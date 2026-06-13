@@ -21,4 +21,5 @@ creation_rules:
     key_groups:
     - age:
       - *lytharn_mewx
+      - *lytharn_quex
       - *machine_serx
