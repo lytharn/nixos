@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  pkgs,
   namespace,
   ...
 }:
@@ -19,6 +20,16 @@ in
         attribution = {
           commit = "";
           pr = "";
+        };
+      };
+      lspServers = {
+        lua = {
+          command = lib.getExe pkgs.lua-language-server;
+          extensionToLanguage.".lua" = "lua";
+        };
+        nix = {
+          command = lib.getExe pkgs.nixd;
+          extensionToLanguage.".nix" = "nix";
         };
       };
     };
