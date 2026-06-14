@@ -32,7 +32,6 @@
       swaylockImage = "/home/lytharn/Nextcloud/wallpapers/astronaut-landscape-sci-fi-city.jpg";
       kbLayout = "us,se";
     };
-    kitty.enable = true;
     mangohud.enable = true;
     nextcloud-client.enable = true;
     starship.enable = true;
