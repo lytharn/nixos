@@ -34,7 +34,7 @@ hl.bind(mod .. " + RETURN",   hl.dsp.exec_cmd("ghostty"))
 hl.bind(mod .. " + CTRL + Q", hl.dsp.exec_cmd("wlogout"))
 hl.bind(mod .. " + D",        hl.dsp.exec_cmd("fuzzel"))
 hl.bind(mod .. " + PRINT",    hl.dsp.exec_cmd("cd @picturesDir@; wayshot"))
-hl.bind(mod .. " + N",        hl.dsp.exec_cmd("kitty yazi"))
+hl.bind(mod .. " + N",        hl.dsp.exec_cmd("ghostty -e yazi"))
 
 -- System
 hl.bind(mod .. " + F1", hl.dsp.exec_cmd("systemctl suspend"))

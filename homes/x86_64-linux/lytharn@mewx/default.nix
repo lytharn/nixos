@@ -27,7 +27,6 @@
     ghostty.enable = true;
     git.enable = true;
     helix.enable = true;
-    kitty.enable = true;
     mangohud.enable = true;
     nextcloud-client.enable = true;
     starship.enable = true;
