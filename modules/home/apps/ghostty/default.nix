@@ -30,6 +30,11 @@ in
         font-family = "Hack Nerd Font";
         font-style = "Regular";
         cursor-style-blink = false;
+
+        # Cursor trail. The shader needs animation enabled so it keeps
+        # rendering frames while the smear catches up to the cursor.
+        custom-shader = toString ./cursor_trail.glsl;
+        custom-shader-animation = true;
       };
     };
   };
