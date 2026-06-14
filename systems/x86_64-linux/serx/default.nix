@@ -143,7 +143,10 @@
     ];
   };
   users.groups.remotebuilder = { };
-  nix.settings.trusted-users = [ "remotebuilder" ];
+  nix.settings.trusted-users = [
+    "remotebuilder"
+    "lytharn"
+  ];
 
   # Automatically delete older generations and garbage collect
   nix = {
