@@ -15,7 +15,7 @@ in
 
   config = lib.mkIf cfg.enable {
     # Runtime dependencies of tmux plugins / bindings:
-    # - wl-clipboard: Alacritty calls wl-copy when tmux emits an OSC 52
+    # - wl-clipboard: the terminal calls wl-copy when tmux emits an OSC 52
     #   sequence via `copy-pipe-and-cancel`.
     # - fzf: required by the extrakto and tmux-fzf plugins.
     # - python3: required by the extrakto and tmux-which-key plugins.

@@ -18,13 +18,13 @@
 
   # Enable internal modules
   slask.apps = {
-    alacritty.enable = true;
     bat.enable = true;
     claude.enable = true;
     direnv.enable = true;
     eza.enable = true;
     fzf.enable = true;
     gh.enable = true;
+    ghostty.enable = true;
     git.enable = true;
     helix.enable = true;
     kitty.enable = true;
