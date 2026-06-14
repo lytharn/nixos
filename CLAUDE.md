@@ -40,7 +40,7 @@ sudo nixos-rebuild switch --flake .
 
 Only pass `.#<host>` when targeting a different host than the one you're on, e.g. building `serx` from `quex`:
 ```bash
-nixos-rebuild switch --flake .#serx --target-host <user>@serx --use-remote-sudo
+nixos-rebuild switch --flake .#serx --target-host lytharn@serx --elevate=sudo --ask-elevate-password
 ```
 
 Format all Nix files (formatter is `nixfmt-tree`, declared in `flake.nix`):
