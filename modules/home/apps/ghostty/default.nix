@@ -29,6 +29,7 @@ in
         window-padding-y = 10;
         font-family = "Hack Nerd Font";
         font-style = "Regular";
+        cursor-style-blink = false;
       };
     };
   };
