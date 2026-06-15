@@ -17,6 +17,7 @@ in
     programs.claude-code = {
       enable = true;
       settings = {
+        model = "opus";
         attribution = {
           commit = "";
           pr = "";
