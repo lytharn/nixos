@@ -61,52 +61,9 @@ in
       };
     };
 
-    programs.waybar = {
-      enable = true;
-      settings = {
-        mainBar = {
-          modules-left = [
-            "hyprland/workspaces"
-            "hyprland/submap"
-          ];
-          modules-center = [ "hyprland/window" ];
-          modules-right = [
-            "mpris"
-            "idle_inhibitor"
-            "hyprland/language"
-            "wireplumber"
-            "cpu"
-            "memory"
-            "clock"
-            "tray"
-          ];
-          mpris = {
-            ignored-players = [ "firefox" ];
-          };
-          idle_inhibitor = {
-            format = "{icon}";
-            format-icons = {
-              activated = "";
-              deactivated = "";
-            };
-          };
-        };
-      };
-    };
-
     programs.wlogout.enable = true;
 
     programs.fuzzel.enable = true;
-
-    services.mako = {
-      enable = true;
-      settings = {
-        background-color = "#162633FF";
-        border-radius = 5;
-        default-timeout = 2000;
-        width = 500;
-      };
-    };
 
     services.udiskie.enable = true; # Auto mount removable disks
 

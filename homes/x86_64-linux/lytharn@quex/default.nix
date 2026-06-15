@@ -36,6 +36,7 @@
     nextcloud-client.enable = true;
     starship.enable = true;
     tmux.enable = true;
+    wayle.enable = true;
     yazi.enable = true;
     zed.enable = true;
     zoxide.enable = true;
