@@ -55,6 +55,10 @@ in
 
     # This will enable extra things necessary which is not enabled in Home Manager
     programs.hyprland.enable = true;
+    # Manage the session with UWSM (Universal Wayland Session Manager).
+    # Installs the systemd user units. The uwsm-managed Hyprland session entry
+    # registers Hyprland as a UWSM compositor.
+    programs.hyprland.withUWSM = true;
 
     # PAM must be configured to enable swaylock to perform authentication.
     security.pam.services.swaylock = { };

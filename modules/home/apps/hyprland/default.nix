@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   namespace,
   ...
 }:
@@ -33,20 +32,26 @@ in
     wayland.windowManager.hyprland = {
       enable = true;
       configType = "lua";
+      # UWSM owns the session (see the NixOS hyprland module's withUWSM), so
+      # let it manage graphical-session.target instead of Home Manager's
+      # hyprland-session.target. UWSM finalizes the compositor environment.
+      systemd.enable = false;
       extraConfig =
         lib.replaceStrings
           [
             "@kbLayout@"
-            "@polkitAgent@"
             "@picturesDir@"
           ]
           [
             cfg.kbLayout
-            "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
             "${config.home.homeDirectory}/Pictures"
           ]
           (builtins.readFile ./hyprland.lua);
     };
+
+    # Autostarted as a systemd user service bound to graphical-session.target,
+    # which UWSM pulls in.
+    services.polkit-gnome.enable = true;
 
     services.hyprpaper = {
       enable = true;
