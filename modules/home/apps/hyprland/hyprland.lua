@@ -1,11 +1,5 @@
 -- Bulk of the Hyprland config. Placeholders in @at-sign@ form are substituted
--- by lib.replaceStrings in default.nix (kbLayout, polkitAgent, picturesDir).
-
-hl.on("hyprland.start", function()
-  hl.exec_cmd("waybar")
-  hl.exec_cmd("hyprpaper")
-  hl.exec_cmd("@polkitAgent@")
-end)
+-- by lib.replaceStrings in default.nix (kbLayout, picturesDir).
 
 hl.config({
   general = {
@@ -25,16 +19,16 @@ hl.config({
 local mod = "SUPER"
 
 -- Apps
-hl.bind(mod .. " + M",        hl.dsp.exec_cmd("firefox"))
-hl.bind(mod .. " + Q",        hl.dsp.window.close())
-hl.bind(mod .. " + T",        hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mod .. " + F",        hl.dsp.window.fullscreen({ action = "toggle" }))
+hl.bind(mod .. " + M", hl.dsp.exec_cmd("firefox"))
+hl.bind(mod .. " + Q", hl.dsp.window.close())
+hl.bind(mod .. " + T", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mod .. " + F", hl.dsp.window.fullscreen({ action = "toggle" }))
 hl.bind(mod .. " + CTRL + F", hl.dsp.window.fullscreen_state({ internal = 0, client = 2, action = "toggle" }))
-hl.bind(mod .. " + RETURN",   hl.dsp.exec_cmd("ghostty"))
+hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd("ghostty"))
 hl.bind(mod .. " + CTRL + Q", hl.dsp.exec_cmd("wlogout"))
-hl.bind(mod .. " + D",        hl.dsp.exec_cmd("fuzzel"))
-hl.bind(mod .. " + PRINT",    hl.dsp.exec_cmd("cd @picturesDir@; wayshot"))
-hl.bind(mod .. " + N",        hl.dsp.exec_cmd("ghostty -e yazi"))
+hl.bind(mod .. " + D", hl.dsp.exec_cmd("fuzzel"))
+hl.bind(mod .. " + PRINT", hl.dsp.exec_cmd("cd @picturesDir@; wayshot"))
+hl.bind(mod .. " + N", hl.dsp.exec_cmd("ghostty -e yazi"))
 
 -- System
 hl.bind(mod .. " + F1", hl.dsp.exec_cmd("systemctl suspend"))
@@ -84,15 +78,15 @@ hl.bind(mod .. " + SHIFT + 0", hl.dsp.window.move({ workspace = 0 }))
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
 
 -- Mouse
-hl.bind(mod .. " + mouse:272",       hl.dsp.window.drag(),   { mouse = true })
-hl.bind(mod .. " + mouse:273",       hl.dsp.window.resize(), { mouse = true })
+hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
+hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind(mod .. " + ALT + mouse:272", hl.dsp.window.resize(), { mouse = true })
 
 -- Locked binds (work even when a lockscreen / input inhibitor is active)
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),         { locked = true })
-hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),        { locked = true })
-hl.bind("XF86AudioPlay",        hl.dsp.exec_cmd("playerctl --player=spotify,%any play-pause"),       { locked = true })
-hl.bind("XF86AudioStop",        hl.dsp.exec_cmd("playerctl --player=spotify,%any stop"),             { locked = true })
-hl.bind("XF86AudioNext",        hl.dsp.exec_cmd("playerctl --player=spotify,%any next"),             { locked = true })
-hl.bind("XF86AudioPrev",        hl.dsp.exec_cmd("playerctl --player=spotify,%any previous"),         { locked = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { locked = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true })
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl --player=spotify,%any play-pause"), { locked = true })
+hl.bind("XF86AudioStop", hl.dsp.exec_cmd("playerctl --player=spotify,%any stop"), { locked = true })
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl --player=spotify,%any next"), { locked = true })
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl --player=spotify,%any previous"), { locked = true })
