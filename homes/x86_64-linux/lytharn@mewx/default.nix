@@ -1,6 +1,5 @@
 {
   pkgs,
-  lib,
   inputs,
   ...
 }:
@@ -27,29 +26,19 @@
     ghostty.enable = true;
     git.enable = true;
     helix.enable = true;
+    hyprland = {
+      enable = true;
+      wallpaper = "/home/lytharn/Nextcloud/wallpapers/road-scenery.jpg";
+      swaylockImage = "/home/lytharn/Nextcloud/wallpapers/astronaut-landscape-sci-fi-city.jpg";
+      kbLayout = "us,se";
+    };
     mangohud.enable = true;
     nextcloud-client.enable = true;
     starship.enable = true;
     tmux.enable = true;
+    wayle.enable = true;
     yazi.enable = true;
     zoxide.enable = true;
-  };
-
-  # Set keyboard layouts
-  dconf.settings = {
-    "org/gnome/desktop/input-sources" = {
-      show-all-sources = true;
-      sources = [
-        (lib.hm.gvariant.mkTuple [
-          "xkb"
-          "us"
-        ])
-        (lib.hm.gvariant.mkTuple [
-          "xkb"
-          "se"
-        ])
-      ];
-    };
   };
 
   # This value determines the Home Manager release that your

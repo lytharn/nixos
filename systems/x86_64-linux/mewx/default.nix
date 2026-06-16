@@ -1,5 +1,4 @@
 {
-  config,
   pkgs,
   inputs,
   ...
@@ -45,10 +44,6 @@
     LC_TIME = "sv_SE.UTF-8";
   };
 
-  # Enable the GNOME Desktop Environment.
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
-
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
@@ -68,9 +63,6 @@
     enable32Bit = true;
   };
 
-  # Load nvidia driver for Xorg and Wayland
-  services.xserver.videoDrivers = [ "nvidia" ];
-
   # Enable firmware updates
   #
   # USAGE:
@@ -86,18 +78,6 @@
   # To install updates:
   # $ fwupdmgr update
   services.fwupd.enable = true;
-
-  hardware.nvidia = {
-    open = false;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
-    prime = {
-      sync.enable = true;
-
-      # Make sure to use the correct Bus ID values for your system!
-      intelBusId = "PCI:0:2:0";
-      nvidiaBusId = "PCI:1:0:0";
-    };
-  };
 
   fonts.packages = with pkgs; [
     nerd-fonts.hack
@@ -137,15 +117,6 @@
     ];
   };
 
-  users.users.guest = {
-    isNormalUser = true;
-    description = "guest";
-    extraGroups = [
-      "networkmanager"
-    ];
-    packages = with pkgs; [ prismlauncher ];
-  };
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
@@ -156,19 +127,16 @@
     wl-clipboard
   ];
 
-  # A set of environment variables used in the global environment.
-  # These variables will be set by PAM early in the login process.
-  environment.sessionVariables = {
-    GSK_RENDERER = "gl"; # Fix rendering issues in gnome
-  };
-
   # Enable internal modules
   slask = {
     apps.fish.enable = true;
+    apps.hyprland.enable = true;
     apps.neovim.enable = true;
     apps.steam.enable = true;
     services.tailscale.enable = true;
   };
+
+  services.udisks2.enable = true; # Start Udisks2 DBus service so udiskie can auto mount removable disks
 
   # Enable the OpenSSH daemon. Needed for ssh host keys used by sops.
   services.openssh = {
