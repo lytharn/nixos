@@ -31,6 +31,7 @@
       wallpaper = "/home/lytharn/Nextcloud/wallpapers/road-scenery.jpg";
       swaylockImage = "/home/lytharn/Nextcloud/wallpapers/astronaut-landscape-sci-fi-city.jpg";
       kbLayout = "us,se";
+      scale = "1";
     };
     mangohud.enable = true;
     nextcloud-client.enable = true;
