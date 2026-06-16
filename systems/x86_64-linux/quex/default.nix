@@ -156,8 +156,6 @@
 
   services.flatpak.enable = true;
 
-  services.udisks2.enable = true; # Start Udisk2 DBus service to be able to auto mount removable disks
-
   # Automatically delete older generations and garbage collect
   nix = {
     gc = {

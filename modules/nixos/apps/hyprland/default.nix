@@ -63,6 +63,9 @@ in
     # PAM must be configured to enable swaylock to perform authentication.
     security.pam.services.swaylock = { };
 
+    # System daemon backing the udiskie auto-mounter enabled in the home module.
+    services.udisks2.enable = true;
+
     # Secret service for storing app credentials (e.g. Nextcloud client).
     # Unlocked automatically on login via PAM.
     services.gnome.gnome-keyring.enable = true;
