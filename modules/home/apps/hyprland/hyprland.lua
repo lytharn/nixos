@@ -1,6 +1,10 @@
 -- Bulk of the Hyprland config. Placeholders in @at-sign@ form are substituted
 -- by lib.replaceStrings in default.nix (kbLayout, picturesDir).
 
+-- Catch-all monitor rule (empty output matches every connector). @scale@ is
+-- substituted by default.nix; "auto" defers to Hyprland's DPI heuristic.
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "@scale@" })
+
 hl.config({
   general = {
     border_size = 2,

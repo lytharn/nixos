@@ -26,6 +26,16 @@ in
       default = "us";
       description = "Value for Hyprland's input.kb_layout.";
     };
+
+    scale = lib.mkOption {
+      type = lib.types.str;
+      default = "auto";
+      description = ''
+        Scale for the catch-all monitor rule. "auto" lets Hyprland pick
+        (its heuristic applies fractional scaling on high-DPI panels); set
+        an explicit value like "1" or "1.25" to override.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -41,10 +51,12 @@ in
           [
             "@kbLayout@"
             "@picturesDir@"
+            "@scale@"
           ]
           [
             cfg.kbLayout
             "${config.home.homeDirectory}/Pictures"
+            cfg.scale
           ]
           (builtins.readFile ./hyprland.lua);
     };
