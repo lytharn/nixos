@@ -31,6 +31,8 @@ Every module follows the same `mkEnableOption` pattern using the injected `names
 
 No manual import is needed — Snowfall picks it up from the path.
 
+> **Gotcha — `git add` new files before evaluating.** This is a `git+file` flake, so Nix only sees files tracked by git. A newly created file (new module, host, `shells/`, `.envrc`, etc.) is invisible to `nix build`/`eval`/`flake show`/`nixos-rebuild` until it is at least staged — symptoms are "path does not exist" or "does not provide attribute ...". Run `git add <files>` (no commit needed) before evaluating anything that should pick them up.
+
 ## Common commands
 
 Build/switch the current host (preferred — `nixos-rebuild` picks the flake attribute matching the local hostname):
