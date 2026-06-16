@@ -136,8 +136,6 @@
     services.tailscale.enable = true;
   };
 
-  services.udisks2.enable = true; # Start Udisks2 DBus service so udiskie can auto mount removable disks
-
   # Enable the OpenSSH daemon. Needed for ssh host keys used by sops.
   services.openssh = {
     enable = true;
