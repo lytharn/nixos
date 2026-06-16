@@ -24,6 +24,8 @@ in
       # Config reference for all settings keys below: https://wayle.app/config/
       # (or run `wayle config schema` / `wayle config default` locally).
       settings = {
+        bar.scale = 0.75;
+
         bar.layout = [
           {
             monitor = "*";
