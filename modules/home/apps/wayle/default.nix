@@ -21,6 +21,8 @@ in
       # but leave this on so adding e.g. wallust later just works.
       autoInstallDependencies = true;
 
+      # Config reference for all settings keys below: https://wayle.app/config/
+      # (or run `wayle config schema` / `wayle config default` locally).
       settings = {
         bar.layout = [
           {
