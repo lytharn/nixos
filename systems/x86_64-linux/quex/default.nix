@@ -49,6 +49,9 @@
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
+  # Enable SANE for scanning.
+  hardware.sane.enable = true;
+
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -77,6 +80,7 @@
       "wheel"
       "render"
       "video"
+      "scanner" # Access to SANE scanners
     ];
   };
 
@@ -109,6 +113,7 @@
     rust-analyzer
     rustc
     rustfmt
+    naps2 # GUI for scanning documents
     sops
     spotify
     tombi # Language server for TOML
