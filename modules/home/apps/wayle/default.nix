@@ -24,7 +24,7 @@ in
       # Config reference for all settings keys below: https://wayle.app/config/
       # (or run `wayle config schema` / `wayle config default` locally).
       settings = {
-        bar.scale = 0.75;
+        bar.scale = 0.7;
 
         bar.layout = [
           {
@@ -32,16 +32,19 @@ in
             show = true;
             left = [
               "hyprland-workspaces"
+              "cava"
+              "media"
             ];
             center = [
               "window-title"
             ];
             right = [
-              "media"
               "keyboard-input"
               "volume"
+              "microphone"
               "cpu"
               "ram"
+              "network"
               "weather"
               "clock"
               "systray"
@@ -51,6 +54,12 @@ in
 
         modules = {
           clock.format = "%a %b %d  %H:%M";
+
+          cpu = {
+            border-color = "green";
+            icon-bg-color = "green";
+            label-color = "green";
+          };
 
           weather = {
             location = "Linköping";
