@@ -87,7 +87,36 @@ in
 
     programs.wlogout.enable = true;
 
-    programs.fuzzel.enable = true;
+    # Application launcher
+    programs.fuzzel = {
+      enable = true;
+      settings = {
+        main = {
+          font = "Hack Nerd Font:size=12";
+          lines = 10;
+          width = 35;
+          horizontal-pad = 20;
+          vertical-pad = 12;
+        };
+        # Match Hyprland's window border geometry (border_size=2, rounding=5
+        # in hyprland.lua). Fuzzel has no gradient support.
+        border = {
+          radius = 5;
+          width = 2;
+        };
+        # Fuzzel uses RRGGBBAA hex; the background alpha gives the semi-transparent
+        # panel, "ff" is fully opaque.
+        colors = {
+          background = "${palette.bg}e6"; # ~90% opaque
+          text = "${palette.fg}ff";
+          match = "${palette.blue}ff";
+          selection = "${palette.bgHighlight}ff";
+          selection-text = "${palette.fg}ff";
+          selection-match = "${palette.blue}ff";
+          border = "${palette.blue}ff";
+        };
+      };
+    };
 
     services.udiskie.enable = true; # Auto mount removable disks
 
