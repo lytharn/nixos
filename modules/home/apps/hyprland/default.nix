@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.${namespace}.apps.hyprland;
+  palette = lib.${namespace}.palette.tokyonight;
 in
 {
   options.${namespace}.apps.hyprland = {
@@ -52,11 +53,17 @@ in
             "@kbLayout@"
             "@picturesDir@"
             "@scale@"
+            "@colRed@"
+            "@colBlue@"
+            "@colComment@"
           ]
           [
             cfg.kbLayout
             "${config.home.homeDirectory}/Pictures"
             cfg.scale
+            palette.red
+            palette.blue
+            palette.comment
           ]
           (builtins.readFile ./hyprland.lua);
     };
