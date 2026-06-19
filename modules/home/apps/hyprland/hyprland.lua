@@ -9,7 +9,8 @@ hl.config({
   general = {
     border_size = 2,
     col = {
-      active_border = { colors = { "rgba(fb3c67ff)", "rgba(1f5d8dff)" }, angle = 45 },
+      active_border = { colors = { "rgba(@colRed@ff)", "rgba(@colBlue@ff)" }, angle = 45 },
+      inactive_border = { colors = { "rgba(@colComment@ff)" } },
     },
   },
   decoration = {

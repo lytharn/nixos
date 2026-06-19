@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.${namespace}.apps.wayle;
+  palette = lib.${namespace}.palette.tokyonight;
 in
 {
   options.${namespace}.apps.wayle = {
@@ -105,22 +106,22 @@ in
           };
         };
 
-        # Tokyo Night (Night variant). Palette keys are wayle's semantic slots;
-        # theme-provider = "wayle" derives the rest of the stylesheet from these.
+        # Keys here are wayle's semantic slots; theme-provider = "wayle" derives
+        # the rest of the stylesheet from these.
         styling = {
           theme-provider = "wayle";
           rounding = "sm";
           palette = {
-            bg = "#16161e"; # bg_dark
-            surface = "#1a1b26"; # editor bg (bar background)
-            elevated = "#292e42"; # bg_highlight
-            fg = "#c0caf5";
-            fg-muted = "#565f89"; # comment
-            primary = "#7aa2f7"; # blue accent
-            red = "#f7768e";
-            yellow = "#e0af68";
-            green = "#9ece6a";
-            blue = "#7aa2f7";
+            bg = "#${palette.bgDark}";
+            surface = "#${palette.bg}"; # editor bg (bar background)
+            elevated = "#${palette.bgHighlight}";
+            fg = "#${palette.fg}";
+            fg-muted = "#${palette.comment}";
+            primary = "#${palette.blue}"; # blue accent
+            red = "#${palette.red}";
+            yellow = "#${palette.yellow}";
+            green = "#${palette.green}";
+            blue = "#${palette.blue}";
           };
         };
 
