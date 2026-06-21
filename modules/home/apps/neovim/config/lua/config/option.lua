@@ -46,3 +46,6 @@ vim.opt.scrolloff = 10
 
 -- Use rounded borders on all floating windows
 vim.opt.winborder = "rounded"
+
+-- Automatically reload file when changed on disk
+vim.opt.autoread = true
