@@ -34,6 +34,7 @@
       scale = "1";
     };
     mangohud.enable = true;
+    neovim.enable = true;
     nextcloud-client.enable = true;
     starship.enable = true;
     tmux.enable = true;
