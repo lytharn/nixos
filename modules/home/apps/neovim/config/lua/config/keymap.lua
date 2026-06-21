@@ -1,12 +1,6 @@
 -- Clear highlight search by escaping in normal mode
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 
--- Better window navigation
-vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Move to window left of current" })
-vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Move to window below" })
-vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Move to window above" })
-vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Move to window right of current" })
-
 -- Open float
 vim.keymap.set("n", "<leader>od", vim.diagnostic.open_float, { desc = "Open diagnostic" })
 
