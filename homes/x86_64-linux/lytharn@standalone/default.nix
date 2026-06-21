@@ -13,12 +13,13 @@
   # Non-NixOS host: let Home Manager integrate with a foreign distribution
   # (session variables, XDG dirs, putting installed packages on PATH).
   targets.genericLinux.enable = true;
-  # ...but this is a terminal-only home (tmux + git), so skip the GPU/OpenGL
-  # driver shim genericLinux pulls in by default (mesa, intel-media-driver).
+  # ...but this is a terminal-only home, so skip the GPU/OpenGL driver shim
+  # genericLinux pulls in by default (mesa, intel-media-driver).
   targets.genericLinux.gpu.enable = false;
 
   slask.apps = {
     git.enable = true;
+    neovim.enable = true;
     tmux.enable = true;
   };
 
