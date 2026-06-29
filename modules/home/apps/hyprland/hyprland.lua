@@ -33,6 +33,7 @@ hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd("ghostty"))
 hl.bind(mod .. " + D", hl.dsp.exec_cmd("fuzzel"))
 hl.bind(mod .. " + PRINT", hl.dsp.exec_cmd("cd @picturesDir@; wayshot"))
 hl.bind(mod .. " + N", hl.dsp.exec_cmd("ghostty -e yazi"))
+hl.bind(mod .. " + period", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- System
 hl.bind(mod .. " + F1", hl.dsp.exec_cmd("systemctl suspend"))

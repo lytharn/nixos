@@ -86,9 +86,10 @@ in
       };
     };
 
-    # Graceful logout/shutdown GUI: asks apps to exit cleanly before quitting
-    # Hyprland, then runs the optional --post-cmd (see binds in hyprland.lua).
-    home.packages = [ pkgs.hyprshutdown ];
+    home.packages = [
+      pkgs.hyprshutdown # Graceful logout with optional --post-cmd
+      pkgs.hyprpicker # Color picker
+    ];
 
     # Application launcher
     programs.fuzzel = {
