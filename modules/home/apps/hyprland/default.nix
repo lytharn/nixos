@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   namespace,
   ...
 }:
@@ -85,7 +86,9 @@ in
       };
     };
 
-    programs.wlogout.enable = true;
+    # Graceful logout/shutdown GUI: asks apps to exit cleanly before quitting
+    # Hyprland, then runs the optional --post-cmd (see binds in hyprland.lua).
+    home.packages = [ pkgs.hyprshutdown ];
 
     # Application launcher
     programs.fuzzel = {
