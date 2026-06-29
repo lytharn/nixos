@@ -18,6 +18,7 @@ in
       enable = true;
       settings = {
         model = "opus";
+        tui = "fullscreen";
         attribution = {
           commit = "";
           pr = "";
