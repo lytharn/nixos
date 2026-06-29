@@ -130,5 +130,19 @@ in
         ignore-empty-password = true;
       };
     };
+
+    # Listens for logind's lock signal (emitted by the Mod+F2 bind's
+    # `loginctl lock-session`) and runs swaylock; also locks before suspend.
+    # Runs as a systemd user service bound to graphical-session.target.
+    services.hypridle = {
+      enable = true;
+      settings = {
+        general = {
+          lock_cmd = "pidof swaylock || swaylock";
+          before_sleep_cmd = "loginctl lock-session";
+          after_sleep_cmd = "hyprctl dispatch dpms on";
+        };
+      };
+    };
   };
 }
