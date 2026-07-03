@@ -4,6 +4,7 @@ keys:
   - &lytharn_quex age1zrdn505tq2rlsflzfn4fatzzc8t7g0x372cxyj0mgwvnu6vzpsrqnyvgwx
   - &machine_quex age1fgnae7fld6xpg942yxpsa4gjsv688u5thfwjed59kd5nd5w37urszd7shj
   - &machine_serx age1c6hftmen4jkst37q3e9gq9uqr6etcwsdvllk3gdafuayxhzz7v2smrhsn2
+  - &machine_baxx age1tx0td69pf50p9r0er88c20sut650h6w4xpmr4r0lhy9atw2t8s3s0c07qy
 creation_rules:
   # This is a regex, so it could look like this
   # - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
@@ -23,3 +24,9 @@ creation_rules:
       - *lytharn_mewx
       - *lytharn_quex
       - *machine_serx
+  - path_regex: secrets/baxx/secrets.yaml$
+    key_groups:
+    - age:
+      - *lytharn_mewx
+      - *lytharn_quex
+      - *machine_baxx

@@ -119,6 +119,11 @@
     services.home-assistant.enable = true;
     services.minecraft.enable = true;
     services.nextcloud.enable = true;
+    services.restic-backup = {
+      enable = true;
+      client = "serx"; # basic-auth user + repo subdir; matches baxx's restic-server client
+      server = "baxx.gate-catla.ts.net";
+    };
     services.tailscale.enable = true;
   };
 
