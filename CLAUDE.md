@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Personal NixOS configuration flake. Three hosts (all `x86_64-linux`):
+Personal NixOS configuration flake. Four hosts (all `x86_64-linux`):
 - `mewx` — desktop with full home-manager setup
 - `quex` — Hyprland desktop; uses `serx` as a distributed Nix builder
 - `serx` — headless server hosting services (Nextcloud, Home Assistant, Actual, Minecraft) exposed via Tailscale
+- `baxx` — off-site, low-power (Intel N, 16 GB RAM, single 4 TB NVMe SSD) headless backup target for `serx`
 
 ## Structure (Snowfall Lib auto-discovery)
 
@@ -69,3 +70,8 @@ Initial install of a new host from another machine — see `README.md` for the `
 
 - **Distributed builds**: both `quex` and `mewx` are configured with `serx` as a remote builder (`nix.buildMachines` in their respective `systems/x86_64-linux/<host>/default.nix`). Building heavy derivations dispatches to `serx` over SSH as the `remotebuilder` user. The SSH host key for `serx` is pinned in each client's config, and `serx` authorizes both clients' root keys under `users.users.remotebuilder.openssh.authorizedKeys`.
 - **Tailscale-fronted services on `serx`**: Nextcloud (and other services) run plain HTTP on localhost and are exposed via `tailscale serve` (see `modules/nixos/services/nextcloud/default.nix`). When changing those services, keep in mind that TLS is terminated by Tailscale, not nginx — HSTS and `overwriteprotocol = "https"` are set explicitly to compensate.
+- **Backups from `serx` to `baxx`**: `serx` pushes a nightly restic backup over Tailscale into an **append-only** `rest-server` on `baxx` (`slask.services.restic-backup` on serx → `slask.services.restic-server` on baxx). Key points to keep in mind when touching either side:
+  - The restic repo is **client-side encrypted** (so the data is encrypted at rest on baxx — no LUKS), and `baxx`'s repo lives on a dedicated `/backup` btrfs subvolume mounted `compress=no` (restic data is already compressed/encrypted).
+  - Append-only means `serx` can add but **not delete**, so **pruning runs on `baxx`** (the `restic-prune-serx` timer) against the local repo dir, as the `restic` user.
+  - The repo encryption password (`restic-repo-pass`) is **shared** between both hosts by design — baxx needs it to prune/check. The rest-server basic-auth password lives in serx's `restic-rest-pass` (only the password — the rest URL is assembled from it via a `sops.templates` entry so the Nix store never holds the secret) and baxx's `restic-htpasswd-hash` (just the bcrypt hash — the `serx:` username is templated in from the `client` option via `sops.templates`, so the hash can't drift out of sync with the repo subdir).
+  - The backup `paths` reference resolved service options (e.g. `config.services.nextcloud.home`) rather than literals; Nextcloud's Postgres is `pg_dumpall`-ed into a staging dir during `backupPrepareCommand` (maintenance mode wraps only the dump, and the dump is removed again in `backupCleanupCommand` so it doesn't linger unencrypted).

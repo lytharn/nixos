@@ -8,6 +8,7 @@ See [CLAUDE.md](./CLAUDE.md) for how the flake is organized (Snowfall layout, na
 - `mewx` — Laptop
 - `quex` — Desktop
 - `serx` — Headless server
+- `baxx` — Backup server for `serx`
 
 ## Installation
 
@@ -26,6 +27,32 @@ nix run github:nix-community/nixos-anywhere -- \
   --target-host nixos@<ip>
 ```
 This wipes the target's disks (disko-driven) and writes the generated hardware config into the repo in place — commit it afterwards. Type the password set on the target machine and wait for the installation to finish.
+
+#### `baxx` — single-phase install with a pre-seeded host key
+
+`baxx`'s sops-backed services (Tailscale, the restic rest-server) need secrets encrypted
+to its machine age key, which is derived from its SSH host key. To avoid a boot-then-rekey
+round trip, the host key was **pre-generated** and its age key (`machine_baxx`) is already
+in `.sops.yaml`, so `secrets/baxx/secrets.yaml` is populated and ready. The matching
+private host key lives outside the repo at `~/baxx-extra/etc/ssh/` and is seeded onto the
+machine during install with `nixos-anywhere --extra-files`.
+
+Before installing, set the real value (it is a placeholder in the repo):
+```bash
+sops secrets/baxx/secrets.yaml   # replace tailscale-key with a Tailscale auth key
+```
+Then install, pre-seeding the host key so sops works on first boot:
+```bash
+nix run github:nix-community/nixos-anywhere -- \
+  --generate-hardware-config nixos-generate-config ./systems/x86_64-linux/baxx/hardware-configuration.nix \
+  --extra-files ~/baxx-extra \
+  --flake .#baxx \
+  --target-host nixos@<ip>
+```
+Afterwards: commit the generated `hardware-configuration.nix`, `nixos-rebuild switch` on
+`serx` to start pushing backups, and **delete `~/baxx-extra`** so the private host key
+doesn't linger. The restic repo password is shared between `serx` and `baxx` by design
+(baxx needs it to prune); both already hold the same value.
 
 
 ## Secret management
