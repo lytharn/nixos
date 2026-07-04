@@ -1,13 +1,16 @@
 {
+  config,
   pkgs,
-  inputs,
   ...
 }:
 
 {
+  # hardware-configuration.nix and disko.nix are auto-imported by clan
+  # (see clan-core nixosModules/machineModules/forName.nix). Only extra modules
+  # go here — e.g. the reused slask neovim module (namespace = "slask" is injected
+  # via the clan call's specialArgs in flake.nix).
   imports = [
-    ./hardware-configuration.nix
-    ./disko-config.nix
+    ../../modules/nixos/apps/neovim
   ];
 
   # Bootloader.
@@ -68,16 +71,34 @@
     ripgrep
   ];
 
-  # Enable internal modules
-  slask = {
-    apps.fish.enable = true;
-    apps.neovim.enable = true;
-    services.tailscale.enable = true;
-    services.restic-server = {
-      enable = true;
-      client = "serx"; # repo subdir + htpasswd username; must equal serx's restic-backup client
-      dataDir = "/backup"; # dedicated btrfs subvolume (compress=no)
+  # Reused slask module (proves namespace-arg module reuse under clan).
+  slask.apps.neovim.enable = true;
+
+  # fish: enabled directly rather than via slask.apps.fish, which pulls in the
+  # Snowfall-only `snowfallorg.users` home-manager integration (not available on a
+  # clan machine). Home-Manager tooling for baxx is deferred to a later phase.
+  programs.fish.enable = true;
+
+  # Tailscale, with the auth key managed by clan vars: generated/encrypted on the
+  # admin machine and deployed here. Replaces the raw-sops slask.services.tailscale.
+  services.tailscale = {
+    enable = true;
+    authKeyFile = config.clan.core.vars.generators.tailscale.files.authkey.path;
+    openFirewall = true; # direct peer-to-peer connections
+    extraSetFlags = [ "--accept-routes" ]; # discover tailscale-advertised routes/services
+  };
+
+  clan.core.vars.generators.tailscale = {
+    files.authkey = { }; # secret, deployed to the machine
+    prompts.authkey = {
+      description = "Tailscale auth key for baxx";
+      type = "hidden";
+      persist = true;
     };
+    runtimeInputs = [ pkgs.coreutils ];
+    script = ''
+      tr -d "\n" < "$prompts"/authkey > "$out"/authkey
+    '';
   };
 
   # Periodic TRIM for the NVMe SSD.
@@ -87,10 +108,6 @@
     enable = true;
     settings.PasswordAuthentication = false;
   };
-
-  # Enable sops
-  sops.defaultSopsFile = inputs.self + /secrets/baxx/secrets.yaml;
-  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   # Automatically delete older generations and garbage collect
   nix = {
