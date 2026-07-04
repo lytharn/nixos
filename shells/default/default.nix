@@ -1,6 +1,7 @@
 {
   mkShell,
   pkgs,
+  inputs,
   ...
 }:
 let
@@ -41,6 +42,9 @@ let
   );
 in
 mkShell {
+  # clan CLI, so `clan machines …` / `clan vars …` are on PATH via direnv on `cd`.
+  packages = [ inputs.clan-core.packages.${pkgs.stdenv.hostPlatform.system}.clan-cli ];
+
   # Regenerate the (gitignored) .luarc.json files on shell entry. The repo root
   # is resolved at runtime, so no checkout path is hardcoded.
   shellHook = ''

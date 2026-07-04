@@ -2,6 +2,10 @@
 It's a flake based configuration using [Snowfall Lib](https://github.com/snowfallorg/lib) as bases for the structure,
 [disko](https://github.com/nix-community/disko) for disk partitioning and [Home Manager](https://github.com/nix-community/home-manager) for managing a user environments.
 
+The fleet is migrating to [clan](https://clan.lol) for machine lifecycle and secrets, one
+host at a time (order: `baxx` → `serx` → `quex`/`mewx`). `baxx` is already on clan; the
+rest are still on the Snowfall + sops-nix flow until their turn.
+
 See [CLAUDE.md](./CLAUDE.md) for how the flake is organized (Snowfall layout, namespace, module convention).
 
 ## Hosts
@@ -28,31 +32,34 @@ nix run github:nix-community/nixos-anywhere -- \
 ```
 This wipes the target's disks (disko-driven) and writes the generated hardware config into the repo in place — commit it afterwards. Type the password set on the target machine and wait for the installation to finish.
 
-#### `baxx` — single-phase install with a pre-seeded host key
+#### `baxx` — installed and managed by [clan](https://clan.lol)
 
-`baxx`'s sops-backed services (Tailscale, the restic rest-server) need secrets encrypted
-to its machine age key, which is derived from its SSH host key. To avoid a boot-then-rekey
-round trip, the host key was **pre-generated** and its age key (`machine_baxx`) is already
-in `.sops.yaml`, so `secrets/baxx/secrets.yaml` is populated and ready. The matching
-private host key lives outside the repo at `~/baxx-extra/etc/ssh/` and is seeded onto the
-machine during install with `nixos-anywhere --extra-files`.
+`baxx` is the first host on **clan**, which the fleet is migrating to (order:
+baxx → serx → quex/mewx). During the transition the rest of the fleet stays on
+Snowfall + sops-nix + nixos-anywhere (above); only `baxx` uses the clan flow below.
+Its config lives at `machines/baxx/` and its secrets are owned by **clan vars**, not
+`secrets/baxx/` — so the nixos-anywhere and pre-seeded-host-key dance is gone. clan
+generates and deploys the SSH host key at install time, so there is nothing to seed by
+hand.
 
-Before installing, set the real value (it is a placeholder in the repo):
+The `clan` CLI is provided by the dev shell (`nix develop`, or automatically via direnv
+on `cd`).
+
+First, generate baxx's secrets. On its **first** run this creates the admin age key at
+`~/.config/sops/age/keys.txt` — the root of trust for all clan vars, so **back it up**:
 ```bash
-sops secrets/baxx/secrets.yaml   # replace tailscale-key with a Tailscale auth key
+clan vars generate baxx   # prompts for a Tailscale auth key; encrypts it into vars/
 ```
-Then install, pre-seeding the host key so sops works on first boot:
+Boot the target into the NixOS installer USB and authorize your SSH key on it, then
+generate the hardware config and install (disko partitions, deploys, installs the
+clan-generated host key):
 ```bash
-nix run github:nix-community/nixos-anywhere -- \
-  --generate-hardware-config nixos-generate-config ./systems/x86_64-linux/baxx/hardware-configuration.nix \
-  --extra-files ~/baxx-extra \
-  --flake .#baxx \
-  --target-host nixos@<ip>
+clan machines init-hardware-config baxx --target-host root@<ip>
+clan machines install baxx --target-host root@<ip>
 ```
-Afterwards: commit the generated `hardware-configuration.nix`, `nixos-rebuild switch` on
-`serx` to start pushing backups, and **delete `~/baxx-extra`** so the private host key
-doesn't linger. The restic repo password is shared between `serx` and `baxx` by design
-(baxx needs it to prune); both already hold the same value.
+No password to type and no `--extra-files` — the host key is created and placed by clan.
+The generated `machines/baxx/hardware-configuration.nix` is written into the repo in
+place; commit it afterwards.
 
 
 ## Secret management
