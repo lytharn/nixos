@@ -17,26 +17,13 @@ in
   options.${namespace}.services.restic-backup = {
     enable = lib.mkEnableOption "restic-backup";
 
-    client = lib.mkOption {
-      type = lib.types.str;
-      example = "serx";
-      description = ''
-        This host's name. Used as the rest-server basic-auth username and the repo
-        subdirectory (both appear in the repo URL), so it must equal the `client`
-        configured on the restic-server side.
-      '';
-    };
-
     server = lib.mkOption {
       type = lib.types.str;
       example = "baxx.example.ts.net";
-      description = "Hostname of the restic rest-server to push backups to.";
-    };
-
-    port = lib.mkOption {
-      type = lib.types.port;
-      default = 8000;
-      description = "TCP port the rest-server listens on.";
+      description = ''
+        Hostname of the restic rest-server backups go to. Only used to name the backup job
+        and its systemd unit (the actual target comes from `repositoryFile`).
+      '';
     };
 
     schedule = lib.mkOption {
@@ -44,17 +31,33 @@ in
       default = "01:30";
       description = "systemd OnCalendar expression for the nightly backup.";
     };
+
+    repositoryFile = lib.mkOption {
+      type = lib.types.str;
+      example = "/run/secrets/restic-rest-repo-url";
+      description = ''
+        Path to a file holding the full rest-server repo URL, including the basic-auth
+        password (`rest:http://<client>:<pass>@<server>:<port>/<client>`). Kept in a file
+        so the password never lands in the Nix store; the caller supplies it (sops template
+        or clan var).
+      '';
+    };
+
+    passwordFile = lib.mkOption {
+      type = lib.types.str;
+      example = "/run/secrets/restic-repo-pass";
+      description = "Path to the file holding the repo encryption password.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
     # Nightly push of client's service data into server's append-only REST server.
     services.restic.backups.${jobName} = {
-      # restic takes the rest-server basic-auth in the repo URL. Only the password is
-      # secret, so the URL is assembled by a sops template (below): the host/user/path
-      # are plain, and just the password comes from sops via a runtime-substituted
-      # placeholder — the Nix store never sees the password.
-      repositoryFile = config.sops.templates."restic-rest-repo-url".path;
-      passwordFile = config.sops.secrets.restic-repo-pass.path;
+      # restic takes the rest-server basic-auth in the repo URL. Both the URL (with the
+      # embedded password) and the repo password come from caller-provided files, so the
+      # Nix store never sees a secret.
+      repositoryFile = cfg.repositoryFile;
+      passwordFile = cfg.passwordFile;
       # init only creates objects, which the append-only server permits.
       initialize = true;
 
@@ -99,13 +102,5 @@ in
         Persistent = true;
       };
     };
-
-    sops.secrets.restic-repo-pass = { };
-    sops.secrets.restic-rest-pass = { };
-
-    # Render the rest-server repo URL at activation, injecting only the password from
-    # sops. config.sops.placeholder.* is a token in the Nix store, not the real value.
-    sops.templates."restic-rest-repo-url".content =
-      "rest:http://${cfg.client}:${config.sops.placeholder.restic-rest-pass}@${cfg.server}:${toString cfg.port}/${cfg.client}";
   };
 }
