@@ -1,14 +1,30 @@
 {
+  config,
   pkgs,
   inputs,
   ...
 }:
 
 {
+  # hardware-configuration.nix and disko.nix are auto-imported by clan. Unlike Snowfall,
+  # modules/nixos/* are NOT auto-discovered on a clan machine, so the ones serx uses are
+  # imported explicitly, plus the shared restic secrets generator (see clan/restic-secrets.nix).
+  # nix-minecraft's nixos module is imported here too (Snowfall adds it globally via
+  # systems.modules.nixos; clan machines don't get that), and its overlay below supplies
+  # pkgs.fabricServers used by the minecraft module.
   imports = [
-    ./hardware-configuration.nix
-    ./disko-config.nix
+    ../../modules/nixos/apps/neovim
+    ../../modules/nixos/services/actual
+    ../../modules/nixos/services/home-assistant
+    ../../modules/nixos/services/minecraft
+    ../../modules/nixos/services/nextcloud
+    ../../modules/nixos/services/restic-backup
+    ../../modules/nixos/services/tailscale
+    ../../clan/restic-secrets.nix
+    inputs.nix-minecraft.nixosModules.minecraft-servers
   ];
+
+  nixpkgs.overlays = [ inputs.nix-minecraft.overlay ];
 
   # Bootloader.
   boot = {
@@ -113,29 +129,42 @@
 
   # Enable internal modules
   slask = {
-    apps.fish.enable = true;
     apps.neovim.enable = true;
     services.actual.enable = true;
     services.home-assistant.enable = true;
     services.minecraft.enable = true;
-    services.nextcloud.enable = true;
+    services.nextcloud = {
+      enable = true;
+      adminpassFile = config.clan.core.vars.generators.nextcloud.files.adminpass.path;
+    };
     services.restic-backup = {
       enable = true;
-      client = "serx"; # basic-auth user + repo subdir; matches baxx's restic-server client
       server = "baxx.gate-catla.ts.net";
+      # Full rest URL (with the shared basic-auth password) is assembled by the
+      # restic-backup-secrets generator below; the repo password is the shared repo-pass.
+      repositoryFile = config.clan.core.vars.generators.restic-backup-secrets.files.repo-url.path;
+      passwordFile = config.clan.core.vars.generators.restic-secrets.files.repo-pass.path;
     };
-    services.tailscale.enable = true;
+    services.tailscale = {
+      enable = true;
+      sopsSecret = false; # clan host: no raw sops; the auth key comes from a clan var
+      authKeyFile = config.clan.core.vars.generators.tailscale.files.authkey.path;
+    };
   };
 
-  # Enable the OpenSSH daemon. Needed for ssh host keys used by sops.
+  # fish: enabled directly rather than via slask.apps.fish, whose Snowfall snowfallorg.users
+  # HM integration can't run on a clan machine. HM tooling for serx is deferred to a later phase.
+  programs.fish.enable = true;
+
+  # How clan reaches serx for deploys (sudo escalation, like baxx). serx keeps its existing
+  # OpenSSH host key — clan mints a separate machine age key — so the quex/mewx remote-builder
+  # pin (knownHosts."serx") and sops-over-host-key stay valid across the migration.
+  clan.core.networking.targetHost = "lytharn@serx";
+
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;
   };
-
-  # Enable sops
-  sops.defaultSopsFile = inputs.self + /secrets/serx/secrets.yaml;
-  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   # Enable this machine to be a remote builder
   users.users.remotebuilder = {
@@ -166,6 +195,43 @@
     "nix-command"
     "flakes"
   ];
+
+  # --- clan vars ---------------------------------------------------------------------------
+
+  # Tailscale auth key: only consumed on first enrolment, and serx is already enrolled with
+  # persistent state, so this is never actually used — a generated placeholder satisfies the
+  # authKeyFile requirement without prompting.
+  clan.core.vars.generators.tailscale = {
+    files.authkey = { };
+    runtimeInputs = [
+      pkgs.openssl
+      pkgs.coreutils
+    ];
+    script = ''openssl rand -base64 32 | tr -d "\n" > "$out"/authkey'';
+  };
+
+  # Nextcloud initial admin password: read only at first setup, and serx's instance already
+  # exists, so a fresh random value has no effect on the live admin account.
+  clan.core.vars.generators.nextcloud = {
+    files.adminpass.owner = "nextcloud";
+    runtimeInputs = [
+      pkgs.openssl
+      pkgs.coreutils
+    ];
+    script = ''openssl rand -base64 24 | tr -d "\n" > "$out"/adminpass'';
+  };
+
+  # serx's rest-server repo URL, assembled from the shared restic basic-auth password so the
+  # password never lands in the Nix store. Depends on the shared restic-secrets generator.
+  clan.core.vars.generators.restic-backup-secrets = {
+    dependencies = [ "restic-secrets" ];
+    files.repo-url = { };
+    runtimeInputs = [ pkgs.coreutils ];
+    script = ''
+      printf 'rest:http://serx:%s@baxx.gate-catla.ts.net:8000/serx' \
+        "$(cat "$in"/restic-secrets/rest-pass)" > "$out"/repo-url
+    '';
+  };
 
   system.stateVersion = "25.05"; # DO NOT TOUCH
 }
