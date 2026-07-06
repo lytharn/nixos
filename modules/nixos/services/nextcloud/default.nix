@@ -12,6 +12,16 @@ in
 {
   options.${namespace}.services.nextcloud = {
     enable = lib.mkEnableOption "nextcloud";
+
+    adminpassFile = lib.mkOption {
+      type = lib.types.str;
+      example = "/run/secrets/nextcloud-admin-pass";
+      description = ''
+        Path to the file with the initial admin password (read once at first setup; the
+        file must be owned by the `nextcloud` user). Supplied by the caller so this module
+        stays agnostic to the secret backend (sops or clan vars).
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -37,7 +47,7 @@ in
       phpOptions."opcache.interned_strings_buffer" = "16";
       config = {
         dbtype = "pgsql";
-        adminpassFile = config.sops.secrets.nextcloud-admin-pass.path;
+        adminpassFile = cfg.adminpassFile;
       };
       settings = {
         default_phone_region = "SE";
@@ -61,10 +71,6 @@ in
     services.nginx.virtualHosts."cloud.gate-catla.ts.net".extraConfig = ''
       add_header Strict-Transport-Security "max-age=15552000; includeSubDomains" always;
     '';
-
-    sops.secrets.nextcloud-admin-pass = {
-      owner = "nextcloud";
-    };
 
     systemd.services.tailscale-serve-cloud = {
       description = "Tailscale Serve for Nextcloud";
