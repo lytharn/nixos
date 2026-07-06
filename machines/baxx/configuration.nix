@@ -31,6 +31,11 @@
   networking.hostName = "baxx";
   networking.networkmanager.enable = true;
 
+  # How `clan ssh` / `clan machines update` reach baxx: it's off-site and only
+  # reachable over Tailscale, so target its MagicDNS name. Deploy as lytharn (not
+  # root) to match the fleet convention — clan escalates via sudo askpass.
+  clan.core.networking.targetHost = "lytharn@baxx";
+
   time.timeZone = "Europe/Stockholm";
 
   # Select internationalisation properties.
