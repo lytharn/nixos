@@ -12,6 +12,7 @@
   imports = [
     ../../modules/nixos/apps/neovim
     ../../modules/nixos/services/restic-server
+    ../../clan/restic-secrets.nix
   ];
 
   # Bootloader.
@@ -114,33 +115,25 @@
     enable = true;
     client = "serx"; # repo subdir + htpasswd username; must equal serx's restic-backup client
     dataDir = "/backup"; # dedicated btrfs subvolume (compress=no)
-    repoPasswordFile = config.clan.core.vars.generators.restic.files.repo-pass.path;
-    htpasswdFile = config.clan.core.vars.generators.restic.files.htpasswd.path;
+    repoPasswordFile = config.clan.core.vars.generators.restic-server-secrets.files.repo-pass.path;
+    htpasswdFile = config.clan.core.vars.generators.restic-server-secrets.files.htpasswd.path;
   };
 
-  # serx stays on Snowfall/sops this phase, so the shared secrets are pasted in once (they
-  # are static): repo-pass mirrors serx's restic-repo-pass verbatim; htpasswd is the bcrypt
-  # of serx's restic-rest-pass, assembled as the "serx:<hash>" line the rest-server wants.
-  clan.core.vars.generators.restic = {
+  # Derive baxx's server-side files from the shared restic-secrets generator (imported above,
+  # shared with serx): the repo password (owned by restic for the prune job) and the
+  # "serx:<bcrypt>" htpasswd line the rest-server checks. Values are identical to phase 2's
+  # per-machine generator, so the deployed content is unchanged — no repo re-encryption.
+  clan.core.vars.generators.restic-server-secrets = {
+    dependencies = [ "restic-secrets" ];
     files.repo-pass.owner = "restic"; # read by the prune job's restic user
     files.htpasswd.owner = "restic"; # read by the rest-server's restic user
-    prompts.repo-pass = {
-      description = "restic repo encryption password (serx's restic-repo-pass, verbatim)";
-      type = "hidden";
-      persist = true;
-    };
-    prompts.rest-pass = {
-      description = "restic rest-server basic-auth password (serx's restic-rest-pass)";
-      type = "hidden";
-      persist = true;
-    };
     runtimeInputs = [
       pkgs.coreutils
       pkgs.mkpasswd
     ];
     script = ''
-      tr -d "\n" < "$prompts"/repo-pass > "$out"/repo-pass
-      hash="$(tr -d "\n" < "$prompts"/rest-pass | mkpasswd -s -m bcrypt)"
+      cat "$in"/restic-secrets/repo-pass > "$out"/repo-pass
+      hash="$(mkpasswd -s -m bcrypt < "$in"/restic-secrets/rest-pass)"
       printf 'serx:%s' "$hash" > "$out"/htpasswd
     '';
   };
