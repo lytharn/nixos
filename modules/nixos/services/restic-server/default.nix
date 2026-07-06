@@ -59,6 +59,27 @@ in
       default = "Sun 03:00";
       description = "systemd OnCalendar expression for the prune/check job.";
     };
+
+    htpasswdFile = lib.mkOption {
+      type = lib.types.str;
+      example = "/run/secrets/restic-htpasswd";
+      description = ''
+        Path to the rest-server htpasswd file. Must contain a single line
+        `<client>:<bcrypt-hash>` whose username equals `client`. Supplied by the
+        caller (e.g. a sops template or a clan vars generator) so this module stays
+        agnostic to the secret backend.
+      '';
+    };
+
+    repoPasswordFile = lib.mkOption {
+      type = lib.types.str;
+      example = "/run/secrets/restic-repo-pass";
+      description = ''
+        Path to the file holding the repo encryption password, used by the local
+        prune/check job (RESTIC_PASSWORD_FILE). Must be readable by the `restic`
+        user and hold the same password the client encrypts the repo with.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -72,16 +93,7 @@ in
       privateRepos = true;
       dataDir = cfg.dataDir;
       listenAddress = toString cfg.port; # socket-activated; bare port, no interface
-      htpasswd-file = config.sops.templates."restic-htpasswd".path;
-    };
-
-    # Only the bcrypt hash is secret; the username is cfg.client, so the htpasswd line is
-    # assembled by a sops template. Deriving the username from cfg.client keeps it in sync
-    # with the repo subdir and privateRepos check (no chance of a mismatched user).
-    sops.secrets.restic-htpasswd-hash = { };
-    sops.templates."restic-htpasswd" = {
-      owner = "restic"; # read by the rest-server's "restic" system user
-      content = "${cfg.client}:${config.sops.placeholder.restic-htpasswd-hash}";
+      htpasswd-file = cfg.htpasswdFile;
     };
 
     # Only reachable over the tailnet.
@@ -92,11 +104,9 @@ in
     # (append-only only restricts the HTTP path, not local filesystem access).
     # Run as the "restic" user so repacked pack files keep the ownership the rest-server
     # expects for client's subsequent backups.
-    sops.secrets.restic-repo-pass.owner = "restic";
-
     systemd.services."restic-prune-${cfg.client}" = {
       description = "Prune and verify ${cfg.client}'s restic repository";
-      environment.RESTIC_PASSWORD_FILE = config.sops.secrets.restic-repo-pass.path;
+      environment.RESTIC_PASSWORD_FILE = cfg.repoPasswordFile;
       serviceConfig = {
         Type = "oneshot";
         User = "restic";
