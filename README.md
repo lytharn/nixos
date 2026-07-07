@@ -1,103 +1,96 @@
 # My NixOS configuration
-It's a flake based configuration using [Snowfall Lib](https://github.com/snowfallorg/lib) as bases for the structure,
-[disko](https://github.com/nix-community/disko) for disk partitioning and [Home Manager](https://github.com/nix-community/home-manager) for managing a user environments.
 
-The fleet is migrating to [clan](https://clan.lol) for machine lifecycle and secrets, one
-host at a time (order: `baxx` → `serx` → `quex`/`mewx`). `baxx` is already on clan; the
-rest are still on the Snowfall + sops-nix flow until their turn.
+A flake-based configuration managed with [clan](https://clan.lol) (machine lifecycle,
+secrets, and deployment), using [Home Manager](https://github.com/nix-community/home-manager)
+for user environments. clan bundles [disko](https://github.com/nix-community/disko) for disk
+partitioning and handles secrets as **clan vars** (encrypted with sops under the hood — there
+is no raw sops-nix / `secrets/` / `.sops.yaml` here).
 
-See [CLAUDE.md](./CLAUDE.md) for how the flake is organized (Snowfall layout, namespace, module convention).
+See [CLAUDE.md](./CLAUDE.md) for how the flake is organized (layout, namespace, module
+convention, cross-host wiring).
 
 ## Hosts
-- `mewx` — Laptop
-- `quex` — Desktop
-- `serx` — Headless server
-- `baxx` — Backup server for `serx`
+- `mewx` — Hyprland desktop
+- `quex` — Hyprland desktop
+- `serx` — headless server (Nextcloud, Home Assistant, Actual, Minecraft over Tailscale)
+- `baxx` — off-site backup target for `serx`
 
-## Installation
+Plus a standalone (non-NixOS) Home-Manager config: `home-manager switch --flake .#lytharn@standalone`.
 
-### On target machine
-Boot into NixOS installer usb and set a password with:
+## The clan CLI
+
+`clan` is provided by the dev shell — `nix develop`, or automatically via direnv on `cd`.
+
 ```bash
-passwd
+clan machines list                 # list machines
+clan machines update <host>        # deploy a remote host over SSH (lytharn@<host> + sudo)
+clan vars list <host>              # a host's vars and whether they're set
+clan vars generate <host>          # (re)generate a host's vars, prompting as needed
 ```
 
-### On source machine
-Replace \<system> (host name, e.g. `serx`) and \<ip> and run command:
+To rebuild the machine you're sitting at, plain nixos-rebuild is simpler (local, one sudo):
 ```bash
-nix run github:nix-community/nixos-anywhere -- \
-  --generate-hardware-config nixos-generate-config ./systems/x86_64-linux/<system>/hardware-configuration.nix \
-  --flake .#<system> \
-  --target-host nixos@<ip>
-```
-This wipes the target's disks (disko-driven) and writes the generated hardware config into the repo in place — commit it afterwards. Type the password set on the target machine and wait for the installation to finish.
-
-#### `baxx` — installed and managed by [clan](https://clan.lol)
-
-`baxx` is the first host on **clan**, which the fleet is migrating to (order:
-baxx → serx → quex/mewx). During the transition the rest of the fleet stays on
-Snowfall + sops-nix + nixos-anywhere (above); only `baxx` uses the clan flow below.
-Its config lives at `machines/baxx/` and its secrets are owned by **clan vars**, not
-`secrets/baxx/` — so the nixos-anywhere and pre-seeded-host-key dance is gone. clan
-generates and deploys the SSH host key at install time, so there is nothing to seed by
-hand.
-
-The `clan` CLI is provided by the dev shell (`nix develop`, or automatically via direnv
-on `cd`).
-
-First, generate baxx's secrets. On its **first** run this creates the admin age key at
-`~/.config/sops/age/keys.txt` — the root of trust for all clan vars, so **back it up**:
-```bash
-clan vars generate baxx   # prompts for a Tailscale auth key; encrypts it into vars/
-```
-Boot the target into the NixOS installer USB and authorize your SSH key on it, then
-generate the hardware config and install (disko partitions, deploys, installs the
-clan-generated host key):
-```bash
-clan machines init-hardware-config baxx --target-host root@<ip>
-clan machines install baxx --target-host root@<ip>
-```
-No password to type and no `--extra-files` — the host key is created and placed by clan.
-The generated `machines/baxx/hardware-configuration.nix` is written into the repo in
-place; commit it afterwards.
-
-
-## Secret management
-[sops-nix](https://github.com/Mic92/sops-nix) is used for secret management.
-
-### Add user that can edit secret
-Generate age private key from ssh private key
-```bash
-nix run nixpkgs#ssh-to-age -- -private-key -i ~/.ssh/id_ed25519 > ~/.config/sops/age/keys.txt
+sudo nixos-rebuild switch --flake .        # or .#<host>
 ```
 
-Generate public age key:
+## Installing a new host
+
+1. Create `machines/<host>/configuration.nix` (and `disko.nix` for a fresh disk), then
+   `git add` them so the flake sees them.
+2. Generate the host's secrets. The **first ever** `clan vars generate` creates the admin age
+   key at `~/.config/sops/age/keys.txt` — the root of trust for all vars, so **back it up**:
+   ```bash
+   clan vars generate <host>       # prompts for any interactive values
+   ```
+3. Boot the target on the NixOS installer USB, enable `sshd`, and authorize root access
+   (set a root password or drop in your key). Note its IP.
+4. Generate the hardware config (writes `machines/<host>/hardware-configuration.nix` in place):
+   ```bash
+   clan machines init-hardware-config <host> \
+     --backend nixos-generate-config \
+     --host-key-check accept-new \
+     --target-host root@<ip>
+   ```
+5. Install — partitions via disko (⚠️ wipes the disk), deploys, and installs the host's keys:
+   ```bash
+   clan machines install <host> --host-key-check accept-new --target-host root@<ip>
+   ```
+   No password prompt and no host-key pre-seeding — clan creates and places everything.
+6. Commit the generated `machines/<host>/hardware-configuration.nix`.
+
+**Adopting an already-installed machine in-place** (no wipe): create `machines/<host>/`,
+`clan vars generate <host>`, then on that machine `sudo nixos-rebuild switch --flake .#<host>`
+— sops decrypts the vars using the machine's existing SSH host key, so nothing extra is
+provisioned. (For `clan machines update <host>` over SSH instead, the host must authorize an
+ssh key for `lytharn` — each host authorizes its own.)
+
+## Secret management (clan vars)
+
+Secrets are declared as `clan.core.vars.generators.<name>` blocks in a machine's config and
+generated with `clan vars generate <host>`. Ciphertext is committed under `vars/`; the key
+registry lives under `sops/`. Each machine decrypts its own vars with its **SSH host key**
+(imported as an age key at activation) — nothing to provision beyond OpenSSH being enabled.
+
+### Admin users (who can generate/edit vars)
+
+Your admin identity is an age key at `~/.config/sops/age/keys.txt`. Register it (and any
+additional machines' keys) as a clan secrets user so clan encrypts vars to it:
+
 ```bash
-nix shell nixpkgs#age -c age-keygen -y ~/.config/sops/age/keys.txt
+clan secrets key generate                          # if you don't have one yet
+clan secrets users add lytharn <age-public-key>    # register the user
+clan secrets users add-key lytharn --age-key <another-age-public-key>   # e.g. a second machine
 ```
 
-Add the public key to .sops.yaml and to what secrets they should apply to.
-Update the keys for all secrets that are used by the new user:
-```bash
-sops updatekeys secrets/example.yaml
-```
+Derive an age public key from an SSH key with `nix run nixpkgs#ssh-to-age` (private:
+`-private-key -i ~/.ssh/id_ed25519`; from a host key: `ssh-keyscan <ip> | nix run nixpkgs#ssh-to-age`).
 
-### Add a machine that can use secret
-Machines use their SSH host key as the age key via `sops.age.sshKeyPaths` (set in each host's config), so no key file needs to be provisioned on the machine — OpenSSH just needs to be enabled. Only the *public* age key has to be derived and added to `.sops.yaml`.
+### Adding / changing a secret
 
-Replace \<ip> and derive the machine's public age key:
+Add or edit a `clan.core.vars.generators.<name>` block in the machine config, then:
 ```bash
-ssh-keyscan <ip> | nix run nixpkgs#ssh-to-age
+clan vars generate <host>          # runs new/changed generators (prompts if needed)
 ```
-
-Add the public key to .sops.yaml and to what secrets they should apply to.
-Update the keys for all secrets that are used by the new machine:
-```bash
-sops updatekeys secrets/example.yaml
-```
-
-### Create new secret
-First add a matching `creation_rules` entry in `.sops.yaml` (path regex + age keys allowed to decrypt) — otherwise sops won't know how to encrypt the new file. Then create and edit with $EDITOR:
-```bash
-sops secrets/example.yaml
-```
+Shared-across-machines secrets use `share = true` (see `clan/restic-secrets.nix`); a machine
+that consumes a shared secret differently derives per-host files from it via generator
+`dependencies` (see `machines/{serx,baxx}/configuration.nix`).
