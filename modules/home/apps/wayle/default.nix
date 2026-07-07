@@ -6,7 +6,9 @@
 }:
 let
   cfg = config.${namespace}.apps.wayle;
-  palette = lib.${namespace}.palette.tokyonight;
+  # Import the theme palette directly rather than via lib.${namespace} (a Snowfall lib
+  # extension not present under clan's home-manager eval).
+  palette = (import ../../../../lib/palette { }).palette.tokyonight;
 in
 {
   options.${namespace}.apps.wayle = {
