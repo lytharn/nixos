@@ -26,17 +26,13 @@
     let
       inherit (inputs.nixpkgs) lib;
       systems = [ "x86_64-linux" ];
-      forAllSystems =
-        f:
-        lib.genAttrs systems (
-          system:
-          f (
-            import inputs.nixpkgs {
-              inherit system;
-              config.allowUnfree = true;
-            }
-          )
-        );
+      pkgsFor =
+        system:
+        import inputs.nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
+      forAllSystems = f: lib.genAttrs systems (system: f (pkgsFor system));
 
       # clan owns the machine lifecycle. It auto-discovers machines/<name>/ and wires each
       # machine's configuration.nix / hardware-configuration.nix / disko.nix, and bundles its
@@ -57,10 +53,7 @@
       mkHome =
         homeFile:
         inputs.home-manager.lib.homeManagerConfiguration {
-          pkgs = import inputs.nixpkgs {
-            system = "x86_64-linux";
-            config.allowUnfree = true;
-          };
+          pkgs = pkgsFor "x86_64-linux";
           extraSpecialArgs = {
             namespace = "slask";
             inherit inputs;
