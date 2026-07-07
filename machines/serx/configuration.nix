@@ -6,12 +6,10 @@
 }:
 
 {
-  # hardware-configuration.nix and disko.nix are auto-imported by clan. Unlike Snowfall,
-  # modules/nixos/* are NOT auto-discovered on a clan machine, so the ones serx uses are
-  # imported explicitly, plus the shared restic secrets generator (see clan/restic-secrets.nix).
-  # nix-minecraft's nixos module is imported here too (Snowfall adds it globally via
-  # systems.modules.nixos; clan machines don't get that), and its overlay below supplies
-  # pkgs.fabricServers used by the minecraft module.
+  # clan auto-imports hardware-configuration.nix and disko.nix. Everything else is imported
+  # explicitly: the slask modules serx uses, the shared restic secrets generator (see
+  # clan/restic-secrets.nix), nix-minecraft's nixos module (its overlay below supplies
+  # pkgs.fabricServers for the minecraft module), and home-manager.
   imports = [
     ../../modules/nixos/apps/neovim
     ../../modules/nixos/services/actual
@@ -76,9 +74,9 @@
     };
   };
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.lytharn = {
     isNormalUser = true;
+    description = "lytharn";
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -152,13 +150,13 @@
     };
   };
 
-  # fish: enabled directly rather than via slask.apps.fish, whose Snowfall snowfallorg.users
-  # HM integration can't run on a clan machine. HM tooling for serx is deferred to a later phase.
+  # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
+  # (greeting, nix-shell fn) comes from the fish home module enabled in server-home.nix.
   programs.fish.enable = true;
 
-  # How clan reaches serx for deploys (sudo escalation, like baxx). serx keeps its existing
-  # OpenSSH host key — clan mints a separate machine age key — so the quex/mewx remote-builder
-  # pin (knownHosts."serx") and sops-over-host-key stay valid across the migration.
+  # How clan reaches serx for deploys (as lytharn, escalating via sudo). serx keeps its
+  # existing OpenSSH host key, so the quex/mewx remote-builder pin (knownHosts."serx") and
+  # clan's host-key-based vars decryption both keep working.
   clan.core.networking.targetHost = "lytharn@serx";
 
   services.openssh = {
@@ -233,8 +231,7 @@
     '';
   };
 
-  # Home-Manager for the shell tooling used when logged in to serx. The home app modules under
-  # modules/home/apps are imported via clan/home-modules.nix, with namespace injected.
+  # Home-Manager for the shell tooling used when logged in to serx (see clan/server-home.nix).
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
@@ -243,27 +240,10 @@
       namespace = "slask";
       inherit inputs;
     };
-    users.lytharn = {
-      imports = [ ../../clan/home-modules.nix ];
-
-      home.username = "lytharn";
-      home.homeDirectory = "/home/lytharn";
-
-      slask.apps = {
-        bat.enable = true;
-        direnv.enable = true;
-        eza.enable = true;
-        fzf.enable = true;
-        git.enable = true;
-        helix.enable = true;
-        starship.enable = true;
-        tmux.enable = true;
-        zoxide.enable = true;
-      };
-
-      home.stateVersion = "25.05"; # DO NOT TOUCH
-      programs.home-manager.enable = true;
-    };
+    users.lytharn.imports = [
+      ../../clan/home-modules.nix
+      ../../clan/server-home.nix
+    ];
   };
 
   system.stateVersion = "25.05"; # DO NOT TOUCH
