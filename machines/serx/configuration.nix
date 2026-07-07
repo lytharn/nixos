@@ -147,7 +147,6 @@
     };
     services.tailscale = {
       enable = true;
-      sopsSecret = false; # clan host: no raw sops; the auth key comes from a clan var
       authKeyFile = config.clan.core.vars.generators.tailscale.files.authkey.path;
     };
   };
