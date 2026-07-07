@@ -1,13 +1,20 @@
 {
+  config,
   pkgs,
   inputs,
   ...
 }:
 
 {
+  # hardware-configuration.nix is auto-imported by clan. modules/nixos/* are NOT
+  # auto-discovered on a clan machine (that's Snowfall), so the ones mewx uses are imported
+  # explicitly, plus home-manager for the HM user config.
   imports = [
-    # Include the results of the hardware scan.
-    ./hardware-configuration.nix
+    ../../modules/nixos/apps/hyprland
+    ../../modules/nixos/apps/neovim
+    ../../modules/nixos/apps/steam
+    ../../modules/nixos/services/tailscale
+    inputs.home-manager.nixosModules.home-manager
   ];
 
   # Bootloader.
@@ -112,7 +119,6 @@
       rust-analyzer
       rustc
       rustfmt
-      sops
       tombi # Language server for TOML
     ];
   };
@@ -129,22 +135,27 @@
 
   # Enable internal modules
   slask = {
-    apps.fish.enable = true;
     apps.hyprland.enable = true;
     apps.neovim.enable = true;
     apps.steam.enable = true;
-    services.tailscale.enable = true;
+    services.tailscale = {
+      enable = true;
+      authKeyFile = config.clan.core.vars.generators.tailscale.files.authkey.path;
+    };
   };
 
-  # Enable the OpenSSH daemon. Needed for ssh host keys used by sops.
+  # fish: system shell enabled inline (replaces slask.apps.fish's snowfallorg HM injection);
+  # the user-facing fish config now lives in the home fish module (slask.apps.fish, HM).
+  programs.fish.enable = true;
+
+  # How clan reaches mewx for deploys (sudo escalation). mewx keeps its existing OpenSSH host
+  # key, so the serx remote-builder pin (knownHosts) is unaffected.
+  clan.core.networking.targetHost = "lytharn@mewx";
+
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;
   };
-
-  # Enable sops
-  sops.defaultSopsFile = inputs.self + /secrets/mewx/secrets.yaml;
-  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   # Automatically delete older generations and garbage collect
   nix = {
@@ -178,6 +189,91 @@
     "nix-command"
     "flakes"
   ];
+
+  # Home-Manager, wired directly (clan has no native HM module). The home app modules under
+  # modules/home/apps are imported via clan/home-modules.nix (no Snowfall auto-discovery on
+  # clan), and namespace is injected so they resolve slask.apps.*.
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    backupFileExtension = "hm-bak"; # don't fail the first switch on pre-existing dotfiles
+    extraSpecialArgs = {
+      namespace = "slask";
+      inherit inputs;
+    };
+    users.lytharn = {
+      imports = [ ../../clan/home-modules.nix ];
+
+      home.username = "lytharn";
+      home.homeDirectory = "/home/lytharn";
+      home.packages = [ pkgs.htop ];
+
+      slask.apps = {
+        bat.enable = true;
+        claude.enable = true;
+        direnv.enable = true;
+        eza.enable = true;
+        fish.enable = true;
+        fzf.enable = true;
+        gh.enable = true;
+        ghostty.enable = true;
+        git.enable = true;
+        helix.enable = true;
+        hyprland = {
+          enable = true;
+          wallpaper = "/home/lytharn/Nextcloud/wallpapers/road-scenery.jpg";
+          swaylockImage = "/home/lytharn/Nextcloud/wallpapers/astronaut-landscape-sci-fi-city.jpg";
+          kbLayout = "us,se";
+          scale = "1";
+        };
+        mangohud.enable = true;
+        neovim.enable = true;
+        nextcloud-client.enable = true;
+        starship.enable = true;
+        tmux.enable = true;
+        wayle.enable = true;
+        yazi.enable = true;
+        zoxide.enable = true;
+      };
+
+      home.stateVersion = "23.05"; # DO NOT TOUCH
+      programs.home-manager.enable = true;
+    };
+  };
+
+  # gh's hosts.yml (with the oauth token) comes from a clan var owned by lytharn; wired from
+  # here where clan.core.vars is in scope.
+  home-manager.users.lytharn.slask.apps.gh.hostsFile =
+    config.clan.core.vars.generators.gh.files.hosts.path;
+
+  # --- clan vars ---
+
+  # Tailscale auth key: only used on first enrolment; mewx is already enrolled, so a generated
+  # placeholder suffices (never actually used).
+  clan.core.vars.generators.tailscale = {
+    files.authkey = { };
+    runtimeInputs = [
+      pkgs.openssl
+      pkgs.coreutils
+    ];
+    script = ''openssl rand -base64 32 | tr -d "\n" > "$out"/authkey'';
+  };
+
+  # GitHub CLI credentials: render hosts.yml from the existing PAT (prompted), owned by lytharn
+  # so the gh home module can symlink it into ~/.config/gh.
+  clan.core.vars.generators.gh = {
+    files.hosts.owner = "lytharn";
+    prompts.token = {
+      description = "GitHub token for mewx (paste the existing PAT)";
+      type = "hidden";
+      persist = true;
+    };
+    runtimeInputs = [ pkgs.coreutils ];
+    script = ''
+      tok="$(tr -d "\n" < "$prompts"/token)"
+      printf 'github.com:\n    oauth_token: %s\n    user: lytharn\n    git_protocol: ssh\n' "$tok" > "$out"/hosts
+    '';
+  };
 
   system.stateVersion = "23.05"; # DO NOT TOUCH
 }
