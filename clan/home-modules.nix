@@ -1,8 +1,7 @@
-# Imports every home app module (modules/home/apps/*) into a clan machine's home-manager
-# user config. Snowfall auto-discovers these; clan does not, so we replicate the discovery
-# with readDir. Lives outside modules/ (Snowfall) and machines/ (clan treats every machines/
-# subdir as a machine), so neither auto-discovery system picks it up — it is only pulled in
-# by explicit imports from the desktop machine configs.
+# Imports every home app module (modules/home/apps/*) into a home-manager config, discovered
+# with readDir since clan doesn't auto-discover modules. Imported by every machine's HM user
+# config and by the standalone homeConfigurations in flake.nix. Kept in clan/ (not machines/,
+# where clan would treat the dir as a machine).
 let
   appsDir = ../modules/home/apps;
   names = builtins.attrNames (builtins.readDir appsDir);
