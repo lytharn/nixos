@@ -1,18 +1,20 @@
-# Shared clan vars for the serx<->baxx restic backup. Both the repo-encryption password
-# and the rest-server basic-auth password are the same secret on both hosts, so they live
-# in one `share = true` generator: generated once and reused by every machine that declares
-# it (serx as client, baxx as server). Seeded from the *existing* values via prompts — the
-# 827 GiB repo is already encrypted with them, so they must be preserved, not regenerated.
+# Shared clan var for the serx<->baxx restic backup: the repo-encryption password and the
+# rest-server basic-auth password are the same secret on both hosts, so they live in one
+# `share = true` generator, generated once and reused by every machine that declares it
+# (serx as client, baxx as server). Seeded from the *existing* values via prompts so the
+# already-encrypted repo stays readable.
 #
-# This file lives outside modules/ (Snowfall) and machines/ (clan would treat any machines/
-# subdir as a machine), so it is only ever pulled in by explicit imports from the two
-# clan machine configs.
+# Kept in clan/ (not machines/, where clan would treat the dir as a machine) and imported
+# explicitly by the serx and baxx configs.
 { pkgs, ... }:
 {
   clan.core.vars.generators.restic-secrets = {
     share = true;
-    files.repo-pass = { }; # repo encryption password (root-readable; serx's backup runs as root)
-    files.rest-pass = { }; # rest-server basic-auth password (consumed only by per-host derivations)
+    # Repo encryption password: deployed and read at runtime by serx's backup (runs as root).
+    files.repo-pass = { };
+    # Rest-server basic-auth password: only consumed inside the per-host derivation generators
+    # (via $in at generate time), never read at runtime, so it isn't deployed to any machine.
+    files.rest-pass.deploy = false;
     prompts.repo-pass = {
       description = "restic repo encryption password (paste the EXISTING value to preserve repo access)";
       type = "hidden";
