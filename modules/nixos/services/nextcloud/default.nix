@@ -18,8 +18,8 @@ in
       example = "/run/secrets/nextcloud-admin-pass";
       description = ''
         Path to the file with the initial admin password (read once at first setup; the
-        file must be owned by the `nextcloud` user). Supplied by the caller so this module
-        stays agnostic to the secret backend (sops or clan vars).
+        file must be owned by the `nextcloud` user). Supplied by the caller (a clan var) so
+        this module stays agnostic to the secret backend.
       '';
     };
   };

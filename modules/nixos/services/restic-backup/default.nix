@@ -38,8 +38,7 @@ in
       description = ''
         Path to a file holding the full rest-server repo URL, including the basic-auth
         password (`rest:http://<client>:<pass>@<server>:<port>/<client>`). Kept in a file
-        so the password never lands in the Nix store; the caller supplies it (sops template
-        or clan var).
+        so the password never lands in the Nix store; the caller supplies it (a clan var).
       '';
     };
 

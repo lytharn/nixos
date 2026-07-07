@@ -66,8 +66,8 @@ in
       description = ''
         Path to the rest-server htpasswd file. Must contain a single line
         `<client>:<bcrypt-hash>` whose username equals `client`. Supplied by the
-        caller (e.g. a sops template or a clan vars generator) so this module stays
-        agnostic to the secret backend.
+        caller (a clan vars generator) so this module stays agnostic to the secret
+        backend.
       '';
     };
 
