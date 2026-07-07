@@ -22,6 +22,7 @@
     ../../modules/nixos/services/tailscale
     ../../clan/restic-secrets.nix
     inputs.nix-minecraft.nixosModules.minecraft-servers
+    inputs.home-manager.nixosModules.home-manager
   ];
 
   nixpkgs.overlays = [ inputs.nix-minecraft.overlay ];
@@ -230,6 +231,39 @@
       printf 'rest:http://serx:%s@baxx.gate-catla.ts.net:8000/serx' \
         "$(cat "$in"/restic-secrets/rest-pass)" > "$out"/repo-url
     '';
+  };
+
+  # Home-Manager for the shell tooling used when logged in to serx. The home app modules under
+  # modules/home/apps are imported via clan/home-modules.nix, with namespace injected.
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    backupFileExtension = "hm-bak"; # don't fail the first switch on pre-existing dotfiles
+    extraSpecialArgs = {
+      namespace = "slask";
+      inherit inputs;
+    };
+    users.lytharn = {
+      imports = [ ../../clan/home-modules.nix ];
+
+      home.username = "lytharn";
+      home.homeDirectory = "/home/lytharn";
+
+      slask.apps = {
+        bat.enable = true;
+        direnv.enable = true;
+        eza.enable = true;
+        fzf.enable = true;
+        git.enable = true;
+        helix.enable = true;
+        starship.enable = true;
+        tmux.enable = true;
+        zoxide.enable = true;
+      };
+
+      home.stateVersion = "25.05"; # DO NOT TOUCH
+      programs.home-manager.enable = true;
+    };
   };
 
   system.stateVersion = "25.05"; # DO NOT TOUCH
