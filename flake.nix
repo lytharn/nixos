@@ -9,26 +9,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    snowfall-lib = {
-      url = "github:snowfallorg/lib";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # No `follows = "nixpkgs"` here on purpose: nix-minecraft publishes a
     # binary cache (nix-community Cachix) keyed against its own pinned
     # nixpkgs. Overriding it would invalidate those cache hits and force
     # local rebuilds of JREs and server bundles.
     nix-minecraft.url = "github:Infinidoge/nix-minecraft";
-
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     clan-core = {
       url = "git+https://git.clan.lol/clan/clan-core";
@@ -39,59 +24,71 @@
   outputs =
     inputs:
     let
-      lib = inputs.snowfall-lib.mkLib {
-        inherit inputs;
-        src = ./.;
+      inherit (inputs.nixpkgs) lib;
+      systems = [ "x86_64-linux" ];
+      forAllSystems =
+        f:
+        lib.genAttrs systems (
+          system:
+          f (
+            import inputs.nixpkgs {
+              inherit system;
+              config.allowUnfree = true;
+            }
+          )
+        );
 
-        snowfall = {
-          meta = {
-            name = "slask";
-            title = "Slask";
-          };
-
-          namespace = "slask";
-        };
-      };
-      snowfallOutputs = lib.mkFlake {
-        channels-config = {
-          allowUnfree = true;
-        };
-
-        overlays = with inputs; [ nix-minecraft.overlay ];
-
-        systems.modules.nixos = with inputs; [
-          home-manager.nixosModules.home-manager
-          nix-minecraft.nixosModules.minecraft-servers
-          disko.nixosModules.disko
-          sops-nix.nixosModules.sops
-        ];
-
-        homes.modules = with inputs; [
-          sops-nix.homeManagerModules.sops
-        ];
-
-        outputs-builder = channels: { formatter = channels.nixpkgs.nixfmt-tree; };
-      };
-
-      # clan runs alongside Snowfall during the fleet migration. It auto-discovers
-      # machines/<name>/ and wires each machine's configuration.nix /
-      # hardware-configuration.nix / disko.nix. We merge its nixosConfigurations into
-      # Snowfall's and expose the clan CLI outputs (clanInternals, clan).
+      # clan owns the machine lifecycle. It auto-discovers machines/<name>/ and wires each
+      # machine's configuration.nix / hardware-configuration.nix / disko.nix, and bundles its
+      # own disko + sops-nix. We expose its nixosConfigurations plus the CLI outputs.
       clan = inputs.clan-core.lib.clan {
         self = inputs.self;
         meta.name = "slask";
-        # Match the module args Snowfall injects, so shared modules/nixos/* import as-is.
+        # Match the module args our shared modules/* expect.
         specialArgs = {
           inherit inputs;
           namespace = "slask";
         };
       };
+
+      # Build a standalone home-manager configuration from a home file, importing every home
+      # app module (clan/home-modules.nix) and injecting the slask namespace — the same way
+      # the machine HM configs do.
+      mkHome =
+        homeFile:
+        inputs.home-manager.lib.homeManagerConfiguration {
+          pkgs = import inputs.nixpkgs {
+            system = "x86_64-linux";
+            config.allowUnfree = true;
+          };
+          extraSpecialArgs = {
+            namespace = "slask";
+            inherit inputs;
+          };
+          modules = [
+            ./clan/home-modules.nix
+            homeFile
+          ];
+        };
     in
-    snowfallOutputs
-    // {
-      nixosConfigurations =
-        (snowfallOutputs.nixosConfigurations or { }) // clan.config.nixosConfigurations;
-      inherit (clan.config) clanInternals;
+    {
+      inherit (clan.config) nixosConfigurations clanInternals;
       clan = clan.config;
+
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
+
+      devShells = forAllSystems (pkgs: {
+        default = import ./shells/default/default.nix {
+          inherit (pkgs) mkShell;
+          inherit pkgs inputs;
+        };
+      });
+
+      # Standalone (non-NixOS) home for a generic-Linux machine, deployed with
+      # `home-manager switch --flake .#lytharn@standalone`.
+      # NB: the "@" in the dir name isn't valid in a bare path literal, so append as a string.
+      homeConfigurations."lytharn@standalone" = mkHome (
+        ./homes/x86_64-linux + "/lytharn@standalone/default.nix"
+      );
     };
 }
