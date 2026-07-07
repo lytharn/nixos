@@ -11,23 +11,12 @@ in
   options.${namespace}.services.tailscale = {
     enable = lib.mkEnableOption "tailscale";
 
-    sopsSecret = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''
-        Declare the `tailscale-key` sops secret and use it as the auth key. True for
-        Snowfall/sops hosts (quex, mewx). Set false on clan hosts, which have no raw sops,
-        and pass `authKeyFile` from a clan var instead.
-      '';
-    };
-
     authKeyFile = lib.mkOption {
       type = lib.types.str;
-      default = config.sops.secrets.tailscale-key.path;
-      defaultText = lib.literalExpression "config.sops.secrets.tailscale-key.path";
+      example = "/run/secrets/tailscale-authkey";
       description = ''
-        Path to the tailscale auth key file (used only on first enrolment). Defaults to the
-        sops secret; clan hosts override it with a clan vars path.
+        Path to the tailscale auth key file (used only on first enrolment). Supplied by the
+        caller from a clan var.
       '';
     };
   };
@@ -42,6 +31,5 @@ in
       # Needed to discover tailscale services.
       extraSetFlags = [ "--accept-routes" ];
     };
-    sops.secrets.tailscale-key = lib.mkIf cfg.sopsSecret { };
   };
 }
