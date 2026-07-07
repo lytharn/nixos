@@ -89,6 +89,11 @@
       "video"
       "scanner" # Access to SANE scanners
     ];
+    # Authorize quex's own key so clan can deploy over SSH (as lytharn@quex, escalating via
+    # sudo) from quex itself. PasswordAuthentication is off.
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOpXrMQFd1h62FXx2gUVFPVpEoZh2xWbcQ7FqzJSPi+M lytharn@users.noreply.github.com" # quex
+    ];
   };
 
   # Allow unfree packages
