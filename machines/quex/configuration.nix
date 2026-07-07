@@ -6,9 +6,8 @@
 }:
 
 {
-  # hardware-configuration.nix is auto-imported by clan. modules/nixos/* are NOT
-  # auto-discovered on a clan machine (that's Snowfall), so the ones quex uses are imported
-  # explicitly, plus home-manager for the HM user config.
+  # clan auto-imports hardware-configuration.nix. modules/nixos/* are not auto-discovered, so
+  # the ones quex uses are imported explicitly, plus home-manager for the HM user config.
   imports = [
     ../../modules/nixos/apps/hyprland
     ../../modules/nixos/apps/neovim
@@ -143,8 +142,8 @@
     };
   };
 
-  # fish: system shell enabled inline (replaces slask.apps.fish's snowfallorg HM injection);
-  # the user-facing fish config now lives in the home fish module (slask.apps.fish, HM).
+  # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
+  # (greeting, nix-shell fn) comes from the fish home module (slask.apps.fish in desktop-home.nix).
   programs.fish.enable = true;
 
   # Enable distributed builds on serx
@@ -191,9 +190,8 @@
     "flakes"
   ];
 
-  # Home-Manager, wired directly (clan has no native HM module). The home app modules under
-  # modules/home/apps are imported via clan/home-modules.nix (no Snowfall auto-discovery on
-  # clan), and namespace is injected so they resolve slask.apps.*.
+  # Home-Manager for the desktop (see clan/desktop-home.nix for the shared app set). quex adds
+  # zed; the gh hosts.yml path is wired below where clan.core.vars is in scope.
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
@@ -203,47 +201,15 @@
       inherit inputs;
     };
     users.lytharn = {
-      imports = [ ../../clan/home-modules.nix ];
-
-      home.username = "lytharn";
-      home.homeDirectory = "/home/lytharn";
-      home.packages = [ pkgs.htop ];
-
-      slask.apps = {
-        bat.enable = true;
-        claude.enable = true;
-        direnv.enable = true;
-        eza.enable = true;
-        fish.enable = true;
-        fzf.enable = true;
-        gh.enable = true;
-        ghostty.enable = true;
-        git.enable = true;
-        helix.enable = true;
-        hyprland = {
-          enable = true;
-          wallpaper = "/home/lytharn/Nextcloud/wallpapers/road-scenery.jpg";
-          swaylockImage = "/home/lytharn/Nextcloud/wallpapers/astronaut-landscape-sci-fi-city.jpg";
-          kbLayout = "us,se";
-        };
-        mangohud.enable = true;
-        neovim.enable = true;
-        nextcloud-client.enable = true;
-        starship.enable = true;
-        tmux.enable = true;
-        wayle.enable = true;
-        yazi.enable = true;
-        zed.enable = true;
-        zoxide.enable = true;
-      };
-
-      home.stateVersion = "23.05"; # DO NOT TOUCH
-      programs.home-manager.enable = true;
+      imports = [
+        ../../clan/home-modules.nix
+        ../../clan/desktop-home.nix
+      ];
+      slask.apps.zed.enable = true; # quex-specific
     };
   };
 
-  # gh's hosts.yml (with the oauth token) comes from a clan var owned by lytharn; wired from
-  # here where clan.core.vars is in scope.
+  # gh's hosts.yml (with the oauth token) comes from a clan var owned by lytharn.
   home-manager.users.lytharn.slask.apps.gh.hostsFile =
     config.clan.core.vars.generators.gh.files.hosts.path;
 

@@ -35,11 +35,6 @@
   networking.hostName = "baxx";
   networking.networkmanager.enable = true;
 
-  # How `clan ssh` / `clan machines update` reach baxx: it's off-site and only
-  # reachable over Tailscale, so target its MagicDNS name. Deploy as lytharn (not
-  # root) to match the fleet convention — clan escalates via sudo askpass.
-  clan.core.networking.targetHost = "lytharn@baxx";
-
   time.timeZone = "Europe/Stockholm";
 
   # Select internationalisation properties.
@@ -58,9 +53,9 @@
     };
   };
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.lytharn = {
     isNormalUser = true;
+    description = "lytharn";
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -80,16 +75,14 @@
     ripgrep
   ];
 
-  # Reused slask module (proves namespace-arg module reuse under clan).
   slask.apps.neovim.enable = true;
 
-  # fish: enabled directly rather than via slask.apps.fish, which pulls in the
-  # Snowfall-only `snowfallorg.users` home-manager integration (not available on a
-  # clan machine). Home-Manager tooling for baxx is deferred to a later phase.
+  # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
+  # (greeting, nix-shell fn) comes from the fish home module enabled in server-home.nix.
   programs.fish.enable = true;
 
-  # Tailscale, with the auth key managed by clan vars: generated/encrypted on the
-  # admin machine and deployed here. Replaces the raw-sops slask.services.tailscale.
+  # Tailscale, with the auth key from a clan var (generated/encrypted on the admin machine
+  # and deployed here).
   services.tailscale = {
     enable = true;
     authKeyFile = config.clan.core.vars.generators.tailscale.files.authkey.path;
@@ -97,17 +90,16 @@
     extraSetFlags = [ "--accept-routes" ]; # discover tailscale-advertised routes/services
   };
 
+  # Auth key: only used on first enrolment, and baxx is already enrolled with persistent
+  # state, so this is never actually used — a generated placeholder satisfies the authKeyFile
+  # requirement without prompting (matches serx/quex/mewx).
   clan.core.vars.generators.tailscale = {
-    files.authkey = { }; # secret, deployed to the machine
-    prompts.authkey = {
-      description = "Tailscale auth key for baxx";
-      type = "hidden";
-      persist = true;
-    };
-    runtimeInputs = [ pkgs.coreutils ];
-    script = ''
-      tr -d "\n" < "$prompts"/authkey > "$out"/authkey
-    '';
+    files.authkey = { };
+    runtimeInputs = [
+      pkgs.openssl
+      pkgs.coreutils
+    ];
+    script = ''openssl rand -base64 32 | tr -d "\n" > "$out"/authkey'';
   };
 
   # Append-only restic REST server receiving serx's nightly backups into the dedicated
@@ -123,8 +115,7 @@
 
   # Derive baxx's server-side files from the shared restic-secrets generator (imported above,
   # shared with serx): the repo password (owned by restic for the prune job) and the
-  # "serx:<bcrypt>" htpasswd line the rest-server checks. Values are identical to phase 2's
-  # per-machine generator, so the deployed content is unchanged — no repo re-encryption.
+  # "serx:<bcrypt>" htpasswd line the rest-server checks.
   clan.core.vars.generators.restic-server-secrets = {
     dependencies = [ "restic-secrets" ];
     files.repo-pass.owner = "restic"; # read by the prune job's restic user
@@ -142,6 +133,10 @@
 
   # Periodic TRIM for the NVMe SSD.
   services.fstrim.enable = true;
+
+  # How clan reaches baxx for deploys (as lytharn, escalating via sudo): it's off-site and
+  # only reachable over Tailscale, so target its MagicDNS name.
+  clan.core.networking.targetHost = "lytharn@baxx";
 
   services.openssh = {
     enable = true;
@@ -162,8 +157,7 @@
     "flakes"
   ];
 
-  # Home-Manager for the shell tooling used when logged in to baxx. The home app modules under
-  # modules/home/apps are imported via clan/home-modules.nix, with namespace injected.
+  # Home-Manager for the shell tooling used when logged in to baxx (see clan/server-home.nix).
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
@@ -172,27 +166,10 @@
       namespace = "slask";
       inherit inputs;
     };
-    users.lytharn = {
-      imports = [ ../../clan/home-modules.nix ];
-
-      home.username = "lytharn";
-      home.homeDirectory = "/home/lytharn";
-
-      slask.apps = {
-        bat.enable = true;
-        direnv.enable = true;
-        eza.enable = true;
-        fzf.enable = true;
-        git.enable = true;
-        helix.enable = true;
-        starship.enable = true;
-        tmux.enable = true;
-        zoxide.enable = true;
-      };
-
-      home.stateVersion = "25.05"; # DO NOT TOUCH
-      programs.home-manager.enable = true;
-    };
+    users.lytharn.imports = [
+      ../../clan/home-modules.nix
+      ../../clan/server-home.nix
+    ];
   };
 
   system.stateVersion = "25.05"; # DO NOT TOUCH
