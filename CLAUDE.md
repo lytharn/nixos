@@ -26,34 +26,52 @@ clan auto-discovers **machines** by directory; everything else is imported expli
 - `machines/<host>/configuration.nix` → NixOS config for `<host>`. clan also auto-imports
   `hardware-configuration.nix` and `disko.nix` from the same dir if present (disko is only
   acted on at install, inert on update). Nothing else in `machines/<host>/` is magic.
-- `modules/nixos/{apps,services}/<name>/default.nix` → reusable NixOS modules. **Not**
-  auto-discovered — a machine that wants one imports its path in `configuration.nix`.
+- `clan/services/<name>.nix` → reusable **NixOS** services, written as clan `clan.service`
+  modules, auto-registered as `clan.modules.<name>` by `clan/services-modules.nix` (a `readDir`)
+  and deployed to machines by the **inventory** (`clan/inventory.nix`: machine tags + service
+  instances). This replaces the old per-machine `modules/nixos/*` import model — `modules/nixos/`
+  no longer exists. See the README's "Services (clan inventory)" section for tags, instances,
+  and the add-a-service / client-server flow.
 - `modules/home/apps/<name>/default.nix` → reusable Home-Manager modules. Imported into a
   machine's HM user config via `clan/home-modules.nix` (which imports them all).
 - `homes/x86_64-linux/lytharn@standalone/default.nix` → the one standalone HM config.
-- `clan/` → clan glue not tied to a single machine: `home-modules.nix` (imports all home
-  modules for HM), `restic-secrets.nix` (the shared restic vars generator).
+- `clan/` → clan glue not tied to a single machine: `clan.nix` (aggregator — sets `meta.name`,
+  imports `inventory.nix` + `services-modules.nix`; `flake.nix`'s `lib.clan` call is a thin
+  wrapper that just `imports = [ ./clan/clan.nix ]`), `inventory.nix` (machine tags + service
+  instances), `services-modules.nix` (readDir-registers `clan/services/*`), `services/` (the
+  service modules), `home-modules.nix` (imports all home modules for HM), `desktop-home.nix` /
+  `server-home.nix` (shared HM app sets per host class), `restic-secrets.nix` (the shared restic
+  vars generator).
 - `shells/default/default.nix` → dev shell (provides the `clan` CLI + generates the gitignored
   `.luarc.json` LSP configs); entered via direnv / `nix develop`.
 - `lib/palette/` → the tokyonight theme palette, imported directly by the hyprland/wayle modules.
 - `sops/` + `vars/` → clan's own encrypted secret store (see Secrets). **Not** raw sops-nix.
 
-The namespace is `slask`, injected into every module via clan's `specialArgs`
-(`namespace = "slask"`) in `flake.nix`. Internal modules expose options under `slask.*`,
-toggled with `slask.apps.<name>.enable` / `slask.services.<name>.enable`.
+The namespace is `slask`, injected as a module arg (`namespace = "slask"`) via clan's
+`specialArgs` and HM's `extraSpecialArgs`. The **Home-Manager** modules expose options under
+`slask.apps.<name>.*`, toggled in a host's `home-manager.users.lytharn.slask.apps` block. NixOS
+services are no longer `slask.services.*` options — they're `clan.service` modules wired through
+the inventory (above).
 
-## Module convention
+## Adding functionality
 
-Every module follows the same `mkEnableOption` pattern using the injected `namespace` arg —
-see `modules/home/apps/git/default.nix` for the canonical shape. Modules that need a secret
-take a **file-path option** (e.g. `authKeyFile`, `adminpassFile`) rather than reading sops
-directly, so the caller wires it to a clan var. When adding a module:
+Two kinds of module, wired differently:
 
-1. Create `modules/<nixos|home>/<apps|services>/<name>/default.nix` using that pattern.
-2. Reference it as `${namespace}.apps.<name>` / `${namespace}.services.<name>` in options.
-3. **NixOS module:** import its path in the relevant `machines/<host>/configuration.nix` and
-   enable it (`slask.<...>.enable = true;`). **Home module:** it's already imported everywhere
-   via `clan/home-modules.nix`; just enable it in that host's `home-manager.users.lytharn.slask.apps` block.
+- **NixOS service** → a `clan.service` module in `clan/services/<name>.nix` (`_class =
+  "clan.service"`, `manifest.{name,description,readme}`, and the actual NixOS config under
+  `roles.<role>.perInstance.nixosModule = { ... }`). `git add` it, then add an `instances.<name>`
+  block in `clan/inventory.nix` targeting a tag or a machine. If it needs a secret, declare its
+  `clan.core.vars.generators.<name>` **inside** the `nixosModule`, so the var is scoped to the
+  machines that run it (see `clan/services/{tailscale,nextcloud}.nix`; the shared `restic-secrets`
+  is the exception, kept in `clan/restic-secrets.nix`). Multi-machine relationships use multiple
+  roles — see `clan/services/restic.nix` (client/server). Canonical minimal shapes:
+  `clan/services/{neovim,steam}.nix`.
+- **Home-Manager module** → `modules/home/apps/<name>/default.nix`, following the `mkEnableOption`
+  pattern with the injected `namespace` arg (canonical shape: `modules/home/apps/git/default.nix`),
+  exposing options under `${namespace}.apps.<name>`. It's already imported everywhere via
+  `clan/home-modules.nix`; enable it in the host's `home-manager.users.lytharn.slask.apps` block.
+  Modules that need a secret take a **file-path option** (e.g. `hostsFile`) that the caller wires
+  to a clan var, rather than reading sops directly.
 
 > **Gotcha — `git add` new files before evaluating.** This is a `git+file` flake, so Nix only
 > sees files tracked by git. A newly created file (new module, machine, `clan/` helper, etc.)
@@ -89,8 +107,9 @@ Installing a brand-new host — see `README.md` (`clan machines install`).
 
 ## Secrets (clan vars)
 
-No raw sops-nix. Secrets are **clan vars**: `clan.core.vars.generators.<name>` blocks in a
-machine's config declare `files.*` (deployed secrets, optionally `owner`), `prompts.*`
+No raw sops-nix. Secrets are **clan vars**: `clan.core.vars.generators.<name>` blocks (in a
+machine's config, or folded into a `clan/services/*` service so the var is scoped to that
+service's machines) declare `files.*` (deployed secrets, optionally `owner`), `prompts.*`
 (interactive values, `persist = true`), and a `script` that renders the files (prompt values
 arrive at `$prompts/<p>`, dependency outputs at `$in/<dep>/<file>`, outputs go to `$out/<f>`).
 Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f>.path`.
@@ -103,8 +122,9 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
   own vars using its **SSH host key** (imported as an age key at activation), so no separate
   key file is provisioned.
 - **Shared vars** (`share = true`) are generated once and reused across machines — see
-  `clan/restic-secrets.nix`. Machines that consume a shared secret differently derive per-host
-  files from it via generator `dependencies` (e.g. baxx's `restic-server-secrets`).
+  `clan/restic-secrets.nix`. A consumer that needs a shared secret in a different shape derives
+  per-host files from it via generator `dependencies` (e.g. the `restic` service's client/server
+  roles in `clan/services/restic.nix`).
 - Vestigial secrets on already-provisioned hosts (a host's tailscale auth key once enrolled,
   Nextcloud's initial admin password once set up) are generated as throwaway placeholders.
 
@@ -116,20 +136,20 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
   `serx` authorizes the clients' root keys under `users.users.remotebuilder`. clan preserves
   each host's SSH host key across deploys, so this keeps working.
 - **Tailscale-fronted services on `serx`**: Nextcloud (and others) run plain HTTP on localhost
-  and are exposed via `tailscale serve` (`modules/nixos/services/nextcloud/default.nix`). TLS
-  is terminated by Tailscale, not nginx — HSTS and `overwriteprotocol = "https"` are set
-  explicitly to compensate.
+  and are exposed via `tailscale serve` (`clan/services/nextcloud.nix`). TLS is terminated by
+  Tailscale, not nginx — HSTS and `overwriteprotocol = "https"` are set explicitly to compensate.
 - **Backups from `serx` to `baxx`**: `serx` pushes a nightly restic backup over Tailscale into
-  an **append-only** `rest-server` on `baxx` (`slask.services.restic-backup` on serx →
-  `slask.services.restic-server` on baxx). Points to keep in mind:
+  an **append-only** `rest-server` on `baxx`. Modeled as one two-role clan service
+  (`clan/services/restic.nix`): `roles.client` → serx, `roles.server` → baxx. Points to keep in mind:
   - The restic repo is **client-side encrypted** (data encrypted at rest on baxx — no LUKS);
     baxx's repo lives on a dedicated `/backup` btrfs subvolume mounted `compress=no`.
   - Append-only means `serx` can add but **not delete**, so **pruning runs on `baxx`** (the
     `restic-prune-serx` timer, as the `restic` user).
   - The repo password and rest-server basic-auth password are a **shared clan var**
-    (`restic-secrets` in `clan/restic-secrets.nix`, `share = true`). Each side derives what it
-    needs from it via generator `dependencies`: serx's `restic-backup-secrets` builds the repo
-    URL (embedding the basic-auth password so the Nix store never holds it); baxx's
+    (`restic-secrets` in `clan/restic-secrets.nix`, `share = true`, imported by both machines).
+    Each role derives what it needs from it via generator `dependencies` (folded into the
+    service): the `client` role's `restic-backup-secrets` builds the repo URL (embedding the
+    basic-auth password so the Nix store never holds it); the `server` role's
     `restic-server-secrets` emits the repo password (owner `restic`) and the `serx:<bcrypt>`
     htpasswd. Seeded from the existing password values so the repo stays readable.
   - The backup `paths` reference resolved service options (e.g. `config.services.nextcloud.home`)
