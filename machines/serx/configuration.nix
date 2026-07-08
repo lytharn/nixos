@@ -7,11 +7,10 @@
 
 {
   # clan auto-imports hardware-configuration.nix and disko.nix. Everything else is imported
-  # explicitly: the slask modules serx still uses (nextcloud, restic-backup), the shared restic
+  # explicitly: the slask modules serx still uses (restic-backup), the shared restic
   # secrets generator (see clan/restic-secrets.nix), nix-minecraft's nixos module (its overlay
   # below supplies pkgs.fabricServers to the minecraft inventory service), and home-manager.
   imports = [
-    ../../modules/nixos/services/nextcloud
     ../../modules/nixos/services/restic-backup
     ../../clan/restic-secrets.nix
     inputs.nix-minecraft.nixosModules.minecraft-servers
@@ -123,10 +122,6 @@
 
   # Enable internal modules
   slask = {
-    services.nextcloud = {
-      enable = true;
-      adminpassFile = config.clan.core.vars.generators.nextcloud.files.adminpass.path;
-    };
     services.restic-backup = {
       enable = true;
       server = "baxx.gate-catla.ts.net";
@@ -182,17 +177,6 @@
   ];
 
   # --- clan vars ---------------------------------------------------------------------------
-
-  # Nextcloud initial admin password: read only at first setup, and serx's instance already
-  # exists, so a fresh random value has no effect on the live admin account.
-  clan.core.vars.generators.nextcloud = {
-    files.adminpass.owner = "nextcloud";
-    runtimeInputs = [
-      pkgs.openssl
-      pkgs.coreutils
-    ];
-    script = ''openssl rand -base64 24 | tr -d "\n" > "$out"/adminpass'';
-  };
 
   # serx's rest-server repo URL, assembled from the shared restic basic-auth password so the
   # password never lands in the Nix store. Depends on the shared restic-secrets generator.
