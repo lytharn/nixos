@@ -72,5 +72,14 @@
       # serx-only (the nix-minecraft module import + overlay stay in serx's configuration.nix).
       roles.default.machines.serx = { };
     };
+
+    instances.nextcloud = {
+      module = {
+        name = "nextcloud";
+        input = "self";
+      };
+      # serx-only. The service declares its own nextcloud admin-password var generator.
+      roles.default.machines.serx = { };
+    };
   };
 }
