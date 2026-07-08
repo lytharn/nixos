@@ -54,5 +54,14 @@
       # serx-only: baxx is just the backup target, so target by machine, not the server tag.
       roles.default.machines.serx = { };
     };
+
+    instances.home-assistant = {
+      module = {
+        name = "home-assistant";
+        input = "self";
+      };
+      # serx-only (its Thread/OTBR hardware glue stays in serx's configuration.nix).
+      roles.default.machines.serx = { };
+    };
   };
 }
