@@ -36,5 +36,14 @@
       };
       roles.default.tags = [ "desktop" ];
     };
+
+    instances.tailscale = {
+      module = {
+        name = "tailscale";
+        input = "self";
+      };
+      # Every host is on the tailnet (desktops + servers).
+      roles.default.tags = [ "all" ];
+    };
   };
 }

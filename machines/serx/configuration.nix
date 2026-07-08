@@ -16,7 +16,6 @@
     ../../modules/nixos/services/minecraft
     ../../modules/nixos/services/nextcloud
     ../../modules/nixos/services/restic-backup
-    ../../modules/nixos/services/tailscale
     ../../clan/restic-secrets.nix
     inputs.nix-minecraft.nixosModules.minecraft-servers
     inputs.home-manager.nixosModules.home-manager
@@ -142,10 +141,6 @@
       repositoryFile = config.clan.core.vars.generators.restic-backup-secrets.files.repo-url.path;
       passwordFile = config.clan.core.vars.generators.restic-secrets.files.repo-pass.path;
     };
-    services.tailscale = {
-      enable = true;
-      authKeyFile = config.clan.core.vars.generators.tailscale.files.authkey.path;
-    };
   };
 
   # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
@@ -193,18 +188,6 @@
   ];
 
   # --- clan vars ---------------------------------------------------------------------------
-
-  # Tailscale auth key: only consumed on first enrolment, and serx is already enrolled with
-  # persistent state, so this is never actually used — a generated placeholder satisfies the
-  # authKeyFile requirement without prompting.
-  clan.core.vars.generators.tailscale = {
-    files.authkey = { };
-    runtimeInputs = [
-      pkgs.openssl
-      pkgs.coreutils
-    ];
-    script = ''openssl rand -base64 32 | tr -d "\n" > "$out"/authkey'';
-  };
 
   # Nextcloud initial admin password: read only at first setup, and serx's instance already
   # exists, so a fresh random value has no effect on the live admin account.

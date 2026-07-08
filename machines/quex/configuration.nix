@@ -9,7 +9,6 @@
   # clan auto-imports hardware-configuration.nix. modules/nixos/* are not auto-discovered, so
   # the ones quex uses are imported explicitly, plus home-manager for the HM user config.
   imports = [
-    ../../modules/nixos/services/tailscale
     inputs.home-manager.nixosModules.home-manager
   ];
 
@@ -128,14 +127,6 @@
     xdg-utils # For opening default programs when clicking links
   ];
 
-  # Enable internal modules
-  slask = {
-    services.tailscale = {
-      enable = true;
-      authKeyFile = config.clan.core.vars.generators.tailscale.files.authkey.path;
-    };
-  };
-
   # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
   # (greeting, nix-shell fn) comes from the fish home module (slask.apps.fish in desktop-home.nix).
   programs.fish.enable = true;
@@ -208,17 +199,6 @@
     config.clan.core.vars.generators.gh.files.hosts.path;
 
   # --- clan vars ---
-
-  # Tailscale auth key: only used on first enrolment; quex is already enrolled, so a generated
-  # placeholder suffices (never actually used).
-  clan.core.vars.generators.tailscale = {
-    files.authkey = { };
-    runtimeInputs = [
-      pkgs.openssl
-      pkgs.coreutils
-    ];
-    script = ''openssl rand -base64 32 | tr -d "\n" > "$out"/authkey'';
-  };
 
   # GitHub CLI credentials: render hosts.yml from the existing PAT (prompted), owned by lytharn
   # so the gh home module can symlink it into ~/.config/gh.
