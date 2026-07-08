@@ -78,27 +78,6 @@
   # (greeting, nix-shell fn) comes from the fish home module enabled in server-home.nix.
   programs.fish.enable = true;
 
-  # Tailscale, with the auth key from a clan var (generated/encrypted on the admin machine
-  # and deployed here).
-  services.tailscale = {
-    enable = true;
-    authKeyFile = config.clan.core.vars.generators.tailscale.files.authkey.path;
-    openFirewall = true; # direct peer-to-peer connections
-    extraSetFlags = [ "--accept-routes" ]; # discover tailscale-advertised routes/services
-  };
-
-  # Auth key: only used on first enrolment, and baxx is already enrolled with persistent
-  # state, so this is never actually used — a generated placeholder satisfies the authKeyFile
-  # requirement without prompting (matches serx/quex/mewx).
-  clan.core.vars.generators.tailscale = {
-    files.authkey = { };
-    runtimeInputs = [
-      pkgs.openssl
-      pkgs.coreutils
-    ];
-    script = ''openssl rand -base64 32 | tr -d "\n" > "$out"/authkey'';
-  };
-
   # Append-only restic REST server receiving serx's nightly backups into the dedicated
   # /backup subvolume. Client-side encrypted, so data is encrypted at rest here; pruning
   # runs locally (serx can't delete under append-only). Secrets come from clan vars.
