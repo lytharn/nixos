@@ -11,7 +11,6 @@
   # clan/restic-secrets.nix), nix-minecraft's nixos module (its overlay below supplies
   # pkgs.fabricServers for the minecraft module), and home-manager.
   imports = [
-    ../../modules/nixos/services/actual
     ../../modules/nixos/services/home-assistant
     ../../modules/nixos/services/minecraft
     ../../modules/nixos/services/nextcloud
@@ -126,7 +125,6 @@
 
   # Enable internal modules
   slask = {
-    services.actual.enable = true;
     services.home-assistant.enable = true;
     services.minecraft.enable = true;
     services.nextcloud = {
