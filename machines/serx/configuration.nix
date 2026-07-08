@@ -1,5 +1,4 @@
 {
-  config,
   pkgs,
   inputs,
   ...
@@ -7,11 +6,10 @@
 
 {
   # clan auto-imports hardware-configuration.nix and disko.nix. Everything else is imported
-  # explicitly: the slask modules serx still uses (restic-backup), the shared restic
-  # secrets generator (see clan/restic-secrets.nix), nix-minecraft's nixos module (its overlay
+  # explicitly: the shared restic secrets generator (see clan/restic-secrets.nix; the restic
+  # backup itself is now the restic inventory service), nix-minecraft's nixos module (its overlay
   # below supplies pkgs.fabricServers to the minecraft inventory service), and home-manager.
   imports = [
-    ../../modules/nixos/services/restic-backup
     ../../clan/restic-secrets.nix
     inputs.nix-minecraft.nixosModules.minecraft-servers
     inputs.home-manager.nixosModules.home-manager
@@ -120,18 +118,6 @@
     };
   };
 
-  # Enable internal modules
-  slask = {
-    services.restic-backup = {
-      enable = true;
-      server = "baxx.gate-catla.ts.net";
-      # Full rest URL (with the shared basic-auth password) is assembled by the
-      # restic-backup-secrets generator below; the repo password is the shared repo-pass.
-      repositoryFile = config.clan.core.vars.generators.restic-backup-secrets.files.repo-url.path;
-      passwordFile = config.clan.core.vars.generators.restic-secrets.files.repo-pass.path;
-    };
-  };
-
   # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
   # (greeting, nix-shell fn) comes from the fish home module enabled in server-home.nix.
   programs.fish.enable = true;
@@ -175,20 +161,6 @@
     "nix-command"
     "flakes"
   ];
-
-  # --- clan vars ---------------------------------------------------------------------------
-
-  # serx's rest-server repo URL, assembled from the shared restic basic-auth password so the
-  # password never lands in the Nix store. Depends on the shared restic-secrets generator.
-  clan.core.vars.generators.restic-backup-secrets = {
-    dependencies = [ "restic-secrets" ];
-    files.repo-url = { };
-    runtimeInputs = [ pkgs.coreutils ];
-    script = ''
-      printf 'rest:http://serx:%s@baxx.gate-catla.ts.net:8000/serx' \
-        "$(cat "$in"/restic-secrets/rest-pass)" > "$out"/repo-url
-    '';
-  };
 
   # Home-Manager for the shell tooling used when logged in to serx (see clan/server-home.nix).
   home-manager = {

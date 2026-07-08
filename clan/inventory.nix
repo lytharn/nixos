@@ -81,5 +81,20 @@
       # serx-only. The service declares its own nextcloud admin-password var generator.
       roles.default.machines.serx = { };
     };
+
+    instances.restic = {
+      module = {
+        name = "restic";
+        input = "self";
+      };
+      # serx pushes its backups to baxx's append-only rest-server. The shared restic-secrets
+      # var (clan/restic-secrets.nix) is imported by both machines; each role folds in the
+      # generator deriving its per-host files.
+      roles.client.machines.serx = { };
+      roles.server.machines.baxx.settings = {
+        address = "baxx.gate-catla.ts.net"; # tailnet MagicDNS name serx reaches baxx at
+        dataDir = "/backup"; # dedicated btrfs subvolume (compress=no)
+      };
+    };
   };
 }
