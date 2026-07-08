@@ -7,6 +7,7 @@
   _class = "clan.service";
   manifest.name = "slask/neovim";
   manifest.description = "Install a bare neovim as the default system editor on member machines";
+  manifest.readme = "Bare, unconfigured neovim as the system `$EDITOR` for root/non-lytharn contexts on servers. lytharn's configured neovim comes from Home-Manager and shadows this on PATH.";
 
   roles.default = {
     description = "Machines that should have a base neovim as the default system editor";
