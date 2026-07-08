@@ -28,5 +28,13 @@
       };
       roles.default.tags = [ "desktop" ];
     };
+
+    instances.hyprland = {
+      module = {
+        name = "hyprland";
+        input = "self";
+      };
+      roles.default.tags = [ "desktop" ];
+    };
   };
 }
