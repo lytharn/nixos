@@ -63,5 +63,14 @@
       # serx-only (its Thread/OTBR hardware glue stays in serx's configuration.nix).
       roles.default.machines.serx = { };
     };
+
+    instances.minecraft = {
+      module = {
+        name = "minecraft";
+        input = "self";
+      };
+      # serx-only (the nix-minecraft module import + overlay stay in serx's configuration.nix).
+      roles.default.machines.serx = { };
+    };
   };
 }
