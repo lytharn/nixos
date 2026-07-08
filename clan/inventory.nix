@@ -45,5 +45,14 @@
       # Every host is on the tailnet (desktops + servers).
       roles.default.tags = [ "all" ];
     };
+
+    instances.actual = {
+      module = {
+        name = "actual";
+        input = "self";
+      };
+      # serx-only: baxx is just the backup target, so target by machine, not the server tag.
+      roles.default.machines.serx = { };
+    };
   };
 }
