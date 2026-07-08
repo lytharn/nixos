@@ -7,11 +7,10 @@
 
 {
   # clan auto-imports hardware-configuration.nix and disko.nix. Everything else is imported
-  # explicitly: the slask modules serx uses, the shared restic secrets generator (see
-  # clan/restic-secrets.nix), nix-minecraft's nixos module (its overlay below supplies
-  # pkgs.fabricServers for the minecraft module), and home-manager.
+  # explicitly: the slask modules serx still uses (nextcloud, restic-backup), the shared restic
+  # secrets generator (see clan/restic-secrets.nix), nix-minecraft's nixos module (its overlay
+  # below supplies pkgs.fabricServers to the minecraft inventory service), and home-manager.
   imports = [
-    ../../modules/nixos/services/minecraft
     ../../modules/nixos/services/nextcloud
     ../../modules/nixos/services/restic-backup
     ../../clan/restic-secrets.nix
@@ -124,7 +123,6 @@
 
   # Enable internal modules
   slask = {
-    services.minecraft.enable = true;
     services.nextcloud = {
       enable = true;
       adminpassFile = config.clan.core.vars.generators.nextcloud.files.adminpass.path;
