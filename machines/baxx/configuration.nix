@@ -1,5 +1,4 @@
 {
-  config,
   pkgs,
   inputs,
   ...
@@ -7,11 +6,10 @@
 
 {
   # hardware-configuration.nix and disko.nix are auto-imported by clan
-  # (see clan-core nixosModules/machineModules/forName.nix). Only extra modules go here —
-  # e.g. the reused slask restic-server module (namespace = "slask" is injected via the clan
-  # call's specialArgs in flake.nix). neovim is now deployed via inventory (clan/services).
+  # (see clan-core nixosModules/machineModules/forName.nix). Only extra modules go here — the
+  # shared restic secrets generator (clan/restic-secrets.nix, also imported by serx). The
+  # restic rest-server itself is now the restic inventory service (server role → baxx).
   imports = [
-    ../../modules/nixos/services/restic-server
     ../../clan/restic-secrets.nix
     inputs.home-manager.nixosModules.home-manager
   ];
@@ -77,35 +75,6 @@
   # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
   # (greeting, nix-shell fn) comes from the fish home module enabled in server-home.nix.
   programs.fish.enable = true;
-
-  # Append-only restic REST server receiving serx's nightly backups into the dedicated
-  # /backup subvolume. Client-side encrypted, so data is encrypted at rest here; pruning
-  # runs locally (serx can't delete under append-only). Secrets come from clan vars.
-  slask.services.restic-server = {
-    enable = true;
-    client = "serx"; # repo subdir + htpasswd username; must equal serx's restic-backup client
-    dataDir = "/backup"; # dedicated btrfs subvolume (compress=no)
-    repoPasswordFile = config.clan.core.vars.generators.restic-server-secrets.files.repo-pass.path;
-    htpasswdFile = config.clan.core.vars.generators.restic-server-secrets.files.htpasswd.path;
-  };
-
-  # Derive baxx's server-side files from the shared restic-secrets generator (imported above,
-  # shared with serx): the repo password (owned by restic for the prune job) and the
-  # "serx:<bcrypt>" htpasswd line the rest-server checks.
-  clan.core.vars.generators.restic-server-secrets = {
-    dependencies = [ "restic-secrets" ];
-    files.repo-pass.owner = "restic"; # read by the prune job's restic user
-    files.htpasswd.owner = "restic"; # read by the rest-server's restic user
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.mkpasswd
-    ];
-    script = ''
-      cat "$in"/restic-secrets/repo-pass > "$out"/repo-pass
-      hash="$(mkpasswd -s -m bcrypt < "$in"/restic-secrets/rest-pass)"
-      printf 'serx:%s' "$hash" > "$out"/htpasswd
-    '';
-  };
 
   # Periodic TRIM for the NVMe SSD.
   services.fstrim.enable = true;
