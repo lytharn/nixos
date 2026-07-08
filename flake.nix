@@ -45,6 +45,31 @@
           inherit inputs;
           namespace = "slask";
         };
+
+        # Local clan services (referenced from inventory.instances via module.input = "self").
+        modules.neovim = ./clan/services/neovim.nix;
+
+        # Inventory: tag machines, then deploy services to them by role/tag instead of each
+        # machine importing a module path in its configuration.nix. `all`/`nixos`/`darwin`
+        # are built-in tags; `desktop`/`server` are ours (unused for now, wired for the next
+        # services we migrate). See modules/nixos/* for the modules still imported per-machine.
+        inventory = {
+          machines = {
+            mewx.tags = [ "desktop" ];
+            quex.tags = [ "desktop" ];
+            serx.tags = [ "server" ];
+            baxx.tags = [ "server" ];
+          };
+          instances.neovim = {
+            module = {
+              name = "neovim";
+              input = "self";
+            };
+            # Bare system neovim only where root-context editing is useful (the servers);
+            # desktops get lytharn's fully-configured neovim from Home-Manager instead.
+            roles.default.tags = [ "server" ];
+          };
+        };
       };
 
       # Build a standalone home-manager configuration from a home file, importing every home

@@ -10,7 +10,6 @@
   # the ones quex uses are imported explicitly, plus home-manager for the HM user config.
   imports = [
     ../../modules/nixos/apps/hyprland
-    ../../modules/nixos/apps/neovim
     ../../modules/nixos/apps/steam
     ../../modules/nixos/services/tailscale
     inputs.home-manager.nixosModules.home-manager
@@ -134,7 +133,6 @@
   # Enable internal modules
   slask = {
     apps.hyprland.enable = true;
-    apps.neovim.enable = true;
     apps.steam.enable = true;
     services.tailscale = {
       enable = true;

@@ -7,11 +7,10 @@
 
 {
   # hardware-configuration.nix and disko.nix are auto-imported by clan
-  # (see clan-core nixosModules/machineModules/forName.nix). Only extra modules
-  # go here — e.g. the reused slask neovim module (namespace = "slask" is injected
-  # via the clan call's specialArgs in flake.nix).
+  # (see clan-core nixosModules/machineModules/forName.nix). Only extra modules go here —
+  # e.g. the reused slask restic-server module (namespace = "slask" is injected via the clan
+  # call's specialArgs in flake.nix). neovim is now deployed via inventory (clan/services).
   imports = [
-    ../../modules/nixos/apps/neovim
     ../../modules/nixos/services/restic-server
     ../../clan/restic-secrets.nix
     inputs.home-manager.nixosModules.home-manager
@@ -74,8 +73,6 @@
     fd
     ripgrep
   ];
-
-  slask.apps.neovim.enable = true;
 
   # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
   # (greeting, nix-shell fn) comes from the fish home module enabled in server-home.nix.
