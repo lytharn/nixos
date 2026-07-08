@@ -20,5 +20,13 @@
       # desktops get lytharn's fully-configured neovim from Home-Manager instead.
       roles.default.tags = [ "server" ];
     };
+
+    instances.steam = {
+      module = {
+        name = "steam";
+        input = "self";
+      };
+      roles.default.tags = [ "desktop" ];
+    };
   };
 }
