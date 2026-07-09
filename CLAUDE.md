@@ -156,3 +156,12 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     rather than literals; Nextcloud's Postgres is `pg_dumpall`-ed into a staging dir during
     `backupPrepareCommand` (maintenance mode wraps only the dump; the dump is removed in
     `backupCleanupCommand` so it doesn't linger unencrypted).
+  - **Monitoring** (`monitor = true` on both roles): each side pings its own
+    [healthchecks.io](https://healthchecks.io) check as a dead-man's-switch — the client on a
+    successful backup (`Type=oneshot` → `ExecStartPost`), the server on a successful
+    prune/check, with a dedicated `restic-hc-fail-*` unit pinging `/fail` on any failure. The
+    point is catching the *absence* of a run (silently-stopped timer, host down), which no
+    on-box check can. The secret ping URLs are per-machine clan var prompts
+    (`restic-monitor-client` on serx, `restic-monitor-server` on baxx, owner `restic`), so the
+    URL never lands in the Nix store; the ping is best-effort (`|| true`) so it can't fail the
+    backup. The two healthchecks checks' period/grace are configured on the healthchecks side.

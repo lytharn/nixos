@@ -3,7 +3,7 @@
   _class = "clan.service";
   manifest.name = "slask/restic";
   manifest.description = "serx→baxx restic backup: an append-only rest-server (server) receiving a nightly push (client)";
-  manifest.readme = "Two-role backup pair. The client (serx) pushes a nightly restic backup of its service data into the server (baxx), which runs an append-only rest-server and prunes locally (the client can't delete under append-only). The repo is client-side encrypted. The shared repo/basic-auth secret is the `restic-secrets` generator (share = true, in clan/restic-secrets.nix, imported by both machines); each role folds in the generator that derives its per-host files from it. The client derives the server's address/port from roles.server.machines rather than hardcoding.";
+  manifest.readme = "Two-role backup pair. The client (serx) pushes a nightly restic backup of its service data into the server (baxx), which runs an append-only rest-server and prunes locally (the client can't delete under append-only). The repo is client-side encrypted. The shared repo/basic-auth secret is the `restic-secrets` generator (share = true, in clan/restic-secrets.nix, imported by both machines); each role folds in the generator that derives its per-host files from it. The client derives the server's address/port from roles.server.machines rather than hardcoding. With `monitor = true` each role pings its own healthchecks.io check (client on backup, server on prune/check) as a dead-man's-switch; the secret ping URLs are clan var prompts (restic-monitor-{client,server}).";
 
   # ---- server: the append-only rest-server that stores the client's backups ----
   roles.server = {
@@ -47,6 +47,15 @@
             default = "Sun 03:00";
             description = "systemd OnCalendar expression for the prune/check job.";
           };
+          monitor = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = ''
+              Ping a healthchecks.io check on prune/check success/failure, so a stalled or
+              failing verification job is noticed too (its own check, separate from the client's).
+              The secret ping URL is a clan var prompt (`restic-monitor-server`).
+            '';
+          };
         };
       };
     perInstance =
@@ -69,6 +78,22 @@
             # There is a single client (serx) in this instance.
             client = lib.head (lib.attrNames roles.client.machines);
             repo = "${settings.dataDir}/${client}";
+            # healthchecks.io ping helper for the prune/check job (only used when settings.monitor).
+            pingUrlFile = config.clan.core.vars.generators.restic-monitor-server.files.ping-url.path;
+            hcPing =
+              suffix:
+              lib.getExe (
+                pkgs.writeShellApplication {
+                  name = "restic-hc-ping-prune-${client}";
+                  runtimeInputs = [
+                    pkgs.curl
+                    pkgs.coreutils
+                  ];
+                  text = ''
+                    curl -fsS -m 10 --retry 3 -o /dev/null "$(cat ${pingUrlFile})${suffix}" || true
+                  '';
+                }
+              );
           in
           {
             # Append-only restic REST server. The client pushes its backups here but cannot
@@ -99,7 +124,11 @@
                 Type = "oneshot";
                 User = "restic";
                 Group = "restic";
+                # oneshot: ExecStartPost runs only if the prune/check succeeded → success ping.
+                ExecStartPost = lib.mkIf settings.monitor [ (hcPing "") ];
               };
+              # Any failure fires the /fail ping via the dedicated unit below.
+              onFailure = lib.mkIf settings.monitor [ "restic-hc-fail-prune-${client}.service" ];
               script = ''
                 # The repo only exists after client has run its first backup (restic init).
                 test -e ${repo}/config || exit 0
@@ -108,6 +137,14 @@
                 # at-rest bit-rot (btrfs has no redundancy here, so this is the only such check).
                 ${lib.getExe pkgs.restic} -r ${repo} check --read-data-subset=5%
               '';
+            };
+
+            systemd.services."restic-hc-fail-prune-${client}" = lib.mkIf settings.monitor {
+              description = "Signal healthchecks.io that ${client}'s restic prune/check failed";
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = hcPing "/fail";
+              };
             };
 
             systemd.timers."restic-prune-${client}" = {
@@ -135,6 +172,17 @@
                 printf '${client}:%s' "$hash" > "$out"/htpasswd
               '';
             };
+
+            clan.core.vars.generators.restic-monitor-server = lib.mkIf settings.monitor {
+              files.ping-url.owner = "restic"; # read by the prune job, which runs as restic
+              prompts.ping-url = {
+                description = "healthchecks.io ping URL for ${client}'s restic prune/check job on this server (e.g. https://hc-ping.com/<uuid>)";
+                type = "hidden";
+                persist = true;
+              };
+              runtimeInputs = [ pkgs.coreutils ];
+              script = ''tr -d "\n" < "$prompts"/ping-url > "$out"/ping-url'';
+            };
           };
       };
   };
@@ -145,10 +193,22 @@
     interface =
       { lib, ... }:
       {
-        options.schedule = lib.mkOption {
-          type = lib.types.str;
-          default = "01:30";
-          description = "systemd OnCalendar expression for the nightly backup.";
+        options = {
+          schedule = lib.mkOption {
+            type = lib.types.str;
+            default = "01:30";
+            description = "systemd OnCalendar expression for the nightly backup.";
+          };
+          monitor = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = ''
+              Ping a healthchecks.io check on backup success/failure (a dead-man's-switch:
+              a missed ping — silently-stopped timer, host down, dropped job — is what
+              healthchecks alerts on, which no on-box check can catch). The secret ping URL
+              is a clan var prompt (`restic-monitor-client`), so it isn't world-pingable.
+            '';
+          };
         };
       };
     perInstance =
@@ -176,6 +236,23 @@
             serverSettings = roles.server.machines.${serverName}.settings;
             serverAddress = if serverSettings.address == null then serverName else serverSettings.address;
             jobName = serverName;
+            # healthchecks.io ping helper (only used when settings.monitor). The URL is a secret
+            # var, read at runtime; best-effort so a monitoring hiccup never fails the backup.
+            pingUrlFile = config.clan.core.vars.generators.restic-monitor-client.files.ping-url.path;
+            hcPing =
+              suffix:
+              lib.getExe (
+                pkgs.writeShellApplication {
+                  name = "restic-hc-ping-${jobName}";
+                  runtimeInputs = [
+                    pkgs.curl
+                    pkgs.coreutils
+                  ];
+                  text = ''
+                    curl -fsS -m 10 --retry 3 -o /dev/null "$(cat ${pingUrlFile})${suffix}" || true
+                  '';
+                }
+              );
           in
           {
             # Nightly push of this machine's service data into the server's append-only REST server.
@@ -228,6 +305,32 @@
                 OnCalendar = settings.schedule;
                 Persistent = true;
               };
+            };
+
+            # Dead-man's-switch pings. The backup unit is Type=oneshot, so ExecStartPost runs
+            # only when the backup succeeded → that's the "I'm alive" ping. Any failure instead
+            # fires the dedicated fail unit (the /fail ping), and if the run never happens at all
+            # healthchecks alerts on the missing ping on its own.
+            systemd.services."restic-backups-${jobName}" = lib.mkIf settings.monitor {
+              serviceConfig.ExecStartPost = [ (hcPing "") ];
+              onFailure = [ "restic-hc-fail-${jobName}.service" ];
+            };
+            systemd.services."restic-hc-fail-${jobName}" = lib.mkIf settings.monitor {
+              description = "Signal healthchecks.io that the ${jobName} restic backup failed";
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = hcPing "/fail";
+              };
+            };
+            clan.core.vars.generators.restic-monitor-client = lib.mkIf settings.monitor {
+              files.ping-url = { }; # deployed; read by root (both the backup and fail units run as root)
+              prompts.ping-url = {
+                description = "healthchecks.io ping URL for ${client}'s restic backup (e.g. https://hc-ping.com/<uuid>)";
+                type = "hidden";
+                persist = true;
+              };
+              runtimeInputs = [ pkgs.coreutils ];
+              script = ''tr -d "\n" < "$prompts"/ping-url > "$out"/ping-url'';
             };
 
             # Assemble the rest-server repo URL from the shared restic basic-auth password so the

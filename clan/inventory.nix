@@ -90,10 +90,13 @@
       # serx pushes its backups to baxx's append-only rest-server. The shared restic-secrets
       # var (clan/restic-secrets.nix) is imported by both machines; each role folds in the
       # generator deriving its per-host files.
-      roles.client.machines.serx = { };
+      # monitor = healthchecks.io dead-man's-switch; each role pings its own check (backup vs
+      # prune/check). The ping URLs are secret clan var prompts (restic-monitor-{client,server}).
+      roles.client.machines.serx.settings.monitor = true;
       roles.server.machines.baxx.settings = {
         address = "baxx.gate-catla.ts.net"; # tailnet MagicDNS name serx reaches baxx at
         dataDir = "/backup"; # dedicated btrfs subvolume (compress=no)
+        monitor = true;
       };
     };
   };
