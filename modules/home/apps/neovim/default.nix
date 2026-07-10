@@ -14,22 +14,22 @@ let
   # 0.12's built-in treesitter (see lua/plugins/treesitter.lua).
   tsg = pkgs.tree-sitter.builtGrammars;
 
-  # Neovim-language name -> nixpkgs grammar. Split in two: Neovim 0.12 already
-  # ships curated highlight queries for these languages, so we provide only the
-  # parser and let its bundled queries win.
-  coreQueryGrammars = {
-    c = tsg.tree-sitter-c;
-    lua = tsg.tree-sitter-lua;
-    markdown = tsg.tree-sitter-markdown;
-    markdown_inline = tsg.tree-sitter-markdown-inline;
-    query = tsg.tree-sitter-query; # for editing treesitter .scm query files
-    vim = tsg.tree-sitter-vim;
-  };
-  # For everything else we supply the parser and the grammar's own queries.
-  # (luadoc/luap/vimdoc are intentionally dropped: no standalone nixpkgs
-  # grammar; vimdoc keeps Neovim's legacy help highlighting.)
-  fullGrammars = {
+  # Neovim-language name -> nixpkgs grammar. Each grammar supplies both its
+  # parser and its own queries, kept as a matched set from a single source so
+  # the two can never drift. (Pairing a Nix parser with Neovim 0.12's *bundled*
+  # queries instead breaks whenever the two grammar revisions disagree — e.g.
+  # lua's `operator:` field, absent from the tree-sitter-grammars fork nixpkgs
+  # ships, made every lua buffer throw. Grammar-own queries sidestep that.)
+  # luadoc/luap/vimdoc are intentionally dropped: no standalone nixpkgs grammar;
+  # vimdoc keeps Neovim's legacy help highlighting.
+  #
+  # Revisit if upstream settles on a canonical parser+query story for core
+  # treesitter (post nvim-treesitter archival): neovim/neovim#39006. If Neovim
+  # starts shipping/curating queries that pair with a known parser set, the
+  # grammar-own-queries approach here can likely be simplified or dropped.
+  grammars = {
     bash = tsg.tree-sitter-bash;
+    c = tsg.tree-sitter-c;
     cpp = tsg.tree-sitter-cpp;
     diff = tsg.tree-sitter-diff;
     erlang = tsg.tree-sitter-erlang;
@@ -41,16 +41,20 @@ let
     gitignore = tsg.tree-sitter-gitignore;
     hyprlang = tsg.tree-sitter-hyprlang;
     json = tsg.tree-sitter-json;
+    lua = tsg.tree-sitter-lua;
+    markdown = tsg.tree-sitter-markdown;
+    markdown_inline = tsg.tree-sitter-markdown-inline;
     nix = tsg.tree-sitter-nix;
     proto = tsg.tree-sitter-proto;
     python = tsg.tree-sitter-python;
+    query = tsg.tree-sitter-query; # for editing treesitter .scm query files
     regex = tsg.tree-sitter-regex;
     rust = tsg.tree-sitter-rust;
     toml = tsg.tree-sitter-toml;
+    vim = tsg.tree-sitter-vim;
     xml = tsg.tree-sitter-xml;
     yaml = tsg.tree-sitter-yaml;
   };
-  allGrammars = coreQueryGrammars // fullGrammars;
 
   treesitterRuntime = pkgs.runCommand "nvim-treesitter-runtime" { } (
     ''
@@ -59,15 +63,16 @@ let
     + lib.concatStrings (
       lib.mapAttrsToList (lang: drv: ''
         ln -s ${drv}/parser $out/parser/${lang}.so
-      '') allGrammars
-    )
-    + lib.concatStrings (
-      lib.mapAttrsToList (lang: drv: ''
         mkdir -p $out/queries/${lang}
-        for q in ${drv}/queries/*.scm; do
-          [ -e "$q" ] && ln -s "$q" $out/queries/${lang}/
+        # Grammars store queries either flat at queries/*.scm or nested one
+        # level under queries/<name>/*.scm (e.g. hyprlang, query). Harvest both
+        # into queries/${lang}/; first file wins on the rare basename collision.
+        for q in ${drv}/queries/*.scm ${drv}/queries/*/*.scm; do
+          [ -e "$q" ] || continue
+          dest=$out/queries/${lang}/$(basename "$q")
+          [ -e "$dest" ] || ln -s "$q" "$dest"
         done
-      '') fullGrammars
+      '') grammars
     )
   );
 in

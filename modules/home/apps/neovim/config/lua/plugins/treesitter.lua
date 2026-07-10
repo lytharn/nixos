@@ -27,6 +27,19 @@ return {
       end,
     })
 
+    -- Some Nix-provided grammar queries were authored for nvim-treesitter and
+    -- use its `#is-not?` predicate (e.g. tree-sitter-nix's highlights.scm does
+    -- `(#is-not? @variable.builtin local)`). Core treesitter has no handler for
+    -- it, so without this every matching buffer throws "No handler for is-not?"
+    -- mid-highlight. We dropped nvim-treesitter's locals machinery, so register
+    -- a pragmatic stub: treat every node as "not a local", i.e. `#is-not? local`
+    -- always passes -> builtins/keywords stay highlighted even when a local of
+    -- the same name shadows them (`let map = ...`), which is rare and cosmetic.
+    -- (`is-not?` is the only non-core predicate any of our grammars use.)
+    pcall(vim.treesitter.query.add_predicate, "is-not?", function()
+      return true
+    end, { force = true })
+
     -- On the `main` branch, setup() only takes `select`/`move` options;
     -- keymaps are defined manually below via the module APIs.
     require("nvim-treesitter-textobjects").setup({
