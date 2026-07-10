@@ -76,9 +76,6 @@
   # (greeting, nix-shell fn) comes from the fish home module enabled in server-home.nix.
   programs.fish.enable = true;
 
-  # Periodic TRIM for the NVMe SSD.
-  services.fstrim.enable = true;
-
   # How clan reaches baxx for deploys (as lytharn, escalating via sudo): it's off-site and
   # only reachable over Tailscale, so target its MagicDNS name.
   clan.core.networking.targetHost = "lytharn@baxx";
