@@ -18,6 +18,7 @@
     gh.enable = true;
     ghostty.enable = true;
     git.enable = true;
+    gtk.enable = true;
     helix.enable = true;
     hyprland = {
       enable = true;
