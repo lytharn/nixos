@@ -1,6 +1,6 @@
 return {
   "mrcjkb/rustaceanvim",
   branch = "main",
-  version = "^6",
+  version = "^9",
   lazy = false, -- The plugin is already lazy
 }
