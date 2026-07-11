@@ -3,7 +3,12 @@
   _class = "clan.service";
   manifest.name = "slask/home-assistant";
   manifest.description = "Home Assistant (+ Matter server), exposed on the tailnet via tailscale serve";
-  manifest.readme = "Runs Home Assistant with the Matter server on localhost and fronts it with `tailscale serve` under the `hass` tailnet service (TLS terminated by Tailscale). serx-only; the OTBR/Thread hardware glue (otbr-agent, packet forwarding) stays in serx's configuration.nix since it references serx's NIC and USB dongle.";
+  manifest.readme = ''
+    Runs Home Assistant with the Matter server on localhost and fronts it with
+    `tailscale serve` under the `hass` tailnet service (TLS terminated by Tailscale).
+    serx-only; the OTBR/Thread hardware glue (otbr-agent, packet forwarding) stays in
+    serx's configuration.nix since it references serx's NIC and USB dongle.
+  '';
 
   roles.default = {
     description = "Machine hosting Home Assistant";

@@ -3,7 +3,12 @@
   _class = "clan.service";
   manifest.name = "slask/nextcloud";
   manifest.description = "Nextcloud (plain HTTP on localhost), exposed on the tailnet via tailscale serve";
-  manifest.readme = "Runs Nextcloud with Postgres/Redis on localhost and fronts it with `tailscale serve` under the `cloud` tailnet service. TLS is terminated by Tailscale, so HSTS + overwriteprotocol=https are set explicitly. Declares its own `nextcloud` admin-password var generator (placeholder — the instance is already set up). serx-only.";
+  manifest.readme = ''
+    Runs Nextcloud with Postgres/Redis on localhost and fronts it with `tailscale serve`
+    under the `cloud` tailnet service. TLS is terminated by Tailscale, so HSTS +
+    overwriteprotocol=https are set explicitly. Declares its own `nextcloud`
+    admin-password var generator (placeholder — the instance is already set up). serx-only.
+  '';
 
   roles.default = {
     description = "Machine hosting Nextcloud";
