@@ -3,7 +3,18 @@
   _class = "clan.service";
   manifest.name = "slask/restic";
   manifest.description = "serx→baxx restic backup: an append-only rest-server (server) receiving a nightly push (client)";
-  manifest.readme = "Two-role backup pair. The client (serx) pushes a nightly restic backup of its service data into the server (baxx), which runs an append-only rest-server and prunes locally (the client can't delete under append-only). The repo is client-side encrypted. The shared repo/basic-auth secret is the `restic-secrets` generator (share = true, in clan/restic-secrets.nix, imported by both machines); each role folds in the generator that derives its per-host files from it. The client derives the server's address/port from roles.server.machines rather than hardcoding. With `monitor = true` each role pings its own healthchecks.io check (client on backup, server on prune/check) as a dead-man's-switch; the secret ping URLs are clan var prompts (restic-monitor-{client,server}).";
+  manifest.readme = ''
+    Two-role backup pair. The client (serx) pushes a nightly restic backup of its service
+    data into the server (baxx), which runs an append-only rest-server and prunes locally
+    (the client can't delete under append-only). The repo is client-side encrypted. The
+    shared repo/basic-auth secret is the `restic-secrets` generator (share = true, in
+    clan/restic-secrets.nix, imported by both machines); each role folds in the generator
+    that derives its per-host files from it. The client derives the server's address/port
+    from roles.server.machines rather than hardcoding. With `monitor = true` each role
+    pings its own healthchecks.io check (client on backup, server on prune/check) as a
+    dead-man's-switch; the secret ping URLs are clan var prompts
+    (restic-monitor-{client,server}).
+  '';
 
   # ---- server: the append-only rest-server that stores the client's backups ----
   roles.server = {

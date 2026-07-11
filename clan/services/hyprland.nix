@@ -3,7 +3,12 @@
   _class = "clan.service";
   manifest.name = "slask/hyprland";
   manifest.description = "System-level Hyprland desktop (Ly, portals, keyring, session) on member machines";
-  manifest.readme = "System-level pieces of the Hyprland desktop: Ly display manager (matrix animation), UWSM session, xdg portals, gnome-keyring, udisks2 and supporting packages. lytharn's compositor config lives in the Home-Manager hyprland module. Applied to desktop machines.";
+  manifest.readme = ''
+    System-level pieces of the Hyprland desktop: Ly display manager (matrix
+    animation), UWSM session, xdg portals, gnome-keyring, udisks2 and supporting
+    packages. lytharn's compositor config lives in the Home-Manager hyprland module.
+    Applied to desktop machines.
+  '';
 
   roles.default = {
     description = "Desktop machines running the Hyprland session";

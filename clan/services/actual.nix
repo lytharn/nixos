@@ -3,7 +3,10 @@
   _class = "clan.service";
   manifest.name = "slask/actual";
   manifest.description = "Actual Budget, exposed on the tailnet via tailscale serve";
-  manifest.readme = "Runs Actual Budget on localhost and fronts it with `tailscale serve` under the `actual` tailnet service (TLS terminated by Tailscale). serx-only.";
+  manifest.readme = ''
+    Runs Actual Budget on localhost and fronts it with `tailscale serve` under the
+    `actual` tailnet service (TLS terminated by Tailscale). serx-only.
+  '';
 
   roles.default = {
     description = "Machine hosting Actual Budget";

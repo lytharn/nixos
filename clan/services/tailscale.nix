@@ -3,7 +3,10 @@
   _class = "clan.service";
   manifest.name = "slask/tailscale";
   manifest.description = "Tailscale on member machines, enrolled from a clan-var auth key";
-  manifest.readme = "Joins each member machine to the tailnet. Also declares the placeholder auth-key var generator (enrolment is one-time; all hosts are already enrolled). Applied to every host.";
+  manifest.readme = ''
+    Joins each member machine to the tailnet. Also declares the placeholder auth-key var
+    generator (enrolment is one-time; all hosts are already enrolled). Applied to every host.
+  '';
 
   roles.default = {
     description = "Machines joined to the tailnet";

@@ -3,7 +3,12 @@
   _class = "clan.service";
   manifest.name = "slask/minecraft";
   manifest.description = "Fabric Minecraft servers (vanilla + alviria) with Simple Voice Chat";
-  manifest.readme = "Runs the Fabric Minecraft servers via nix-minecraft's services.minecraft-servers. serx-only; the nix-minecraft nixos module import and its overlay (which supplies pkgs.fabricServers) stay in serx's configuration.nix. Attach to a server with `tmux -S /run/minecraft/<server>.sock attach`.";
+  manifest.readme = ''
+    Runs the Fabric Minecraft servers via nix-minecraft's services.minecraft-servers.
+    serx-only; the nix-minecraft nixos module import and its overlay (which supplies
+    pkgs.fabricServers) stay in serx's configuration.nix. Attach to a server with
+    `tmux -S /run/minecraft/<server>.sock attach`.
+  '';
 
   roles.default = {
     description = "Machine hosting the Minecraft servers";
