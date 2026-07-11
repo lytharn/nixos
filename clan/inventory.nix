@@ -29,6 +29,19 @@
       roles.default.tags = [ "desktop" ];
     };
 
+    instances.oom-guard = {
+      module = {
+        name = "oom-guard";
+        input = "self";
+      };
+      # Both desktops run swapless (swapDevices = []); zram + oomd keeps a memory spike from
+      # freezing them.
+      roles.default.machines = {
+        mewx.settings.memoryPercent = 50;
+        quex.settings.memoryPercent = 25;
+      };
+    };
+
     instances.hyprland = {
       module = {
         name = "hyprland";
