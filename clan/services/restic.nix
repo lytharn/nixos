@@ -58,6 +58,17 @@
             default = "Sun 03:00";
             description = "systemd OnCalendar expression for the prune/check job.";
           };
+          prune = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = ''
+              Install the scheduled prune/check timer. Set false to keep the prune service
+              defined and manually runnable (`systemctl start restic-prune-<client>`) but stop
+              it auto-firing — e.g. when the prune's CPU+I/O+memory load destabilises the
+              server (see baxx). With the timer off, the server-side healthchecks dead-man's
+              switch lapses, so pause that check on the healthchecks.io side.
+            '';
+          };
           monitor = lib.mkOption {
             type = lib.types.bool;
             default = false;
@@ -158,7 +169,7 @@
               };
             };
 
-            systemd.timers."restic-prune-${client}" = {
+            systemd.timers."restic-prune-${client}" = lib.mkIf settings.prune {
               wantedBy = [ "timers.target" ];
               timerConfig = {
                 OnCalendar = settings.pruneSchedule;
