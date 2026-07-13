@@ -110,6 +110,11 @@
         address = "baxx.gate-catla.ts.net"; # tailnet MagicDNS name serx reaches baxx at
         dataDir = "/backup"; # dedicated btrfs subvolume (compress=no)
         monitor = true;
+        # The scheduled prune/check hard-locks baxx (suspected marginal RAM); keep the prune
+        # service defined but off-timer so it can't re-crash the box on boot. Run it by hand
+        # (`systemctl start restic-prune-serx`) as the RAM stress-test / to prune when stable.
+        # Re-enable once the RAM is fixed. Server-side healthchecks check should be paused meanwhile.
+        prune = false;
       };
     };
   };
