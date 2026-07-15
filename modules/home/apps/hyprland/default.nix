@@ -90,6 +90,7 @@ in
     home.packages = [
       pkgs.hyprshutdown # Graceful logout with optional --post-cmd
       pkgs.hyprpicker # Color picker
+      pkgs.brightnessctl # Backlight control for the XF86MonBrightness* keys
     ];
 
     # Application launcher
