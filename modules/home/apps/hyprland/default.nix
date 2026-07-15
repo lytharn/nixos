@@ -90,6 +90,7 @@ in
     home.packages = [
       pkgs.hyprshutdown # Graceful logout with optional --post-cmd
       pkgs.hyprpicker # Color picker
+      pkgs.playerctl # Playback control for the XF86Audio* keys
       pkgs.brightnessctl # Backlight control for the XF86MonBrightness* keys
     ];
 
