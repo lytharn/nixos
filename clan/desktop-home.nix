@@ -30,6 +30,7 @@
     neovim.enable = true;
     nextcloud-client.enable = true;
     starship.enable = true;
+    thunderbird.enable = true;
     tmux.enable = true;
     wayle.enable = true;
     yazi.enable = true;
