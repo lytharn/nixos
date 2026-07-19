@@ -80,6 +80,19 @@
   # only reachable over Tailscale, so target its MagicDNS name.
   clan.core.networking.targetHost = "lytharn@baxx";
 
+  # Build baxx's closure on serx instead of on baxx itself. baxx is low-power (Intel N, 16 GB)
+  # so evaluating + building its own system is slow and OOM-prone; clan uploads the flake to
+  # serx, evaluates and builds there, then `nix copy`s only the runtime closure here and
+  # activates — so baxx's SSD never accumulates build-only deps or intermediates. If serx is
+  # unreachable, override per-invocation: `clan machines update baxx --build-host localhost`
+  # builds on the deploying desktop instead.
+  clan.core.networking.buildHost = "lytharn@serx";
+  # The serx→baxx closure copy runs *from* serx (`nix copy --to ssh://lytharn@baxx`), but baxx
+  # only trusts the mewx/quex lytharn keys, not serx's. Forwarding the deploying desktop's SSH
+  # agent through serx lets that copy authenticate as the desktop, reusing the existing trust —
+  # no standing serx→baxx key to provision.
+  clan.core.networking.forwardAgent = true;
+
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;
