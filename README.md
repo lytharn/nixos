@@ -82,12 +82,14 @@ This mirrors clan's own official services (e.g. `borgbackup`).
 
 ```bash
 clan machines list                 # list machines
-clan machines update <host>        # deploy a remote host over SSH (lytharn@<host> + sudo)
+clan machines update <host>        # deploy any host over SSH (lytharn@<host> + sudo)
 clan vars list <host>              # a host's vars and whether they're set
 clan vars generate <host>          # (re)generate a host's vars, prompting as needed
 ```
 
-To rebuild the machine you're sitting at, plain nixos-rebuild is simpler (local, one sudo):
+`clan machines update` works for the host you're sitting at too — each desktop authorizes its
+own `lytharn` key, so it self-deploys. Plain nixos-rebuild stays available as a local fallback
+(no SSH, one sudo):
 ```bash
 sudo nixos-rebuild switch --flake .        # or .#<host>
 ```

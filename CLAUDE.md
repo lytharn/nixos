@@ -80,20 +80,25 @@ Two kinds of module, wired differently:
 
 ## Common commands
 
-Build/switch the machine you're on (local, no SSH, one sudo — `nixos-rebuild` picks the
-`nixosConfigurations` attr matching the hostname):
-```bash
-sudo nixos-rebuild switch --flake .
-```
-
-Deploy a **remote** host with clan (SSHes to the host's `clan.core.networking.targetHost`,
-`lytharn@<host>`, escalating via sudo):
+Deploy **any** host — including the one you're sitting at — uniformly with clan (SSHes to the
+host's `clan.core.networking.targetHost`, `lytharn@<host>`, escalating via sudo; also generates
+any missing vars across the fleet first):
 ```bash
 clan machines update <host>
 ```
-`clan machines update` also generates any missing vars across the fleet first. For a host you
-are sitting at, prefer the local `nixos-rebuild` above (clan's SSH-to-self needs the host to
-authorize an ssh key for `lytharn`, which each host does only for its own key).
+Self-deploy works because each desktop authorizes its own `lytharn` key
+(`machines/<host>/configuration.nix`); only *cross*-desktop deploys are unauthorized. Where the
+build runs follows each host's `clan.core.networking.buildHost`: unset ⇒ build on the target
+(desktops build locally, still offloading compilation to `serx` via `nix.buildMachines`, and
+falling back to local if `serx` is unreachable), while `baxx` builds on `serx`. Override the
+builder per-invocation with `--build-host <host>` (or `--build-host localhost` to build on the
+deploying machine).
+
+Still available as a fallback for the machine you're on (local, no SSH, one sudo — `nixos-rebuild`
+picks the `nixosConfigurations` attr matching the hostname):
+```bash
+sudo nixos-rebuild switch --flake .
+```
 
 Other:
 ```bash
