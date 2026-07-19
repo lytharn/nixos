@@ -166,9 +166,13 @@
     };
   };
 
-  # Distributed builds on serx: offloads *compilation* for LOCAL builds — i.e. the `nixos-rebuild`
-  # fallback and `clan machines update mewx --build-host localhost`. The normal clan path now
-  # builds entirely on serx via buildHost above, bypassing this; it stays for the offline case.
+  # Distributed builds on serx. mewx's *system* build now runs on serx via buildHost above, so
+  # this no longer serves deploys — its remaining job is offloading from-source compilation of
+  # ad-hoc local nix builds, chiefly uncached dev-shell dependencies (`nix develop` for projects
+  # on this machine), to serx while on the home tailnet. Note the limits: cached deps are just
+  # substituted by mewx (serx uninvolved), and a project's own in-shell build (cargo/make/etc.)
+  # isn't a nix build so it stays on mewx. nix silently skips serx when unreachable, so it's
+  # harmless off-network.
   nix.distributedBuilds = true;
   programs.ssh.knownHosts."serx".publicKey =
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHA94CzkE/GsVvqsPkUyFCwuA+MXQXSBposOrq4HxSHB";
