@@ -54,6 +54,14 @@
             users.users.hass.extraGroups = [ "bluetooth" ];
 
             services.matter-server.enable = true;
+            # Skip a single malformed PAA root cert the DCL serves that newer
+            # cryptography's ASN.1 parser rejects, which otherwise aborts the whole
+            # startup cert fetch and takes the Matter server (and every Matter/Thread
+            # device) down. See matter-paa-skip.patch for the details and the (upstream
+            # is archived) removal condition.
+            services.matter-server.package = pkgs.python-matter-server.overrideAttrs (old: {
+              patches = (old.patches or [ ]) ++ [ ./matter-paa-skip.patch ];
+            });
 
             # Allow Thread devices to initiate BDX connections for Matter OTA firmware updates
             networking.firewall.trustedInterfaces = [ "wpan0" ];
