@@ -92,6 +92,11 @@
   # agent through serx lets that copy authenticate as the desktop, reusing the existing trust —
   # no standing serx→baxx key to provision.
   clan.core.networking.forwardAgent = true;
+  # That copy lands as `lytharn`, and paths serx built from source (not yet in the public cache)
+  # are unsigned; baxx's nix-daemon rejects unsigned paths from an untrusted user (clan's
+  # `--no-check-sigs` is ignored by the receiving daemon for such users). Trust lytharn as a nix
+  # user so the copy is accepted. root stays trusted (merged in automatically).
+  nix.settings.trusted-users = [ "lytharn" ];
 
   services.openssh = {
     enable = true;

@@ -151,6 +151,11 @@
   # so forwardAgent must be on, and serx pins mewx's host key for that copy.
   clan.core.networking.buildHost = "lytharn@serx";
   clan.core.networking.forwardAgent = true;
+  # serx copies the closure it built here as `lytharn`; paths serx built from source (not yet in
+  # the public cache) are unsigned, and mewx's nix-daemon rejects unsigned paths from an untrusted
+  # user (clan's `nix copy --no-check-sigs` is ignored by the receiving daemon for such users). So
+  # trust lytharn as a nix user, as serx does. root stays trusted (merged in automatically).
+  nix.settings.trusted-users = [ "lytharn" ];
 
   services.openssh = {
     enable = true;
