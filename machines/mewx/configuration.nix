@@ -141,6 +141,17 @@
   # key, so the serx remote-builder pin (knownHosts) is unaffected.
   clan.core.networking.targetHost = "lytharn@mewx";
 
+  # Build mewx's closure on serx rather than locally. mewx is an old, low-RAM laptop, so
+  # offloading evaluation + build to serx (clan uploads the flake, evals + builds there, then
+  # nix-copies only the runtime closure back here and activates) spares mewx's RAM/CPU/SSD and
+  # slow uplink. `nix.buildMachines` below only ever offloaded *compilation*, not eval — buildHost
+  # moves eval too. Requires serx reachable, which it is on the home tailnet; override with
+  # `clan machines update mewx --build-host localhost` when off-network. The serx->mewx closure
+  # copy authenticates via mewx's own forwarded agent (mewx already trusts its own lytharn key),
+  # so forwardAgent must be on, and serx pins mewx's host key for that copy.
+  clan.core.networking.buildHost = "lytharn@serx";
+  clan.core.networking.forwardAgent = true;
+
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;
@@ -155,7 +166,9 @@
     };
   };
 
-  # Enable distributed builds on serx
+  # Distributed builds on serx: offloads *compilation* for LOCAL builds — i.e. the `nixos-rebuild`
+  # fallback and `clan machines update mewx --build-host localhost`. The normal clan path now
+  # builds entirely on serx via buildHost above, bypassing this; it stays for the offline case.
   nix.distributedBuilds = true;
   programs.ssh.knownHosts."serx".publicKey =
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHA94CzkE/GsVvqsPkUyFCwuA+MXQXSBposOrq4HxSHB";
