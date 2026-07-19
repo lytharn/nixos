@@ -132,6 +132,15 @@
     settings.PasswordAuthentication = false;
   };
 
+  # serx is baxx's clan buildHost (see machines/baxx/configuration.nix): it builds baxx's
+  # closure and then opens its *own* SSH connection to `lytharn@baxx` to `nix copy` it over.
+  # Pin baxx's host key here so that copy verifies non-interactively from a clean serx install,
+  # rather than relying on trust-on-first-use in serx's mutable ~/.ssh/known_hosts (which would
+  # force `--host-key-check accept-new` on the first deploy after any serx reinstall). Mirrors
+  # how the desktops pin serx for the remote-builder SSH.
+  programs.ssh.knownHosts."baxx".publicKey =
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG4W+zDBhmm3KV4tRs4O2aY8s+06dCGLJbZzKf+0ApJ2";
+
   # Enable this machine to be a remote builder
   users.users.remotebuilder = {
     isSystemUser = true;
