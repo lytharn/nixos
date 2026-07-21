@@ -71,6 +71,10 @@
 
             services.home-assistant = {
               enable = true;
+              # Mushroom dashboard cards, installed declaratively instead of via HACS.
+              customLovelaceModules = with pkgs.home-assistant-custom-lovelace-modules; [
+                mushroom
+              ];
               extraComponents = [
                 # Components required to complete the onboarding
                 "analytics"
