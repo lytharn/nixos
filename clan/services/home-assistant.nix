@@ -158,6 +158,42 @@
                     }
                   ];
                 };
+                # A switch group for all switchable speakers.
+                group.hogtalare = {
+                  name = "Högtalare";
+                  entities = [
+                    "switch.alvins_rum_hogtalare"
+                    "switch.milos_rum_hogtalare"
+                    "switch.nemos_rum_hogtalare"
+                  ];
+                };
+                # If anything in the group is on, turn everything off; otherwise all on.
+                script.toggle_hogtalare = {
+                  alias = "Toggle Högtalare";
+                  sequence = [
+                    {
+                      "if" = [
+                        {
+                          condition = "state";
+                          entity_id = "group.hogtalare";
+                          state = "on";
+                        }
+                      ];
+                      "then" = [
+                        {
+                          action = "homeassistant.turn_off";
+                          target.entity_id = "group.hogtalare";
+                        }
+                      ];
+                      "else" = [
+                        {
+                          action = "homeassistant.turn_on";
+                          target.entity_id = "group.hogtalare";
+                        }
+                      ];
+                    }
+                  ];
+                };
               };
             };
             # Need to have a tailscale service named hass, already created
