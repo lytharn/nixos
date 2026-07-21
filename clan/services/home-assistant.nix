@@ -110,6 +110,50 @@
                     "::1"
                   ];
                 };
+                # A light+switch group for all the lights.
+                group.lampor = {
+                  name = "Lampor";
+                  entities = [
+                    "switch.koket_fonster"
+                    "light.milos_rum_fonster"
+                    "switch.sovrummet_fonster"
+                    "light.alvins_rum_fonster_hoger"
+                    "light.alvins_rum_fonster_vanster"
+                    "light.nemos_rum_fonster_hoger"
+                    "light.nemos_rum_fonster_vanster"
+                    "switch.vardagsrummet_fonster_hoger"
+                    "switch.vardagsrummet_fonster_vanster"
+                    "light.vardagsrummet_tv_hoger"
+                    "light.vardagsrummet_tv_vanster"
+                  ];
+                };
+                # If anything in the group is on, turn everything off; otherwise all on.
+                script.toggle_lampor = {
+                  alias = "Toggle Lampor";
+                  sequence = [
+                    {
+                      "if" = [
+                        {
+                          condition = "state";
+                          entity_id = "group.lampor";
+                          state = "on";
+                        }
+                      ];
+                      "then" = [
+                        {
+                          action = "homeassistant.turn_off";
+                          target.entity_id = "group.lampor";
+                        }
+                      ];
+                      "else" = [
+                        {
+                          action = "homeassistant.turn_on";
+                          target.entity_id = "group.lampor";
+                        }
+                      ];
+                    }
+                  ];
+                };
               };
             };
             # Need to have a tailscale service named hass, already created
