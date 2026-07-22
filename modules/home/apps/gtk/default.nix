@@ -19,13 +19,15 @@ in
     # imperative dconf state that had drifted).
     gtk = {
       enable = true;
-      # settings.ini flag that GTK3 apps (zenity askpass) read for dark Adwaita.
+      # settings.ini flag that plain GTK3 apps read for dark Adwaita. Not set for
+      # GTK4: libadwaita ignores this property and warns ("Using
+      # GtkSettings:gtk-application-prefer-dark-theme with libadwaita is
+      # unsupported"), driving off color-scheme (below) instead.
       gtk3.extraConfig.gtk-application-prefer-dark-theme = true;
-      gtk4.extraConfig.gtk-application-prefer-dark-theme = true;
     };
 
     # The libadwaita / xdg-desktop-portal-gtk color-scheme preference, read by
-    # newer GTK4/libadwaita apps.
+    # newer GTK4/libadwaita apps (e.g. the zenity askpass popup).
     dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
   };
 }
