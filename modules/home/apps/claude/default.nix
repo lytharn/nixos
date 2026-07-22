@@ -22,6 +22,7 @@ in
         attribution = {
           commit = "";
           pr = "";
+          sessionUrl = false;
         };
       };
       lspServers = {
