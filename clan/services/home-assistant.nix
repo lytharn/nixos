@@ -2,9 +2,10 @@
 {
   _class = "clan.service";
   manifest.name = "slask/home-assistant";
-  manifest.description = "Home Assistant (+ Matter server), exposed on the tailnet via tailscale serve";
+  manifest.description = "Home Assistant (+ matterjs-server), exposed on the tailnet via tailscale serve";
   manifest.readme = ''
-    Runs Home Assistant with the Matter server on localhost and fronts it with
+    Runs Home Assistant with matterjs-server (the maintained Matter.js controller,
+    successor to the archived python-matter-server) on localhost and fronts it with
     `tailscale serve` under the `hass` tailnet service (TLS terminated by Tailscale).
     serx-only; the OTBR/Thread hardware glue (otbr-agent, packet forwarding) stays in
     serx's configuration.nix since it references serx's NIC and USB dongle.
@@ -19,33 +20,6 @@
           { lib, pkgs, ... }:
           let
             internalPort = 8123;
-
-            # Pre-built OTA provider binary — nixpkgs does not yet package this (see nixpkgs PR #377902).
-            # Source: https://github.com/home-assistant-libs/matter-linux-ota-provider/releases
-            # Update the version and hash when upgrading python-matter-server.
-            chip-ota-provider-app = pkgs.stdenvNoCC.mkDerivation {
-              pname = "chip-ota-provider-app";
-              version = "2025.9.0";
-
-              src = pkgs.fetchurl {
-                url = "https://github.com/home-assistant-libs/matter-linux-ota-provider/releases/download/2025.9.0/chip-ota-provider-app-x86-64";
-                hash = "sha256-RVDfevZSnkYgRj0cASf4MOwkBMgXrUxjQ7KeMs7AFE4=";
-              };
-
-              nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-              buildInputs = with pkgs; [
-                libnl
-                openssl
-                glib
-                stdenv.cc.cc.lib
-              ];
-
-              dontUnpack = true;
-
-              installPhase = ''
-                install -Dm755 $src $out/bin/chip-ota-provider-app
-              '';
-            };
           in
           {
             # For local connections
@@ -53,21 +27,22 @@
 
             users.users.hass.extraGroups = [ "bluetooth" ];
 
-            services.matter-server.enable = true;
-            # Skip a single malformed PAA root cert the DCL serves that newer
-            # cryptography's ASN.1 parser rejects, which otherwise aborts the whole
-            # startup cert fetch and takes the Matter server (and every Matter/Thread
-            # device) down. See matter-paa-skip.patch for the details and the (upstream
-            # is archived) removal condition.
-            services.matter-server.package = pkgs.python-matter-server.overrideAttrs (old: {
-              patches = (old.patches or [ ]) ++ [ ./matter-paa-skip.patch ];
-            });
+            # matterjs-server (Matter.js controller). Drop-in successor to the archived
+            # python-matter-server: same WebSocket API on the same default (127.0.0.1:5580,
+            # /ws), so HA's `matter` integration connects unchanged, and it auto-migrates
+            # the legacy python storage on startup. OTA is handled internally (no external
+            # chip-ota-provider-app), and the old PAA-cert parsing bug was
+            # python/cryptography-specific, so no patch is needed here.
+            services.matterjs-server.enable = true;
+            # Pin the fabric's vendor ID to 4939 (0x134b, the Home Assistant vendor ID).
+            # python-matter-server commissioned our devices under vendor 4939; matterjs-server
+            # otherwise defaults to 0xfff1, which does not match the existing fabric — the
+            # legacy loader would find no matching fabric and orphan every commissioned
+            # device. Keeping this pinned is what makes the migrated fabric keep working.
+            services.matterjs-server.extraArgs = [ "--vendorid=4939" ];
 
             # Allow Thread devices to initiate BDX connections for Matter OTA firmware updates
             networking.firewall.trustedInterfaces = [ "wpan0" ];
-
-            # Make chip-ota-provider-app visible to matter-server for OTA firmware updates
-            systemd.services.matter-server.path = [ chip-ota-provider-app ];
 
             services.home-assistant = {
               enable = true;
