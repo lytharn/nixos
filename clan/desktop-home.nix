@@ -30,6 +30,7 @@
     fd
     ripgrep
     ouch
+    manix # Fast search over nixpkgs/NixOS/Home-Manager options and docs
     # Apps
     firefox
     keepassxc
