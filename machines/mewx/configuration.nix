@@ -98,40 +98,10 @@
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJART1vYgHpeweIlQ4hpcJQQ12WnKJydXaSSkvehteCC lytharn@users.noreply.github.com" # mewx
     ];
-    # List packages installed in user profile. To search, run:
-    # $ nix search nixpkgs wget
-    packages = with pkgs; [
-      cargo
-      clang # For building parsers for treesitter
-      clippy
-      fd
-      gcc
-      keepassxc
-      lldb # For rust/c/c++ debugging
-      lua-language-server
-      marksman # Language server for Markdown
-      mold
-      nixd # Language server for Nix
-      nixfmt
-      prismlauncher
-      ouch
-      ripgrep
-      rust-analyzer
-      rustc
-      rustfmt
-      tombi # Language server for TOML
-    ];
   };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-
-  # List packages installed in system profile. To search, run:
-  # $ nix search nixpkgs wget
-  environment.systemPackages = with pkgs; [
-    firefox
-    wl-clipboard
-  ];
 
   # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
   # (greeting, nix-shell fn) comes from the fish home module (slask.apps.fish in desktop-home.nix).
