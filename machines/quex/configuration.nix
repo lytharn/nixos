@@ -94,39 +94,6 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search nixpkgs wget
-  environment.systemPackages = with pkgs; [
-    cargo
-    clippy
-    discord
-    eog
-    fd
-    firefox
-    gcc
-    impression # USB flasher
-    keepassxc
-    lldb # For rust/c/c++ debugging
-    lua-language-server
-    marksman # Language server for Markdown
-    mold
-    nixd # Language server for Nix
-    nixfmt
-    playerctl # For controlling playback
-    prismlauncher
-    protonup-qt
-    ouch
-    ripgrep
-    rust-analyzer
-    rustc
-    rustfmt
-    naps2 # GUI for scanning documents
-    spotify
-    tombi # Language server for TOML
-    vlc
-    xdg-utils # For opening default programs when clicking links
-  ];
-
   # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
   # (greeting, nix-shell fn) comes from the fish home module (slask.apps.fish in desktop-home.nix).
   programs.fish.enable = true;
@@ -191,6 +158,16 @@
         ../../clan/desktop-home.nix
       ];
       slask.apps.zed.enable = true; # quex-specific
+      # quex-specific apps (media, gaming, scanning)
+      home.packages = with pkgs; [
+        discord
+        eog
+        impression # USB flasher
+        naps2 # GUI for scanning documents
+        protonup-qt
+        spotify
+        vlc
+      ];
     };
   };
 

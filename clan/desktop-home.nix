@@ -6,7 +6,35 @@
 {
   home.username = "lytharn";
   home.homeDirectory = "/home/lytharn";
-  home.packages = [ pkgs.htop ];
+  # Shared toolchain for both desktops (dev tools + apps present on quex and mewx alike).
+  # Host-specific extras live in each machine's home-manager.users.lytharn block.
+  home.packages = with pkgs; [
+    htop
+    # Rust toolchain
+    cargo
+    clippy
+    rustc
+    rustfmt
+    rust-analyzer
+    mold
+    # C/C++
+    gcc
+    lldb # For rust/c/c++ debugging
+    # Language servers / formatters
+    lua-language-server
+    marksman # Language server for Markdown
+    nixd # Language server for Nix
+    nixfmt
+    tombi # Language server for TOML
+    # CLI utilities
+    fd
+    ripgrep
+    ouch
+    # Apps
+    firefox
+    keepassxc
+    prismlauncher
+  ];
 
   slask.apps = {
     bat.enable = true;
