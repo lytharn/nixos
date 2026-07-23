@@ -171,6 +171,15 @@
     "flakes"
   ];
 
+  # Expose the pinned nixpkgs + home-manager on the legacy NIX_PATH so manix can build its
+  # options caches — it evaluates `import <nixpkgs> {}` and `import <home-manager/docs>`.
+  # (Setting nix.nixPath replaces the default, so nixpkgs=flake:nixpkgs is re-listed here.)
+  nix.registry.home-manager.flake = inputs.home-manager;
+  nix.nixPath = [
+    "nixpkgs=flake:nixpkgs"
+    "home-manager=flake:home-manager"
+  ];
+
   # Home-Manager for the desktop (see clan/desktop-home.nix for the shared app set). mewx sets
   # the hyprland scale; the gh hosts.yml path is wired below where clan.core.vars is in scope.
   home-manager = {
