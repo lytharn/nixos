@@ -10,6 +10,7 @@
   # the ones mewx uses are imported explicitly, plus home-manager for the HM user config.
   imports = [
     inputs.home-manager.nixosModules.home-manager
+    ../../clan/rclone-nextcloud-secrets.nix
   ];
 
   # Bootloader.

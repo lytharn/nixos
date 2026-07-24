@@ -58,6 +58,7 @@
     mangohud.enable = true;
     neovim.enable = true;
     nextcloud-client.enable = true;
+    rclone-nextcloud.enable = true;
     starship.enable = true;
     thunderbird.enable = true;
     tmux.enable = true;

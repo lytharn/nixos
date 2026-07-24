@@ -10,6 +10,7 @@
   # the ones quex uses are imported explicitly, plus home-manager for the HM user config.
   imports = [
     inputs.home-manager.nixosModules.home-manager
+    ../../clan/rclone-nextcloud-secrets.nix
   ];
 
   # Bootloader.
@@ -183,6 +184,9 @@
   # gh's hosts.yml (with the oauth token) comes from a clan var owned by lytharn.
   home-manager.users.lytharn.slask.apps.gh.hostsFile =
     config.clan.core.vars.generators.gh.files.hosts.path;
+
+  # Increase rclone Nextcloud cache
+  home-manager.users.lytharn.slask.apps.rclone-nextcloud.cacheSize = "25G";
 
   # --- clan vars ---
 
