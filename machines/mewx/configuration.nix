@@ -12,6 +12,7 @@
     inputs.home-manager.nixosModules.home-manager
     ../../clan/rclone-nextcloud-secrets.nix
     ../../clan/remotebuilder-secrets.nix
+    ../../clan/nix-github-token.nix
   ];
 
   # Bootloader.
