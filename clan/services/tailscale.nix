@@ -5,7 +5,9 @@
   manifest.description = "Tailscale on member machines, enrolled from a clan-var auth key";
   manifest.readme = ''
     Joins each member machine to the tailnet. Also declares the placeholder auth-key var
-    generator (enrolment is one-time; all hosts are already enrolled). Applied to every host.
+    generator: real Tailscale auth keys expire, so none is baked in — enrolment is a one-time
+    manual step (`tailscale up`). After a wipe/reinstall a host must be re-enrolled by hand;
+    see README "Installing a new host". Applied to every host.
   '';
 
   roles.default = {
@@ -25,9 +27,11 @@
               extraSetFlags = [ "--accept-routes" ];
             };
 
-            # Auth key: only read on first enrolment. Every host here is already enrolled with
-            # persistent state, so this placeholder is never actually used — it just satisfies
-            # authKeyFile without prompting.
+            # Auth key: only read on first enrolment. Real Tailscale keys expire, so this ships a
+            # throwaway placeholder — enrolment is done manually once (`sudo tailscale up --reset
+            # --accept-routes`). On an already-enrolled host the persistent state means this is
+            # never read; after a wipe/reinstall the placeholder can't auto-enrol and the
+            # autoconnect unit fails until you re-run `tailscale up` by hand (see README).
             clan.core.vars.generators.tailscale = {
               files.authkey = { };
               runtimeInputs = [
