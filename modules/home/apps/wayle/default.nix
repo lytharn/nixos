@@ -90,8 +90,8 @@ in
 
             # Swap app icons for wayle's bundled monochrome set, tinted with
             # the "blue" color token (resolves to styling.palette.blue below).
-            # Nextcloud is deliberately left alone so its pixmap keeps
-            # reflecting sync state — an override is static.
+            # Leave any status-reflecting tray icon (e.g. a sync client) out of
+            # this list, since an override pixmap is static.
             overrides = [
               {
                 name = "udiskie";

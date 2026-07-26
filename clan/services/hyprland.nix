@@ -71,7 +71,7 @@
             # System daemon backing the udiskie auto-mounter enabled in the home module.
             services.udisks2.enable = true;
 
-            # Secret service for storing app credentials (e.g. Nextcloud client).
+            # Secret service (login keyring) for apps that store credentials there.
             # Unlocked automatically on login via PAM.
             services.gnome.gnome-keyring.enable = true;
             security.pam.services.ly.enableGnomeKeyring = true;
