@@ -1,4 +1,6 @@
 {
+  config,
+  lib,
   pkgs,
   inputs,
   ...
@@ -7,10 +9,12 @@
 {
   # clan auto-imports hardware-configuration.nix and disko.nix. Everything else is imported
   # explicitly: the shared restic secrets generator (see clan/restic-secrets.nix; the restic
-  # backup itself is now the restic inventory service), nix-minecraft's nixos module (its overlay
-  # below supplies pkgs.fabricServers to the minecraft inventory service), and home-manager.
+  # backup itself is now the restic inventory service), the shared remotebuilder SSH key (its
+  # public half is authorized below), nix-minecraft's nixos module (its overlay below supplies
+  # pkgs.fabricServers to the minecraft inventory service), and home-manager.
   imports = [
     ../../clan/restic-secrets.nix
+    ../../clan/remotebuilder-secrets.nix
     inputs.nix-minecraft.nixosModules.minecraft-servers
     inputs.home-manager.nixosModules.home-manager
   ];
@@ -150,9 +154,12 @@
     isSystemUser = true;
     group = "remotebuilder";
     useDefaultShell = true;
+    # Shared remotebuilder key (clan/remotebuilder-secrets.nix): quex and mewx hold the private
+    # half, this is its public half. `.value` reads the plaintext public var committed under vars/.
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAING+bnzNyg29Bo/5XFg/BW0Jauh6/rETiHrRhCMfuxe3 root@quex"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXV4yBwwih/nXTrFAszLDoR4yRET2ZJ+LJpc6YyDu/W root@mewx"
+      (lib.removeSuffix "\n"
+        config.clan.core.vars.generators.remotebuilder-ssh.files."id_ed25519.pub".value
+      )
     ];
   };
   users.groups.remotebuilder = { };

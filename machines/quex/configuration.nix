@@ -11,6 +11,7 @@
   imports = [
     inputs.home-manager.nixosModules.home-manager
     ../../clan/rclone-nextcloud-secrets.nix
+    ../../clan/remotebuilder-secrets.nix
   ];
 
   # Bootloader.
@@ -107,7 +108,7 @@
     {
       hostName = "serx";
       sshUser = "remotebuilder";
-      sshKey = "/root/.ssh/remotebuilder";
+      sshKey = config.clan.core.vars.generators.remotebuilder-ssh.files."id_ed25519".path;
       system = pkgs.stdenv.hostPlatform.system;
       supportedFeatures = [
         "benchmark" # Machine can generate metrics (means the builds usually takes the same amount of time)
