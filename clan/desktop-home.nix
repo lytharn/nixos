@@ -2,7 +2,7 @@
 # desktop's home-manager.users.lytharn alongside home-modules.nix; hosts layer on their
 # specifics (quex: zed; mewx: hyprland scale; each: gh.hostsFile, wired at machine scope
 # where clan.core.vars is visible).
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   home.username = "lytharn";
   home.homeDirectory = "/home/lytharn";
@@ -51,8 +51,10 @@
     helix.enable = true;
     hyprland = {
       enable = true;
-      wallpaper = "/home/lytharn/Nextcloud/wallpapers/road-scenery.jpg";
-      swaylockImage = "/home/lytharn/Nextcloud/wallpapers/astronaut-landscape-sci-fi-city.jpg";
+      # Sourced from the private `wallpapers` flake input (baked into the build, present offline
+      # at session start) rather than the Nextcloud sync folder, which is empty until GUI login.
+      wallpaper = "${inputs.wallpapers}/road-scenery.jpg";
+      swaylockImage = "${inputs.wallpapers}/astronaut-landscape-sci-fi-city.jpg";
       kbLayout = "us,se";
     };
     mangohud.enable = true;

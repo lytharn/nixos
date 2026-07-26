@@ -19,6 +19,14 @@
       url = "git+https://git.clan.lol/clan/clan-core";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Private collection of licensed wallpapers, consumed as raw files (flake = false) by the
+    # desktop HM config (clan/desktop-home.nix). Kept out of this public repo; Nix fetches it
+    # with the access-token from clan/nix-github-token.nix.
+    wallpapers = {
+      url = "github:lytharn/wallpapers";
+      flake = false;
+    };
   };
 
   outputs =
