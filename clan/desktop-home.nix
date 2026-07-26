@@ -59,9 +59,6 @@
     };
     mangohud.enable = true;
     neovim.enable = true;
-    # No GUI sync client: Nextcloud is accessed on-demand via the rclone FUSE mount
-    # (rclone-nextcloud, ~/Nextcloud-remote), which needs no interactive login and survives
-    # reinstalls. Re-enable nextcloud-client if you want always-local two-way sync under ~/Nextcloud.
     rclone-nextcloud.enable = true;
     starship.enable = true;
     thunderbird.enable = true;
