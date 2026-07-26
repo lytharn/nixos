@@ -95,6 +95,9 @@
       "networkmanager"
       "wheel"
     ];
+    # Bootstrap password so console/local login works on a fresh install (mutableUsers is on,
+    # so `passwd` can change it afterwards). Matches serx/baxx; only meaningful at user creation.
+    initialPassword = "slaskfisk";
     # Authorize mewx's own key so clan can deploy over SSH (as lytharn@mewx, escalating via
     # sudo) from mewx itself. PasswordAuthentication is off.
     openssh.authorizedKeys.keys = [
