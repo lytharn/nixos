@@ -175,3 +175,30 @@ Shared-across-machines secrets use `share = true` (see `clan/restic-secrets.nix`
 that needs a shared secret in a different shape derives per-host files from it via generator
 `dependencies` (e.g. the `client`/`server` roles in `clan/services/restic.nix`, which turn the
 shared restic password into a repo URL on serx and an htpasswd line on baxx).
+
+### Private flake inputs (GitHub access token)
+
+The desktop wallpaper comes from a **private** flake input (`wallpapers`, `flake = false`). Nix's
+own fetcher — not the `gh` credential helper, which only covers `git clone` — needs a GitHub
+token to fetch it, supplied via the `access-tokens` nix.conf setting. That token is a shared clan
+var (`clan/nix-github-token.nix`, owner root) pulled into nix.conf with an **optional** `!include`,
+keeping it out of the world-readable store. Use a dedicated fine-grained PAT with just
+**Contents: read** on the private repo — it's deployed to both desktops.
+
+> **Bootstrap gotcha — the first build passes the token by hand.** The `!include` only takes
+> effect *after* a machine activates the config carrying it, but that same build must fetch the
+> private input to succeed — chicken-and-egg. So the **first** deploy on a machine that adds this
+> input (a fresh reinstall, or a desktop getting the wallpaper for the first time) can't self-fetch.
+> Run one local rebuild with the token out-of-band, then normal deploys work:
+> ```bash
+> sudo nixos-rebuild switch --flake . --option access-tokens "github.com=$(gh auth token)"
+> ```
+> Do this as a **local** `nixos-rebuild`, not `clan machines update` — the latter fetches inputs
+> on the remote (where the token isn't set yet) and warns *"Detected potential issue when fetching
+> flake inputs on remote."* After the var lands on disk, `clan machines update <host>` needs no
+> `--option`. (`$(gh auth token)` works if `gh` is logged in on that host; otherwise pass the PAT
+> literally.)
+
+> **Standalone Home-Manager users** (`.#lytharn@standalone`) are unaffected — that config never
+> references `inputs.wallpapers`, and Nix fetches inputs lazily, so the private repo is never
+> pulled. Only whole-flake commands (`nix flake check`/`archive`/`update`) would touch it.
