@@ -12,6 +12,7 @@
     inputs.home-manager.nixosModules.home-manager
     ../../clan/rclone-nextcloud-secrets.nix
     ../../clan/remotebuilder-secrets.nix
+    ../../clan/deploy-ssh-secrets.nix
   ];
 
   # Bootloader.
@@ -86,10 +87,14 @@
       "video"
       "scanner" # Access to SANE scanners
     ];
-    # Authorize quex's own key so clan can deploy over SSH (as lytharn@quex, escalating via
-    # sudo) from quex itself. PasswordAuthentication is off.
+    # Bootstrap password so console/local login works on a fresh install (mutableUsers is on,
+    # so `passwd` can change it afterwards). Matches serx/baxx; only meaningful at user creation.
+    initialPassword = "slaskfisk";
+    # Authorize quex's own self-deploy key so clan can deploy over SSH (as lytharn@quex,
+    # escalating via sudo) from quex itself. PasswordAuthentication is off. The keypair is a
+    # clan var (deploy-ssh) rather than a hand-managed ~/.ssh key, so it survives a reinstall.
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOpXrMQFd1h62FXx2gUVFPVpEoZh2xWbcQ7FqzJSPi+M lytharn@users.noreply.github.com" # quex
+      config.clan.core.vars.generators.deploy-ssh.files."id_ed25519.pub".value
     ];
   };
 
@@ -122,6 +127,15 @@
   # How clan reaches quex for deploys (sudo escalation). quex keeps its existing OpenSSH host
   # key, so the serx remote-builder pin (knownHosts) is unaffected.
   clan.core.networking.targetHost = "lytharn@quex";
+
+  # Self-deploy (`clan machines update quex` on quex) connects to lytharn@quex over SSH. Point
+  # that loopback at the deploy-ssh var key (authorized above) rather than lytharn's default
+  # ~/.ssh identity, so it works on a fresh install without a hand-placed key.
+  programs.ssh.extraConfig = ''
+    Host quex
+      IdentityFile ${config.clan.core.vars.generators.deploy-ssh.files."id_ed25519".path}
+      IdentitiesOnly yes
+  '';
 
   services.openssh = {
     enable = true;
