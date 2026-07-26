@@ -2,6 +2,9 @@
   "machines": {
     "baxx": {
       "installedAt": 1783314565
+    },
+    "quex": {
+      "installedAt": 1785055591
     }
   }
 }
