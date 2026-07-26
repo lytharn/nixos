@@ -86,6 +86,14 @@ any missing vars across the fleet first):
 ```bash
 clan machines update <host>
 ```
+> **Which host can deploy which.** Each desktop authorizes only *its own* `lytharn` key
+> (`machines/<host>/configuration.nix`), so a desktop can deploy **itself** but **not the other
+> desktop** — `quex` cannot `clan machines update mewx`, and vice versa. There is no shared deploy
+> key between them. So a change touching both desktops must be deployed **from each desktop in
+> turn** (run `clan machines update <that-host>` while sitting at it, or `sudo nixos-rebuild
+> switch --flake .`). Never offer to deploy the *other* desktop from the one you're on — it will
+> fail on SSH auth. (`serx`/`baxx` are reachable from the desktops as usual.)
+
 Self-deploy works because each desktop authorizes its own `lytharn` key
 (`machines/<host>/configuration.nix`); only *cross*-desktop deploys are unauthorized. Where the
 build runs follows each host's `clan.core.networking.buildHost`: unset ⇒ build on the target
