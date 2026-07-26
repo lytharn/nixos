@@ -118,6 +118,15 @@ sudo nixos-rebuild switch --flake .        # or .#<host>
    ```
    No password prompt and no host-key pre-seeding — clan creates and places everything.
 6. Commit the generated `machines/<host>/hardware-configuration.nix`.
+7. **Re-enroll Tailscale.** A wipe/reinstall clears `/var/lib/tailscale`, so the host is no
+   longer on the tailnet and the shipped auth key is only a placeholder (keys expire, so no
+   real one is baked in — see `clan/services/tailscale.nix`). `tailscaled-autoconnect.service`
+   will fail on the first rebuild; re-enroll once, manually, on the host:
+   ```bash
+   sudo tailscale up --reset --accept-routes   # opens a login URL to approve the node
+   ```
+   `--reset` clears the half-applied `--accept-routes` state; approving reuses the old node
+   name if you didn't delete it from the admin console. After this the autoconnect unit no-ops.
 
 **Adopting an already-installed machine in-place** (no wipe): create `machines/<host>/`,
 `clan vars generate <host>`, then on that machine `sudo nixos-rebuild switch --flake .#<host>`
