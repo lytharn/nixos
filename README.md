@@ -155,6 +155,16 @@ clan secrets users add-key lytharn --age-key <another-age-public-key>   # e.g. a
 Derive an age public key from an SSH key with `nix run nixpkgs#ssh-to-age` (private:
 `-private-key -i ~/.ssh/id_ed25519`; from a host key: `ssh-keyscan <ip> | nix run nixpkgs#ssh-to-age`).
 
+> **After reinstalling an admin desktop**, a wipe clears `~/.config/sops/age/keys.txt`, so
+> `clan vars generate` fails with *"No SOPS key found"* — the machine can still *decrypt*
+> deployed vars with its SSH host key, but *creating/editing* one needs an admin key. Restore
+> it from backup before generating vars:
+> ```bash
+> mkdir -p ~/.config/sops/age && cp <backup> ~/.config/sops/age/keys.txt && chmod 600 ~/.config/sops/age/keys.txt
+> ```
+> Any of the registered `lytharn` admin keys works (clan encrypts every var to all of them);
+> confirm the file matches one with `age-keygen -y ~/.config/sops/age/keys.txt`.
+
 ### Adding / changing a secret
 
 Add or edit a `clan.core.vars.generators.<name>` block in the machine config, then:
