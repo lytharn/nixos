@@ -157,6 +157,14 @@
   nix.distributedBuilds = true;
   programs.ssh.knownHosts."serx".publicKey =
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHA94CzkE/GsVvqsPkUyFCwuA+MXQXSBposOrq4HxSHB";
+
+  # Pin mewx's own host key so a self-deploy (`clan machines update mewx` run here, which SSHes
+  # to lytharn@mewx) verifies non-interactively instead of a trust-on-first-use prompt on a clean
+  # known_hosts. This is the same key serx already pins for the buildHost closure copy
+  # (machines/serx/configuration.nix); it's stable across deploys and changes only on a deliberate
+  # host-key rotation. Mirrors quex's self-pin.
+  programs.ssh.knownHosts."mewx".publicKey =
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIXSzqEVPc9rFdNBPLP4QzravDBX92tNZ8wi+EtsX6Aj";
   nix.buildMachines = [
     {
       hostName = "serx";
