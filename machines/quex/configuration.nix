@@ -138,6 +138,13 @@
       IdentitiesOnly yes
   '';
 
+  # Pin quex's own host key so self-deploy verifies non-interactively instead of prompting to
+  # trust-on-first-use on a clean known_hosts. This is the same host key that derives quex's
+  # clan-vars age identity (sops/machines/quex), so it's stable across deploys and only changes
+  # on a deliberate host-key rotation. Mirrors the serx pin above.
+  programs.ssh.knownHosts."quex".publicKey =
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILnv3ccPSBMhuE5FVCgfD1EQ0djGJC6yi/lS2mLz+Dnr";
+
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;
