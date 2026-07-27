@@ -19,6 +19,10 @@ in
       settings = {
         model = "opus";
         tui = "fullscreen";
+        # LSP servers are provided below; suppress Claude Code's separate
+        # marketplace-plugin "install an LSP for <lang>?" recommendation nag,
+        # which is independent of configured lspServers and never checks them.
+        lspRecommendationDisabled = true;
         attribution = {
           commit = "";
           pr = "";
