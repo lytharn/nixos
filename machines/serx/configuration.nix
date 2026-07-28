@@ -146,7 +146,7 @@
     "baxx".publicKey =
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG4W+zDBhmm3KV4tRs4O2aY8s+06dCGLJbZzKf+0ApJ2";
     "mewx".publicKey =
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIXSzqEVPc9rFdNBPLP4QzravDBX92tNZ8wi+EtsX6Aj";
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICBRqLxFBuuBq2yhQOzxNzLO0ArNwyfCCZQflCKxhDuj";
   };
 
   # Enable this machine to be a remote builder

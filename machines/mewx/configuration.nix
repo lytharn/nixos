@@ -164,7 +164,7 @@
   # (machines/serx/configuration.nix); it's stable across deploys and changes only on a deliberate
   # host-key rotation. Mirrors quex's self-pin.
   programs.ssh.knownHosts."mewx".publicKey =
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIXSzqEVPc9rFdNBPLP4QzravDBX92tNZ8wi+EtsX6Aj";
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICBRqLxFBuuBq2yhQOzxNzLO0ArNwyfCCZQflCKxhDuj";
   nix.buildMachines = [
     {
       hostName = "serx";
