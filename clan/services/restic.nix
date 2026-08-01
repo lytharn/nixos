@@ -294,6 +294,9 @@
                 config.services.home-assistant.configDir
                 config.services.actual.settings.dataDir
                 config.services.minecraft-servers.dataDir
+                # Forgejo's repos, LFS and data all live under stateDir; its Postgres DB is
+                # already captured by the pg_dumpall into staging below.
+                config.services.forgejo.stateDir
                 staging
               ];
 

@@ -95,6 +95,21 @@
       roles.default.machines.serx = { };
     };
 
+    instances.forgejo = {
+      module = {
+        name = "forgejo";
+        input = "self";
+      };
+      # serx-only. Declares its own forgejo-runner-token var; its Postgres DB + stateDir are
+      # picked up by the restic client below (pg_dumpall + the forgejo stateDir path).
+      # adminUser/adminEmail drive the declarative admin bootstrap (password = forgejo-admin
+      # var prompt); set adminUser null to skip it and create the admin by hand instead.
+      roles.default.machines.serx.settings = {
+        adminUser = "lytharn";
+        adminEmail = "lytharn@users.noreply.github.com";
+      };
+    };
+
     instances.restic = {
       module = {
         name = "restic";
