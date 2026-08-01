@@ -27,11 +27,17 @@
                 # Can attach to a server using tmux -S /run/minecraft/<server>.sock attach
                 vanilla = {
                   enable = true;
-                  package = pkgs.fabricServers.fabric-1_21_10.override { loaderVersion = "0.18.1"; };
+                  # MC 26.2 requires Java 25; nix-minecraft's fabric builder otherwise
+                  # defaults jre_headless to the nixpkgs default (Java 21), which fails at
+                  # launch with UnsupportedClassVersionError (class file version 69.0).
+                  package = pkgs.fabricServers.fabric-26_2.override {
+                    loaderVersion = "0.19.3";
+                    jre_headless = pkgs.jdk25_headless;
+                  };
                   serverProperties = {
                     difficulty = "normal";
                     gamemode = "survival";
-                    level-seed = 3703410692761387670; # Oak forest with plaines
+                    level-seed = 8500081009970950196; # All biomes near spawn
                     server-port = 43001;
                   };
                   jvmOpts = "-Xms6g -Xmx6g"; # Set to same value to prevent resize of the heap (garbage collection pauses)
@@ -39,8 +45,8 @@
                     mods = pkgs.linkFarmFromDrvs "mods" (
                       builtins.attrValues {
                         simpleVoiceChat = pkgs.fetchurl {
-                          url = "https://cdn.modrinth.com/data/9eGKb6K1/versions/BjR2lc4k/voicechat-fabric-1.21.10-2.6.6.jar";
-                          hash = "sha256-yC5pMBLsi4BnUq4CxTfwe4MGTqoBg04ZaRrsBC3Ds3Y=";
+                          url = "https://cdn.modrinth.com/data/9eGKb6K1/versions/3SOh5iiX/voicechat-fabric-2.6.21%2B26.2.jar";
+                          hash = "sha256-7V+hoRf6Jr+8hGPCf4io3/xT2id3gfJm7RESKB9/Zfc=";
                         };
                       }
                     );
