@@ -15,7 +15,8 @@ convention, cross-host wiring).
 - `serx` — headless server (Nextcloud, Home Assistant, Actual, Minecraft over Tailscale)
 - `baxx` — off-site backup target for `serx`
 
-Plus a standalone (non-NixOS) Home-Manager config: `home-manager switch --flake .#lytharn@standalone`.
+Plus a standalone (non-NixOS) Home-Manager config for a foreign distro — see
+[Standalone Home Manager](#standalone-home-manager-non-nixos).
 
 ## Services (clan inventory)
 
@@ -134,6 +135,83 @@ sudo nixos-rebuild switch --flake .        # or .#<host>
 provisioned. (For `clan machines update <host>` over SSH instead, the host must authorize an
 ssh key for `lytharn` — each host authorizes its own.)
 
+## Standalone Home Manager (non-NixOS)
+
+`homes/standalone/` is a Home-Manager-only config for a machine that has Nix but isn't
+NixOS. It's deliberately distro-agnostic — nothing in it is tied to a particular
+distribution, and `targets.genericLinux.enable` is what papers over the differences — so it
+should apply unchanged anywhere Nix runs. It's built by `mkHome` in `flake.nix` and exposed
+as `homeConfigurations.standalone`.
+
+It gets the same shell toolkit as the headless servers (bat, direnv, eza, fish, fzf, git,
+helix, starship, tmux, zoxide) plus neovim. No clan, no vars, no system-level config — clan
+is not involved with these hosts at all.
+
+### First-time setup
+
+1. **Install Nix** (multi-user daemon install), if it isn't already, and enable flakes:
+   ```bash
+   sh <(curl -L https://nixos.org/nix/install) --daemon
+   mkdir -p ~/.config/nix
+   echo 'experimental-features = nix-command flakes' >> ~/.config/nix/nix.conf
+   ```
+   Log out and back in so `/etc/profile.d/nix.sh` is sourced.
+
+   > `nix.conf` is left to you rather than managed by this flake on purpose: Home Manager's
+   > `nix.settings` requires `nix.package`, which installs a second nix client into the
+   > profile that shadows the daemon's. Not worth it for two lines.
+
+2. **Clone this flake to `~/flake`.** The path matters: the neovim module symlinks its lua
+   config out of the working checkout (so `:Lazy update` can write `lazy-lock.json`), and it
+   defaults to `~/flake`. Clone elsewhere only if you also set `slask.apps.neovim.flakePath`
+   in `homes/standalone/default.nix`.
+   ```bash
+   git clone https://github.com/lytharn/nixos ~/flake && cd ~/flake
+   ```
+
+3. **First switch.** `-b backup` is required: Home Manager takes over `~/.bashrc`,
+   `~/.profile` and `~/.bash_profile`, and refuses to clobber the distro's versions unless
+   told where to move them (`~/.bashrc.backup`, ...).
+   ```bash
+   nix run home-manager/master -- switch -b backup --flake .#standalone
+   ```
+
+4. **Open a new shell.** Everything (PATH, `EDITOR`, `TERMINFO_DIRS`, `NIX_PATH`) is exported
+   from `~/.bashrc` / `~/.profile`, which only get sourced on a fresh login.
+
+### Switching after a change
+
+`home-manager` is on PATH from then on, so subsequent applies are just:
+```bash
+cd ~/flake && home-manager switch --flake .#standalone
+```
+`-b backup` is only needed when the switch newly takes over a file the distro already owns,
+so keep it handy if you enable another app. Other useful commands:
+```bash
+home-manager switch --flake .#standalone -n -v   # dry run: show what would change
+home-manager generations                         # list generations, newest first
+home-manager expire-generations '-30 days'       # prune old ones
+```
+To roll back, run the `activate` script of the generation you want — `home-manager
+generations` prints each one's store path, so `<that-path>/activate` reverts to it.
+
+> The flake output is `standalone`, not `$USER@$HOSTNAME`, so the `.#standalone` suffix is
+> not optional — a bare `home-manager switch --flake .` won't find it.
+
+### Caveats on a foreign distro
+
+- **bash stays the login shell** — the distro owns that, and Home Manager only manages its
+  rc files. fish is installed and configured all the same; tmux opens it for its panes, so
+  that's where you actually get it.
+- **Fonts and GUI apps** aren't handled. `targets.genericLinux.gpu.enable = false` is set
+  deliberately: this is a terminal-only home, so the mesa/driver shim genericLinux would
+  otherwise pull in is skipped. Adding a GUI app here means turning that back on (and likely
+  `targets.genericLinux.nixGL`).
+- **`wl-clipboard`** comes in with tmux and is inert outside Wayland; the OSC 52 copy binding
+  falls back to the terminal's own clipboard handling.
+- The **private `wallpapers` flake input** is never fetched by this config — see the note at
+  the end of [Private flake inputs](#private-flake-inputs-github-access-token).
+
 ## Secret management (clan vars)
 
 Secrets are declared as `clan.core.vars.generators.<name>` blocks in a machine's config and
@@ -199,6 +277,6 @@ keeping it out of the world-readable store. Use a dedicated fine-grained PAT wit
 > `--option`. (`$(gh auth token)` works if `gh` is logged in on that host; otherwise pass the PAT
 > literally.)
 
-> **Standalone Home-Manager users** (`.#lytharn@standalone`) are unaffected — that config never
+> **Standalone Home-Manager users** (`.#standalone`) are unaffected — that config never
 > references `inputs.wallpapers`, and Nix fetches inputs lazily, so the private repo is never
 > pulled. Only whole-flake commands (`nix flake check`/`archive`/`update`) would touch it.

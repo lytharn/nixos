@@ -57,20 +57,23 @@
         imports = [ ./clan/clan.nix ];
       };
 
-      # Build a standalone home-manager configuration from a home file, importing every home
-      # app module (clan/home-modules.nix) and injecting the slask namespace — the same way
-      # the machine HM configs do.
+      # Build a standalone (non-NixOS) home-manager configuration from a home dir under
+      # homes/, importing every home app module (clan/home-modules.nix) and injecting the
+      # slask namespace — the same way the machine HM configs do.
       mkHome =
-        homeFile:
+        {
+          home,
+          system ? "x86_64-linux",
+        }:
         inputs.home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsFor "x86_64-linux";
+          pkgs = pkgsFor system;
           extraSpecialArgs = {
             namespace = "slask";
             inherit inputs;
           };
           modules = [
             ./clan/home-modules.nix
-            homeFile
+            home
           ];
         };
     in
@@ -87,11 +90,8 @@
         };
       });
 
-      # Standalone (non-NixOS) home for a generic-Linux machine, deployed with
-      # `home-manager switch --flake .#lytharn@standalone`.
-      # NB: the "@" in the dir name isn't valid in a bare path literal, so append as a string.
-      homeConfigurations."lytharn@standalone" = mkHome (
-        ./homes/x86_64-linux + "/lytharn@standalone/default.nix"
-      );
+      # Standalone (non-NixOS) homes, one attr per homes/<name>. Deployed with
+      # `home-manager switch -b backup --flake .#<name>` — see README.md.
+      homeConfigurations.standalone = mkHome { home = ./homes/standalone; };
     };
 }
