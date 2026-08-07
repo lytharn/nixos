@@ -11,8 +11,10 @@ Personal NixOS configuration flake, managed with [clan](https://clan.lol) (machi
 - `serx` — headless server hosting services (Nextcloud, Home Assistant, Actual, Minecraft) exposed via Tailscale
 - `baxx` — off-site, low-power (Intel N, 16 GB RAM, single 4 TB NVMe SSD) headless backup target for `serx`
 
-There is also one standalone (non-NixOS) Home-Manager config, `homes/x86_64-linux/lytharn@standalone`,
-exposed as the `homeConfigurations."lytharn@standalone"` flake output.
+There is also one standalone (non-NixOS) Home-Manager config, `homes/standalone/`, exposed as
+the `homeConfigurations.standalone` flake output and applied with `home-manager switch -b backup
+--flake .#standalone`. It is deliberately distro-agnostic (`targets.genericLinux`) — keep
+distribution-specific assumptions out of it.
 
 > The flake used to be built on [Snowfall Lib](https://github.com/snowfallorg/lib); it has
 > been fully migrated to clan. `flake.nix` is now plain outputs (no `mkFlake`), inputs are
@@ -34,7 +36,11 @@ clan auto-discovers **machines** by directory; everything else is imported expli
   and the add-a-service / client-server flow.
 - `modules/home/apps/<name>/default.nix` → reusable Home-Manager modules. Imported into a
   machine's HM user config via `clan/home-modules.nix` (which imports them all).
-- `homes/x86_64-linux/lytharn@standalone/default.nix` → the one standalone HM config.
+- `homes/<name>/default.nix` → standalone (non-NixOS) HM configs, built by `mkHome` in
+  `flake.nix` into `homeConfigurations.<name>`. Currently just `homes/standalone/`. Adding
+  one is a new dir plus one `mkHome { home = ./homes/<name>; }` line (`mkHome` also takes an
+  optional `system`, defaulting to `x86_64-linux`). Unlike the machine HM configs these get
+  no clan vars — a standalone home must not reference `clan.core.vars`.
 - `clan/` → clan glue not tied to a single machine: `clan.nix` (aggregator — sets `meta.name`,
   imports `inventory.nix` + `services-modules.nix`; `flake.nix`'s `lib.clan` call is a thin
   wrapper that just `imports = [ ./clan/clan.nix ]`), `inventory.nix` (machine tags + service
