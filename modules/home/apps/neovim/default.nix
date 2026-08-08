@@ -56,6 +56,21 @@ let
     yaml = tsg.tree-sitter-yaml;
   };
 
+  # Grammars whose upstream queries are written to be *concatenated* after
+  # another language's rather than to stand alone. tree-sitter-cpp is the
+  # canonical case: its highlights.scm only adds the C++-specific rules and
+  # leaves (string_literal)/(comment)/(number_literal) to tree-sitter-c's,
+  # which the tree-sitter CLI loads first (see the grammar's tree-sitter.json).
+  # Neovim has no such notion of a grammar's query set — it loads exactly
+  # queries/<lang>/<name>.scm — and expresses inheritance with an
+  # `; inherits: <lang>` modeline that upstream files don't carry. Without it a
+  # cpp buffer gets the C++ rules only, so plain strings/comments/numbers come
+  # out unhighlighted. Prepend the modeline as we harvest. Inherited queries are
+  # loaded *before* the language's own, so cpp-specific rules still win.
+  queryInherits = {
+    cpp = "c";
+  };
+
   treesitterRuntime = pkgs.runCommand "nvim-treesitter-runtime" { } (
     ''
       mkdir -p $out/parser $out/queries
@@ -64,13 +79,21 @@ let
       lib.mapAttrsToList (lang: drv: ''
         ln -s ${drv}/parser $out/parser/${lang}.so
         mkdir -p $out/queries/${lang}
+        modeline=${
+          lib.escapeShellArg (if queryInherits ? ${lang} then "; inherits: ${queryInherits.${lang}}" else "")
+        }
         # Grammars store queries either flat at queries/*.scm or nested one
         # level under queries/<name>/*.scm (e.g. hyprlang, query). Harvest both
         # into queries/${lang}/; first file wins on the rare basename collision.
         for q in ${drv}/queries/*.scm ${drv}/queries/*/*.scm; do
           [ -e "$q" ] || continue
           dest=$out/queries/${lang}/$(basename "$q")
-          [ -e "$dest" ] || ln -s "$q" "$dest"
+          [ -e "$dest" ] && continue
+          if [ -n "$modeline" ]; then
+            { printf '%s\n' "$modeline"; cat "$q"; } > "$dest"
+          else
+            ln -s "$q" "$dest"
+          fi
         done
       '') grammars
     )
@@ -100,6 +123,7 @@ in
       # mason-tool-installer's ensure_installed empty, so they are launched
       # from PATH rather than installed by mason (whose prebuilt binaries
       # don't run on NixOS anyway).
+      clang-tools # Includes clangd, clang-format and clang-tidy
       lua-language-server
       marksman
       nixd
