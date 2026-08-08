@@ -18,12 +18,23 @@ return {
   end,
   config = function()
     -- Enable treesitter highlighting for any filetype that has a parser
-    -- (the Nix-provided ones, plus Neovim's built-ins). pcall so a filetype
-    -- without a parser/query just falls back to legacy syntax highlighting.
+    -- (the Nix-provided ones, plus Neovim's built-ins) *and* highlight queries
+    -- to go with it. The query check is not redundant: vim.treesitter.start()
+    -- clears 'syntax', so starting it for a parser-only grammar (nixpkgs ships
+    -- tree-sitter-gitignore and tree-sitter-xml with no queries/ at all) trades
+    -- Neovim's perfectly good legacy syntax file for no highlighting whatsoever.
+    -- query.get() returns nil when a language has no query files and throws
+    -- when the language has no parser, so the pcall covers both: either way the
+    -- buffer keeps legacy syntax highlighting.
     vim.api.nvim_create_autocmd("FileType", {
       group = vim.api.nvim_create_augroup("lytharn-treesitter-highlight", { clear = true }),
       callback = function(args)
-        pcall(vim.treesitter.start, args.buf)
+        local lang = vim.treesitter.language.get_lang(vim.bo[args.buf].filetype) or vim.bo[args.buf].filetype
+        local ok, query = pcall(vim.treesitter.query.get, lang, "highlights")
+        if not ok or not query then
+          return
+        end
+        pcall(vim.treesitter.start, args.buf, lang)
       end,
     })
 

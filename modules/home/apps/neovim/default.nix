@@ -38,6 +38,10 @@ let
     git_rebase = tsg.tree-sitter-git-rebase;
     gitattributes = tsg.tree-sitter-gitattributes;
     gitcommit = tsg.tree-sitter-gitcommit;
+    # Parser-only in nixpkgs — the grammar ships no queries/ at all, so this
+    # buys no highlighting today and the FileType hook in lua/plugins/
+    # treesitter.lua deliberately leaves such buffers on legacy syntax. Kept so
+    # it starts working if upstream ever adds queries. Same for xml below.
     gitignore = tsg.tree-sitter-gitignore;
     hyprlang = tsg.tree-sitter-hyprlang;
     json = tsg.tree-sitter-json;
