@@ -38,6 +38,10 @@ in
           command = lib.getExe pkgs.nixd;
           extensionToLanguage.".nix" = "nix";
         };
+        rust = {
+          command = lib.getExe pkgs.rust-analyzer;
+          extensionToLanguage.".rs" = "rust";
+        };
       };
     };
   };
