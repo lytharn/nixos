@@ -49,6 +49,13 @@ return {
               vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
             end, "[T]oggle Inlay [H]ints")
           end
+
+          -- Toggle between a C/C++ source file and its header. Backed by clangd's
+          -- textDocument/switchSourceHeader extension, which nvim-lspconfig's clangd
+          -- config exposes as the buffer-local :LspClangdSwitchSourceHeader command.
+          if client and client.name == "clangd" then
+            map("gh", "<cmd>LspClangdSwitchSourceHeader<CR>", "[G]o to [H]eader/source")
+          end
         end,
       })
 
@@ -88,6 +95,26 @@ return {
       --  settings (table): Override the default settings passed when initializing the server.
       local servers = {
         -- :help lspconfig-all for a list of all the pre-configured LSPs
+        clangd = {
+          cmd = {
+            "clangd",
+            -- Index the whole project in the background, not just open files, so
+            -- references/symbol search cover files that were never opened.
+            "--background-index",
+            -- Run clang-tidy in-process (picks up a project's .clang-tidy).
+            "--clang-tidy",
+            "--completion-style=detailed",
+            "--function-arg-placeholders=1",
+            -- Only insert #include on completion when the header is genuinely
+            -- needed for the symbol. iwyu stands for include-what-you-use.
+            "--header-insertion=iwyu",
+          },
+          init_options = {
+            -- Used for files that compile_commands.json doesn't cover (scratch
+            -- files, a project without a compilation database).
+            fallbackFlags = { "-std=c++23" },
+          },
+        },
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
