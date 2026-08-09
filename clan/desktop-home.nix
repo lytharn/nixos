@@ -34,7 +34,6 @@
     # Apps
     firefox
     keepassxc
-    prismlauncher
   ];
 
   slask.apps = {
@@ -59,6 +58,7 @@
     };
     mangohud.enable = true;
     neovim.enable = true;
+    prismlauncher.enable = true;
     rclone-nextcloud.enable = true;
     starship.enable = true;
     thunderbird.enable = true;
