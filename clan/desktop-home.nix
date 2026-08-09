@@ -30,7 +30,6 @@
     fd
     ripgrep
     ouch
-    manix # Fast search over nixpkgs/NixOS/Home-Manager options and docs
     # Apps
     firefox
     keepassxc
@@ -56,6 +55,7 @@
       swaylockImage = "${inputs.wallpapers}/astronaut-landscape-sci-fi-city.jpg";
       kbLayout = "us,se";
     };
+    manix.enable = true;
     mangohud.enable = true;
     neovim.enable = true;
     prismlauncher.enable = true;
