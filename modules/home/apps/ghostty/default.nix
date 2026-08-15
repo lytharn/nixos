@@ -7,6 +7,7 @@
 }:
 let
   cfg = config.${namespace}.apps.ghostty;
+  cursorTrail = pkgs.writeText "ghostty-cursor-trail.glsl" (builtins.readFile ./cursor_trail.glsl);
 in
 {
   options.${namespace}.apps.ghostty = {
@@ -33,7 +34,7 @@ in
 
         # Cursor trail. The shader needs animation enabled so it keeps
         # rendering frames while the smear catches up to the cursor.
-        custom-shader = toString ./cursor_trail.glsl;
+        custom-shader = "${cursorTrail}";
         custom-shader-animation = true;
       };
     };
