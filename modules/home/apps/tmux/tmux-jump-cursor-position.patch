@@ -1,0 +1,105 @@
+--- a/scripts/tmux-jump.rb
++++ b/scripts/tmux-jump.rb
+@@ -184,6 +184,80 @@
+   end
+ end
+ 
++# East Asian Wide and Fullwidth ranges, i.e. the characters tmux lays out over
++# two cells. Deliberately conservative: a character wrongly listed here breaks
++# lines ending in it, while one wrongly left out is only as wrong as not having
++# the table at all. Notably excludes the private use area, where Nerd Font
++# glyphs live as single-width characters.
++WIDE_RANGES = [
++  0x1100..0x115F,
++  # Emoji_Presentation characters scattered through the symbol blocks; their
++  # unlisted neighbours (arrows, box drawing, most dingbats) stay single-width.
++  0x231A..0x231B, 0x23E9..0x23EC, 0x23F0..0x23F0, 0x23F3..0x23F3,
++  0x25FD..0x25FE, 0x2614..0x2615, 0x2648..0x2653, 0x267F..0x267F,
++  0x2693..0x2693, 0x26A1..0x26A1, 0x26AA..0x26AB, 0x26BD..0x26BE,
++  0x26C4..0x26C5, 0x26CE..0x26CE, 0x26D4..0x26D4, 0x26EA..0x26EA,
++  0x26F2..0x26F3, 0x26F5..0x26F5, 0x26FA..0x26FA, 0x26FD..0x26FD,
++  0x2705..0x2705, 0x270A..0x270B, 0x2728..0x2728, 0x274C..0x274C,
++  0x274E..0x274E, 0x2753..0x2755, 0x2757..0x2757, 0x2795..0x2797,
++  0x27B0..0x27B0, 0x27BF..0x27BF, 0x2B1B..0x2B1C, 0x2B50..0x2B50,
++  0x2B55..0x2B55,
++  0x2E80..0x303E, 0x3041..0x33FF, 0x3400..0x4DBF,
++  0x4E00..0x9FFF, 0xA000..0xA4CF, 0xA960..0xA97F, 0xAC00..0xD7A3,
++  0xF900..0xFAFF, 0xFE10..0xFE19, 0xFE30..0xFE6F, 0xFF00..0xFF60,
++  0xFFE0..0xFFE6, 0x1F300..0x1F64F, 0x1F680..0x1F6FF, 0x1F900..0x1F9FF,
++  0x1FA70..0x1FAFF, 0x20000..0x2FFFD, 0x30000..0x3FFFD
++].freeze
++
++def double_width?(char)
++  return false if char.nil?
++
++  ord = char.ord
++  WIDE_RANGES.any? { |range| range.cover?(ord) }
++end
++
++# tmux 3.7 stopped letting the copy-mode cursor rest one column past the last
++# character of a line when mode-keys is vi, matching vi's own semantics:
++# window_copy_cursor_right now passes onemore = (mode-keys != vi) through to
++# grid_reader_cursor_right. Older tmux, and emacs mode-keys on any version,
++# still offer that extra resting column, and there one cursor-right per
++# captured character lands exactly right.
++def cursor_rests_past_eol?
++  return @cursor_rests_past_eol if defined?(@cursor_rests_past_eol)
++
++  mode_keys = `tmux show-options -w -t #{Config.pane_nr} -v mode-keys`.strip
++  mode_keys = `tmux show-options -gwv mode-keys`.strip if mode_keys.empty?
++  digits = `tmux display-message -p '\#{version}'`.scan(/\d+/).map(&:to_i)
++  before_3_7 =
++    !digits.empty? && (digits[0] < 3 || (digits[0] == 3 && digits[1].to_i < 7))
++
++  @cursor_rests_past_eol = mode_keys != 'vi' || before_3_7
++end
++
++# Presses of cursor-right needed to walk from column 0 of +line+ to column 0 of
++# the line below it. Copy mode's cursor cannot rest past the last character of
++# a line, so a line of n characters costs n presses rather than the n+1 the
++# capture spends on its characters plus the "\n". Two exceptions: an empty line
++# still costs the single press its "\n" accounts for, and a line ending in a
++# double-width character has one extra resting cell -- the second half of that
++# character -- and so costs one more.
++def line_crossing_presses(line)
++  return 1 if line.empty?
++
++  line.length + (double_width?(line[-1]) ? 1 : 0)
++end
++
++# Presses of cursor-right needed to land on character +jump_to+ of the captured
++# screen, starting from the top left. Wrapped lines need no special case:
++# capture-pane emits one line per screen row, and cursor-right crosses a wrap
++# exactly like it crosses a hard line break.
++def cursor_right_presses(screen_chars, jump_to)
++  return jump_to if cursor_rests_past_eol?
++
++  *crossed, current = screen_chars[0...jump_to].split("\n", -1)
++  crossed.sum { |line| line_crossing_presses(line) } + current.to_s.length
++end
++
+ def main
+   begin
+     jump_to_char = read_char_from_file! File.new(Config.tmp_file)
+@@ -209,8 +283,19 @@
+    # end
+   `tmux send-keys -X -t #{Config.pane_nr} start-of-line`
+   `tmux send-keys -X -t #{Config.pane_nr} top-line`
+-  `tmux send-keys -X -t #{Config.pane_nr} -N #{Config.scroll_position} cursor-up`
+-  `tmux send-keys -X -t #{Config.pane_nr} -N #{jump_to} cursor-right`
++  if Config.scroll_position > 0
++    `tmux send-keys -X -t #{Config.pane_nr} -N #{Config.scroll_position} cursor-up`
++    # window_copy_cursor_up only refreshes its remembered column when the
++    # cursor is away from the end of its line, so scrolling up off an empty
++    # line leaves the freshly zeroed pair reading as "was at end of line" and
++    # lands us on the end of the line that scrolls in. Re-anchor. top-line,
++    # not start-of-line: it assigns cx = cy = 0 outright, while start-of-line
++    # walks to the start of the *logical* line and so climbs out of the pane
++    # when the top row is the continuation of a wrapped line.
++    `tmux send-keys -X -t #{Config.pane_nr} top-line`
++  end
++  presses = cursor_right_presses screen_chars, jump_to
++  `tmux send-keys -X -t #{Config.pane_nr} -N #{presses} cursor-right` if presses > 0
+ end
+ 
+ if $PROGRAM_NAME == __FILE__
