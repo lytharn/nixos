@@ -18,6 +18,18 @@ let
   # character is a resting spot, so crossing costs a press more, which is why
   # the patch carries a width table.
   #
+  # That extra press has an expiry date. tmux commit 44b8a40b8c (2026-07-29,
+  # "Correctly skip padding at end of line", tmux/tmux#5411) adds grid_line_limit
+  # and has grid_reader_cursor_right stop before trailing padding, so crossing
+  # such a line will cost no more than its length. It is on master but in no
+  # release yet: the 3.7c tarball still carries the old px-- boundary, and a
+  # 3.7c build takes 5 presses to cross a 4-character line ending in a wide
+  # glyph, exactly like 3.7b. Once it ships, the +1 needs an upper version bound
+  # -- note cursor_rests_past_eol?'s scan(/\d+/) drops letter suffixes, so it
+  # cannot tell 3.7 from 3.7c and a bound has to parse those too. Only the
+  # vi-on-3.7+ path is affected; the others return early and never consult the
+  # table.
+  #
   # Its scroll-restore preamble has a second, unrelated bug, and this one is
   # tmux's vi-style sticky `$` rather than anything about counting. cursor-up
   # and cursor-down keep a remembered column, but window-copy.c only refreshes
