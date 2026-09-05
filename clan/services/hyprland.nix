@@ -24,9 +24,17 @@
               lib.concatMapStringsSep "\n" (i: "U+${lib.toHexString i}") (lib.range 65381 65439)
             );
 
+            # nixpkgs' unifont stopped installing a BDF (it now ships pcf/otf
+            # plus the upstream .hex source), so regenerate one with unifont's
+            # own hex2bdf. Yields a byte-identical psf to the old unifont.bdf.
+            unifontBdf = pkgs.runCommand "unifont.bdf" { } ''
+              ${pkgs.unifont.bin}/bin/hex2bdf \
+                ${pkgs.unifont.doc}/share/unifont/unifont.hex > $out
+            '';
+
             matrixConsoleFont = pkgs.runCommand "matrix-console.psf" { } ''
               ${pkgs.bdf2psf}/bin/bdf2psf --fb \
-                ${pkgs.unifont}/share/fonts/unifont.bdf \
+                ${unifontBdf} \
                 ${pkgs.bdf2psf}/share/bdf2psf/standard.equivalents \
                 ${pkgs.bdf2psf}/share/bdf2psf/fontsets/Lat15.256+${katakanaSet}+${pkgs.bdf2psf}/share/bdf2psf/useful.set \
                 512 \
