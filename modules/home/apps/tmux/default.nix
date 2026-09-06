@@ -115,7 +115,22 @@ in
 
         # Hint-label tokens visible on screen: <prefix>+Space activates.
         # lowercase hint copies; UPPERCASE (shift) hint copies + pastes.
-        tmuxPlugins.tmux-thumbs
+        {
+          plugin = tmuxPlugins.tmux-thumbs;
+          # The upstream defaults copy with plain `set-buffer`, which fills
+          # tmux's own paste buffer and stops there — so a "copy" never
+          # reached the system clipboard (only the paste half worked).
+          # Copy-mode's own copy commands get an OSC 52 hand-off to the
+          # terminal for free under set-clipboard's default `external`, but
+          # the `set-buffer` command is a different path and needs `-w` to
+          # opt in. Re-state the three commands with it; OSC 52 also works
+          # over SSH, unlike piping to wl-copy.
+          extraConfig = ''
+            set -g @thumbs-command 'tmux set-buffer -w -- "{}" && tmux display-message "Copied {}"'
+            set -g @thumbs-upcase-command 'tmux set-buffer -w -- "{}" && tmux paste-buffer && tmux display-message "Copied {}"'
+            set -g @thumbs-multi-command 'tmux set-buffer -w -- "{}" && tmux paste-buffer && tmux display-message "Multi copied {}"'
+          '';
+        }
 
         # Easymotion-style cursor jump in copy mode (enter with <prefix>+[ ):
         # <prefix>+j, then one char, then the hint label to move cursor there.
