@@ -103,7 +103,6 @@
             environment.systemPackages = with pkgs; [
               adwaita-icon-theme # Missing icons in GTK applications without a theme
               hyprpaper
-              polkit_gnome # Authentication agent to elevate privileges by ask for password pop up
               wayshot
               wl-clipboard
               xdg-utils # For opening default programs when clicking links (a full DE would supply this)
