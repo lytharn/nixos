@@ -45,17 +45,18 @@
               };
               maxUploadSize = "64G";
               # Every app is managed via Nix. Nextcloud's bundled apps ship with the package and
-              # update with it; the add-ons are Notes, Tasks, Calendar and richdocuments (Nextcloud
-              # Office — its Collabora backend is services.collabora-online below; notify_push is
-              # wired by its own option above). serx has no appstore-installed apps, so disabling
-              # the store (the default once extraApps is set) freezes nothing — it just prevents
-              # drift outside the flake. autoUpdateApps only touches store apps, so it's dropped
-              # as a no-op.
+              # update with it; the add-ons are Notes, Tasks, Calendar, Cookbook and richdocuments
+              # (Nextcloud Office — its Collabora backend is services.collabora-online below;
+              # notify_push is wired by its own option above). serx has no appstore-installed apps,
+              # so disabling the store (the default once extraApps is set) freezes nothing — it just
+              # prevents drift outside the flake. autoUpdateApps only touches store apps, so it's
+              # dropped as a no-op.
               extraApps = {
                 inherit (pkgs.nextcloud34Packages.apps)
                   notes
                   tasks
                   calendar
+                  cookbook
                   richdocuments
                   ;
               };
