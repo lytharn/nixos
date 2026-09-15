@@ -45,10 +45,11 @@
               };
               maxUploadSize = "64G";
               # Every app is managed via Nix. Nextcloud's bundled apps ship with the package and
-              # update with it; the add-ons are Notes, Tasks, Calendar, Cookbook and richdocuments
+              # update with it; the add-ons are Notes, Tasks, Calendar, Cookbook, richdocuments
               # (Nextcloud Office — its Collabora backend is services.collabora-online below;
-              # notify_push is wired by its own option above). serx has no appstore-installed apps,
-              # so disabling the store (the default once extraApps is set) freezes nothing — it just
+              # notify_push is wired by its own option above), and Memories + previewgenerator
+              # (see nextcloud-memories-config below). serx has no appstore-installed apps, so
+              # disabling the store (the default once extraApps is set) freezes nothing — it just
               # prevents drift outside the flake. autoUpdateApps only touches store apps, so it's
               # dropped as a no-op.
               extraApps = {
@@ -58,6 +59,8 @@
                   calendar
                   cookbook
                   richdocuments
+                  memories
+                  previewgenerator
                   ;
               };
               appstoreEnable = false;
@@ -74,6 +77,29 @@
                 # Hour (0-23, UTC) when heavy daily background jobs run. 01:00 UTC ≈ 02-03 Stockholm.
                 maintenance_window_start = 1;
                 overwriteprotocol = "https";
+                # The NixOS default provider list plus the two a phone photo library needs:
+                # HEIC (iPhone stills — served by the imagick extension enabled above, whose
+                # ImageMagick carries the HEIC coder) and Movie (video thumbnails, which shells
+                # out to the ffmpeg pinned below). Setting this option replaces the default list
+                # wholesale, so the stock entries are repeated verbatim here.
+                enabledPreviewProviders = [
+                  "OC\\Preview\\PNG"
+                  "OC\\Preview\\JPEG"
+                  "OC\\Preview\\GIF"
+                  "OC\\Preview\\BMP"
+                  "OC\\Preview\\XBitmap"
+                  "OC\\Preview\\Krita"
+                  "OC\\Preview\\WebP"
+                  "OC\\Preview\\MarkDown"
+                  "OC\\Preview\\TXT"
+                  "OC\\Preview\\OpenDocument"
+                  "OC\\Preview\\HEIC"
+                  "OC\\Preview\\Movie"
+                ];
+                # OC\Preview\Movie looks up ffmpeg on PATH, which php-fpm doesn't have; pin it.
+                # ffprobe is derived from the same directory (PreviewManager only passes ffmpeg),
+                # so both must come from one package — ffmpeg-headless ships them together.
+                preview_ffmpeg_path = lib.getExe pkgs.ffmpeg-headless;
                 trusted_proxies = [
                   "127.0.0.1"
                   "::1"
@@ -265,6 +291,55 @@
                   ${occ} config:app:set richdocuments disable_certificate_verification --value "yes"
                 '';
             };
+
+            # Memories (photo timeline) needs two external binaries that it normally ships as
+            # prebuilt blobs under bin-ext/. The nixpkgs app tarball has no bin-ext at all, so
+            # both have to be resolved here or the app half-works:
+            #   * exiftool — used for every EXIF read, so without it the timeline indexes nothing.
+            #     Memories version-pins it exactly (BinExt::EXIFTOOL_VER, currently 13.59) and the
+            #     admin panel's self-test fails a mismatch; nixpkgs' exiftool is 13.59 today, so
+            #     this lines up. If a nixpkgs bump breaks that equality the fix is to pin the
+            #     matching exiftool, not to drop this. Note it must stay a *path* — setting
+            #     exiftool_no_local instead makes Memories look for the absent bundled copy.
+            #     Memories copies the binary into a temp dir before running it; nixpkgs' exiftool
+            #     is a perl script with absolute `use lib` paths baked in, so the copy still works.
+            #   * go-vod — the video transcoder. Not packaged at all, hence transcoding stays off
+            #     (also the upstream default; set explicitly so a default flip can't enable a
+            #     binary that isn't there). Videos play as originals, which phone clips do fine.
+            # Indexing needs no timer: Memories registers a TimedJob, driven by nextcloud-cron.
+            systemd.services.nextcloud-memories-config = {
+              description = "Configure Nextcloud Memories (exiftool path, transcoding)";
+              wantedBy = [ "multi-user.target" ];
+              after = [ "nextcloud-setup.service" ];
+              requires = [ "nextcloud-setup.service" ];
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+              };
+              script =
+                let
+                  occ = lib.getExe' config.services.nextcloud.occ "nextcloud-occ";
+                in
+                ''
+                  ${occ} config:system:set memories.exiftool --value "${lib.getExe pkgs.exiftool}"
+                  ${occ} config:system:set memories.exiftool_no_local --value false --type=boolean
+                  ${occ} config:system:set memories.vod.disable --value true --type=boolean
+                '';
+            };
+
+            # Memories' repair step (run by occ on every app enable/upgrade, i.e. from
+            # nextcloud-setup) opens with BinExt::pkill, which shells out to a bare `which ps`
+            # to reap stale go-vod/exiftool processes. occ inherits the unit's PATH, which
+            # carries only the occ wrapper, so that exec fails — and Util::execSafe raises on a
+            # failed proc_open rather than returning false, so the whole repair step aborts
+            # before it reaches fixSystemConfigTypes. Putting the two binaries on the path lets
+            # the step run through. Nothing else needs them: Memories' remaining bare-name
+            # callouts (`rm`, `ldd`) sit in the go-vod and bundled-binary branches, both of
+            # which are unreachable given the config above.
+            systemd.services.nextcloud-setup.path = [
+              pkgs.which
+              pkgs.procps
+            ];
 
             # Initial admin password: read only at first setup, and serx's instance already
             # exists, so a fresh random value has no effect on the live admin account.
