@@ -110,6 +110,16 @@
       };
     };
 
+    instances.hermes = {
+      module = {
+        name = "hermes";
+        input = "self";
+      };
+      # serx-only: it has the RAM and iGPU for the local model. Its stateDir (notes, memories,
+      # sessions) is picked up by the restic client below.
+      roles.default.machines.serx = { };
+    };
+
     instances.restic = {
       module = {
         name = "restic";

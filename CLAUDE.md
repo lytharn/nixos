@@ -8,7 +8,8 @@ Personal NixOS configuration flake, managed with [clan](https://clan.lol) (machi
 + secrets + deployment). Four hosts (all `x86_64-linux`):
 - `mewx` — Hyprland desktop; uses `serx` as a distributed Nix builder
 - `quex` — Hyprland desktop; uses `serx` as a distributed Nix builder
-- `serx` — headless server hosting services (Nextcloud, Home Assistant, Actual, Minecraft) exposed via Tailscale
+- `serx` — headless server hosting services (Nextcloud, Home Assistant, Actual, Minecraft) exposed via Tailscale,
+  plus a local LLM + [Hermes Agent](https://hermes-agent.nousresearch.com) (CLI-only, see below)
 - `baxx` — off-site, low-power (Intel N, 16 GB RAM, single 4 TB NVMe SSD) headless backup target for `serx`
 
 There is also one standalone (non-NixOS) Home-Manager config, `homes/standalone/`, exposed as
@@ -19,7 +20,7 @@ distribution-specific assumptions out of it.
 > The flake used to be built on [Snowfall Lib](https://github.com/snowfallorg/lib); it has
 > been fully migrated to clan. `flake.nix` is now plain outputs (no `mkFlake`), inputs are
 > `nixpkgs`, `home-manager`, `nix-minecraft`, `clan-core` (clan-core bundles disko + sops-nix),
-> `wallpapers`, `nixpkgs-collabora`, and there is no raw sops-nix / `secrets/` / `.sops.yaml`
+> `wallpapers`, `nixpkgs-collabora`, `hermes-agent`, and there is no raw sops-nix / `secrets/` / `.sops.yaml`
 > anymore — all secrets are clan vars.
 >
 > `nixpkgs-collabora` is a **pin, not a second channel**: a fixed older nixos-unstable rev that
@@ -222,3 +223,15 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     (`restic-monitor-client` on serx, `restic-monitor-server` on baxx, owner `restic`), so the
     URL never lands in the Nix store; the ping is best-effort (`|| true`) so it can't fail the
     backup. The two healthchecks checks' period/grace are configured on the healthchecks side.
+- **Hermes Agent on `serx`** (`clan/services/hermes.nix`): `llama-server` (Vulkan on the Arc
+  iGPU, `127.0.0.1:8012`) serves Qwen3.6-35B-A3B, and Hermes talks to it. CLI-only: the
+  gateway daemon is disabled, so nothing runs unattended. Use it with `ssh serx` → `hermes`, a
+  wrapper that (via a NOPASSWD sudo rule for a fixed root helper) starts the CLI as the
+  `hermes` user in a transient hardened unit: network limited to localhost (`IPAddressDeny=any`),
+  writes limited to `/var/lib/hermes`, plus read-only journal access for status questions.
+  - The model is a `pkgs.fetchurl` pinned to a Hugging Face commit + SHA-256, so a deploy
+    downloads it onto `serx` (~21 GB). To switch models, change `url` + `hash`; to avoid a
+    re-download of a file already on disk, `nix-store --add-fixed sha256 <file>` on serx first.
+  - Notes, memories and sessions live in `/var/lib/hermes` (backed up by the restic client).
+    Settings are declarative (`services.hermes-agent.settings`); managed mode blocks
+    `hermes setup` / `hermes config set`.

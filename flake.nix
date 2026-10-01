@@ -24,6 +24,14 @@
     # collabora-online to 26.04 (NixOS/nixpkgs#557042).
     nixpkgs-collabora.url = "github:nixos/nixpkgs/801bef6abd86b91e51083066b83fb354a11fc640";
 
+    # Hermes Agent (Nous Research): its NixOS module, used by clan/services/hermes.nix on serx.
+    # No binary cache upstream, so following our nixpkgs costs nothing and avoids a second one.
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
     clan-core = {
       url = "git+https://git.clan.lol/clan/clan-core";
       inputs.nixpkgs.follows = "nixpkgs";

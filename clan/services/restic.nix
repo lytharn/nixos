@@ -297,6 +297,8 @@
                 # Forgejo's repos, LFS and data all live under stateDir; its Postgres DB is
                 # already captured by the pg_dumpall into staging below.
                 config.services.forgejo.stateDir
+                # Hermes' notes, memories, skills and sessions (the model itself is in the store).
+                config.services.hermes-agent.stateDir
                 staging
               ];
 
