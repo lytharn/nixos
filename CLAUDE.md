@@ -19,7 +19,13 @@ distribution-specific assumptions out of it.
 > The flake used to be built on [Snowfall Lib](https://github.com/snowfallorg/lib); it has
 > been fully migrated to clan. `flake.nix` is now plain outputs (no `mkFlake`), inputs are
 > `nixpkgs`, `home-manager`, `nix-minecraft`, `clan-core` (clan-core bundles disko + sops-nix),
-> and there is no raw sops-nix / `secrets/` / `.sops.yaml` anymore — all secrets are clan vars.
+> `wallpapers`, `nixpkgs-collabora`, and there is no raw sops-nix / `secrets/` / `.sops.yaml`
+> anymore — all secrets are clan vars.
+>
+> `nixpkgs-collabora` is a **pin, not a second channel**: a fixed older nixos-unstable rev that
+> supplies only `collabora-online` on serx (`clan/services/nextcloud.nix`), because the current
+> nixpkgs can't build the LibreOffice 25.04 it depends on under gcc 16. Deliberately does *not*
+> follow `nixpkgs`. Drop it once nixpkgs bumps collabora-online to 26.04.
 
 ## Structure
 
