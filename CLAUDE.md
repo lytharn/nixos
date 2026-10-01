@@ -124,6 +124,14 @@ clan machines update <host>
 > switch --flake .`). Never offer to deploy the *other* desktop from the one you're on — it will
 > fail on SSH auth. (`serx`/`baxx` are reachable from the desktops as usual.)
 
+> **Claude Code can run the deploy itself — don't hand it back.** `sudo` on the desktops is not
+> passwordless, but that is *not* a blocker: an askpass **popup** prompts for the password, and
+> the deploy proceeds once it's answered. So run `clan machines update <host>` directly rather
+> than printing the command for the user to paste. Two practicalities: run it in the
+> **background** (it can outlast a foreground tool timeout, and the popup needs time to be
+> answered), and the popup requires someone **at that machine** — if nobody is, hand over
+> `! clan machines update <host>` instead.
+
 Self-deploy works because each desktop authorizes its own `lytharn` key
 (`machines/<host>/configuration.nix`); only *cross*-desktop deploys are unauthorized. Where the
 build runs follows each host's `clan.core.networking.buildHost`: unset ⇒ build on the target
