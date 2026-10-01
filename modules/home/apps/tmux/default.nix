@@ -8,63 +8,33 @@
 let
   cfg = config.${namespace}.apps.tmux;
 
-  # tmux-jump lands the copy-mode cursor by pressing cursor-right once per
-  # character of capture-pane's output, but the copy-mode cursor cannot rest
-  # past the last character of a line: leaving a non-empty line costs a single
-  # press while the capture spends both that column and the "\n". Every line
-  # above the target therefore pushes the landing spot one column further
-  # right, so only jumps on the top line are accurate. A line ending in a
-  # double-width character is the one exception: the second cell of that
-  # character is a resting spot, so crossing costs a press more, which is why
-  # the patch carries a width table.
+  # tmux-jump lands the copy-mode cursor by replaying cursor-right once per
+  # character of capture-pane's output. That drifts from where tmux actually
+  # moves: on tmux >= 3.7 with mode-keys vi the cursor no longer rests past
+  # the end of a line, multi-codepoint graphemes (emoji, ZWJ, combining marks)
+  # are several characters but one cell, and the scroll restore trips over
+  # vi's sticky end-of-line column when the top row is blank. Analysed in the
+  # upstream issue on cursor landing (and previously fixed here with a local
+  # patch -- see git history).
   #
-  # That extra press has an expiry date. tmux commit 44b8a40b8c (2026-07-29,
-  # "Correctly skip padding at end of line", tmux/tmux#5411) adds grid_line_limit
-  # and has grid_reader_cursor_right stop before trailing padding, so crossing
-  # such a line will cost no more than its length. It is on master but in no
-  # release yet: the 3.7c tarball still carries the old px-- boundary, and a
-  # 3.7c build takes 5 presses to cross a 4-character line ending in a wide
-  # glyph, exactly like 3.7b. Once it ships, the +1 needs an upper version bound
-  # -- note cursor_rests_past_eol?'s scan(/\d+/) drops letter suffixes, so it
-  # cannot tell 3.7 from 3.7c and a bound has to parse those too. Only the
-  # vi-on-3.7+ path is affected; the others return early and never consult the
-  # table.
-  #
-  # Its scroll-restore preamble has a second, unrelated bug, and this one is
-  # tmux's vi-style sticky `$` rather than anything about counting. cursor-up
-  # and cursor-down keep a remembered column, but window-copy.c only refreshes
-  # it when the cursor is away from the end of the line -- so sitting at a
-  # line end (on 3.7 + mode-keys vi, only an empty line qualifies) leaves the
-  # pair holding its calloc'd 0/0, which reads as "was at the end of a
-  # zero-length line" and snaps the cursor to the end of the line it moves
-  # onto. The plugin's cursor-up therefore lands at the end of the top line
-  # rather than its start whenever that line is blank, on every tmux version.
-  # The patch re-anchors afterwards with top-line, which assigns cx = cy = 0
-  # outright; start-of-line would not do, as it seeks the start of the
-  # *logical* line and climbs out of the pane on a wrapped top row.
-  #
-  # Reported upstream as schasse/tmux-jump#46, where it is read as a tmux 3.7
-  # regression. It is not: 3.7 deliberately made vi copy mode match vi, passing
-  # onemore = (mode-keys != vi) from window_copy_cursor_right into
-  # grid_reader_cursor_right. So the extra resting column is still there under
-  # emacs mode-keys, and on any tmux before 3.7 -- which is why the patch picks
-  # its rule at runtime from mode-keys and #{version} rather than assuming.
-  #
-  # The two open PRs, #48 and #49, both move by row then column instead. That
-  # trades the first bug for the sticky-`$` one above, now on the hot path: on
-  # a pane whose top row is blank the very first cursor-down lands at the end
-  # of the line, and the column presses that follow run on from there, past the
-  # end and onto later rows. Even with a re-anchor it still misses on wrapped
-  # lines, since cursor-down counts screen rows while start-of-line snaps to
-  # the start of the logical line. Counting presses along a single axis
-  # sidesteps both.
-  #
-  # Neither PR is merged as of 2026-08-30 (nixpkgs pins 2020-06-26); drop this
-  # patch once one lands, at which point it will fail to apply and say so. This
-  # analysis is posted on #46 as comment 5467058304, offering it as a PR.
-  jumpPlugin = pkgs.tmuxPlugins.jump.overrideAttrs (old: {
-    patches = (old.patches or [ ]) ++ [ ./tmux-jump-cursor-position.patch ];
-  });
+  # An open upstream PR (arcaartem's search-positioning branch) fixes it by
+  # moving to the target row with cursor-down, then within the row either
+  # pressing cursor-right (plain text) or running copy-mode's own
+  # search-forward-text (when emoji/combining marks are present). This tracks
+  # that PR's head, which also brings in upstream's custom jump keys and case
+  # options (nixpkgs pins a 2020-06-26 rev). Known miss: a line indented past
+  # the pane width, whose all-space first row looks blank to capture-pane. Go
+  # back to plain tmuxPlugins.jump once the PR is merged and nixpkgs has
+  # bumped past it.
+  jumpPlugin = pkgs.tmuxPlugins.jump.overrideAttrs {
+    version = "0-unstable-2026-10-01";
+    src = pkgs.fetchFromGitHub {
+      owner = "arcaartem";
+      repo = "tmux-jump";
+      rev = "3b926dcef0a4aabc1999fb8a4879328ab1f77276";
+      hash = "sha256-IiDKvnn7YwaVuKHNy7dODZ06/+X35jtF8DrI+9/1pk8=";
+    };
+  };
 in
 {
   options.${namespace}.apps.tmux = {
