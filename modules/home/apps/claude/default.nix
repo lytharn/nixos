@@ -121,6 +121,19 @@ in
           sessionUrl = false;
         };
       };
+      # Nix/NixOS/Home-Manager option and package lookup against search.nixos.org
+      # et al., so option names and package attrs come from the live indexes
+      # rather than being recalled. Knows nothing about *this* flake (clan's own
+      # `clan.service` modules included) — it is a search index, not an
+      # evaluator, so it complements `nix eval`/`nixd` rather than replacing it.
+      #
+      # Declared here rather than in the shared `programs.mcp.servers` because
+      # Claude Code is the only consumer; that option only pays off once a
+      # second AI tool needs the same server list.
+      mcpServers.nixos = {
+        type = "stdio";
+        command = lib.getExe pkgs.mcp-nixos;
+      };
       lspServers = {
         lua = {
           command = lib.getExe pkgs.lua-language-server;

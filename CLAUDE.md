@@ -84,6 +84,30 @@ Two kinds of module, wired differently:
 > is invisible to `nix`/`clan` until it is at least staged — symptoms are "path does not
 > exist" or "does not provide attribute ...". Run `git add <files>` (no commit needed) first.
 
+## Claude Code's own config (in this repo)
+
+Claude Code is configured **declaratively here**, so don't hand-write files under `~/.claude/`
+or a repo-root `.mcp.json` — they are generated and will be clobbered. Edit the module instead:
+
+- `modules/home/apps/claude/default.nix` → the Home-Manager module, wrapping upstream HM's
+  `programs.claude-code`. Enabled via `slask.apps.claude.enable` in `clan/desktop-home.nix`,
+  so it lands on the two **desktops** only (not `serx`/`baxx`). It sets `settings`
+  (model, fullscreen TUI, empty commit/PR attribution), `lspServers` (nixd, lua-language-server,
+  rust-analyzer), `mcpServers`, and writes the tokyonight `themes/tokyonight.json`.
+- **MCP servers** go in `programs.claude-code.mcpServers.<name>` (`type = "stdio"` plus
+  `command`, pointed at a nixpkgs binary with `lib.getExe` — same idiom as `lspServers`).
+  HM renders them into a generated personal plugin (manifest name `hm`) at
+  `~/.claude/skills/claude-code-home-manager/.mcp.json`, *not* a file in the repo root; tools
+  therefore arrive namespaced `mcp__plugin_hm_<server>__<tool>`.
+  Currently one server: `nixos` → `pkgs.mcp-nixos` (option/package lookup against
+  search.nixos.org, Home-Manager, nix-darwin, Noogle; tools `nix` and `nix_versions`).
+  HM also has a tool-agnostic `programs.mcp.servers`, deliberately unused — Claude Code is the
+  only consumer.
+- **Not everything is declarative.** Selecting the theme writes `custom:tokyonight` into the
+  mutable `~/.claude.json`, so it's a one-off `/theme` per machine (see the module's comment).
+- Changes take effect after a deploy **plus a Claude Code restart**. Per the deploy rule below,
+  a change here touches both desktops and so must be deployed from each in turn.
+
 ## Common commands
 
 Deploy **any** host — including the one you're sitting at — uniformly with clan (SSHes to the
