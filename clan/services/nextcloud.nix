@@ -18,6 +18,7 @@
         nixosModule =
           {
             config,
+            inputs,
             lib,
             pkgs,
             ...
@@ -25,6 +26,12 @@
           let
             internalPort = 80;
             collaboraPort = 9980;
+            # Collabora from the pinned older nixpkgs — see the nixpkgs-collabora comment in
+            # flake.nix. The NixOS module still comes from the current nixpkgs; it only needs
+            # the package's paths and its `libreoffice` passthru, which this version provides.
+            pkgsCollabora = import inputs.nixpkgs-collabora {
+              inherit (pkgs.stdenv.hostPlatform) system;
+            };
           in
           {
             services.nextcloud = {
@@ -193,6 +200,7 @@
             # allow-list — only Nextcloud's public origin may drive it.
             services.collabora-online = {
               enable = true;
+              package = pkgsCollabora.collabora-online;
               port = collaboraPort;
               aliasGroups = [ { host = "https://cloud\\.gate-catla\\.ts\\.net:443"; } ];
               settings = {
