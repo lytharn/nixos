@@ -2,14 +2,16 @@
 {
   _class = "clan.service";
   manifest.name = "slask/hermes";
-  manifest.description = "Hermes Agent (CLI-only) backed by a local llama.cpp model, sandboxed and offline";
+  manifest.description = "Hermes Agent backed by a local llama.cpp model, reachable over Matrix, sandboxed and offline";
   manifest.readme = ''
     Runs a local LLM (llama-server, Vulkan on the iGPU, localhost only) and Hermes Agent
-    against it. CLI-only: no messaging gateway and no daemon. `hermes` on the host starts an
-    interactive session as the unprivileged `hermes` user in a transient, hardened systemd
-    unit whose network is limited to localhost, so nothing the agent reads or writes can
-    leave the machine. Its state (notes, memories, sessions) lives in the module's stateDir,
-    which the restic client backs up. serx-only.
+    against it. The gateway daemon talks to the local Matrix homeserver as `@hermes`
+    (end-to-end encrypted, answers only lytharn), and `hermes` on the host starts an
+    interactive CLI session. Every Hermes process — gateway, CLI, and the cron jobs the
+    gateway spawns in the hermes user's systemd user manager — runs as the unprivileged
+    `hermes` user with network limited to localhost, so nothing the agent reads or writes can
+    leave the machine. Its state (notes, memories, sessions, E2EE keys) lives in the module's
+    stateDir, which the restic client backs up. serx-only.
   '';
 
   roles.default = {
@@ -28,6 +30,13 @@
           let
             cfg = config.services.hermes-agent;
             hermesHome = "${cfg.stateDir}/.hermes";
+            # Pinned (to the values the user was first allocated) so the user slice below can
+            # name it: cron jobs run in this user's systemd user manager, outside the gateway unit.
+            uid = 987;
+            gid = 985;
+            matrixUser = "@hermes:matrix.gate-catla.ts.net";
+            # lytharn's (encrypted) DM with the bot.
+            homeRoom = "!YzGipjm7ceaqo-t1OWMXTmS94XxC5KI3OSFGvhkbMQw:matrix.gate-catla.ts.net";
             port = 8012;
             modelAlias = "qwen3.6-35b-a3b";
             # Hermes wants >= 64k context per session; llama-server splits ctx-size across its
@@ -99,6 +108,20 @@
                 ${cfg.package}/bin/hermes "$@"
             '';
 
+            # Few toolsets: every tool schema is re-read on every turn, and prefill is the slow part
+            # here. No web/browser (the sandbox has no internet anyway). cronjob = reminders and
+            # scheduled tasks, delivered to the Matrix home room.
+            toolsets = [
+              "terminal"
+              "file"
+              "memory"
+              "session_search"
+              "skills"
+              "todo"
+              "clarify"
+              "cronjob"
+            ];
+
             # What the agent may run. Read-only status tools for the homelab use case; everything
             # here runs as the unprivileged hermes user, so systemctl can inspect but not change.
             hermesPath = [
@@ -156,10 +179,30 @@
                 jq
                 tirith
               ];
+              # mautrix (with E2EE: python-olm, built with its bundled libolm by the package).
+              extraDependencyGroups = [ "matrix" ];
               environment = {
                 # Prefill of a long prompt can take minutes on this hardware.
                 HERMES_API_TIMEOUT = "1800";
+                # The local homeserver (clan/services/matrix.nix), over localhost so the sandbox
+                # stays offline.
+                MATRIX_HOMESERVER = "http://127.0.0.1:6167";
+                MATRIX_USER_ID = matrixUser;
+                # Password login on every start reuses this device, keeping its E2EE keys.
+                MATRIX_DEVICE_ID = "HERMES_BOT";
+                # Element X encrypts DMs by default, so the bot must too; fail closed.
+                MATRIX_E2EE_MODE = "required";
+                # Lets the bot bootstrap its own cross-signing identity (so clients see a
+                # self-verified device) and write the new recovery key here once, mode 0600.
+                MATRIX_RECOVERY_KEY_OUTPUT_FILE = "${hermesHome}/platforms/matrix/recovery-key";
+                # Only lytharn, and only in the DM with the bot, can trigger agent turns. That DM
+                # is also the home room for cron output (`!sethome` can't persist in managed mode).
+                MATRIX_ALLOWED_USERS = "@lytharn:matrix.gate-catla.ts.net";
+                MATRIX_ALLOWED_ROOMS = homeRoom;
+                MATRIX_HOME_ROOM = homeRoom;
               };
+              # MATRIX_PASSWORD, kept out of the Nix store.
+              environmentFiles = [ config.clan.core.vars.generators.hermes-matrix.files.env.path ];
               settings = {
                 model = {
                   provider = "custom";
@@ -167,17 +210,10 @@
                   default = modelAlias;
                   context_length = contextPerSlot;
                 };
-                # Few toolsets: every tool schema is re-read on every turn, and prefill is the slow
-                # part here. No web/browser (the sandbox has no internet anyway).
-                platform_toolsets.cli = [
-                  "terminal"
-                  "file"
-                  "memory"
-                  "session_search"
-                  "skills"
-                  "todo"
-                  "clarify"
-                ];
+                platform_toolsets = {
+                  cli = toolsets;
+                  matrix = toolsets;
+                };
                 # Every flagged command asks first; the "smart" mode would have the local model
                 # judge its own commands.
                 approvals.mode = "manual";
@@ -220,20 +256,75 @@
                   `journalctl -u <unit> --since "-1d" --no-pager -n 200`
                 - Resources: `df -h`, `free -h`, `uptime`
                 - Always pass `--no-pager`. Keep log excerpts short.
+
+                ## Chat
+
+                The user usually talks to you over Matrix from their phone: keep replies short and
+                plain, and skip long tables.
                 - Services on serx: nextcloud (phpfpm-nextcloud, nginx), home-assistant, actual,
                   forgejo, minecraft-server-*, postgresql, tailscaled, llama-cpp (your own model),
                   restic-backups-baxx (nightly backup to baxx).
               '';
             };
 
-            # CLI-only: the gateway daemon only serves messaging platforms and cron, and cron has
-            # no way to reach the user without one. Nothing runs unattended until a gateway is
-            # added. (It would need the hermes user's systemd user manager, hence no linger.)
-            systemd.services.hermes-agent.enable = false;
+            # The gateway (Matrix + cron scheduler), in the same sandbox as the CLI. Its cron
+            # dispatch needs the user bus under /run/user, which ProtectHome would hide, so
+            # /home and /root are hidden individually instead (the module sets ProtectHome off).
+            systemd.services.hermes-agent = {
+              # Activation rewrites config.yaml/.env/documents in place without touching the unit,
+              # and Hermes only reads them at start: restart the gateway when they change.
+              restartTriggers = [
+                (builtins.toJSON cfg.settings)
+                (builtins.toJSON cfg.environment)
+                (builtins.toJSON cfg.environmentFiles)
+                (builtins.toJSON cfg.documents)
+              ];
+              after = [
+                "llama-cpp.service"
+                "continuwuity.service"
+              ];
+              wants = [
+                "llama-cpp.service"
+                "continuwuity.service"
+              ];
+              serviceConfig = sandbox // {
+                ProtectHome = false;
+                InaccessiblePaths = [
+                  "-/home"
+                  "-/root"
+                ];
+              };
+            };
+            # Cron jobs run as scopes in the hermes user's systemd user manager (the module turns
+            # on linger for it), i.e. in user-<uid>.slice rather than the gateway unit: give the
+            # whole slice the same localhost-only network.
+            systemd.slices."user-${toString uid}" = {
+              overrideStrategy = "asDropin";
+              sliceConfig = {
+                IPAddressDeny = "any";
+                IPAddressAllow = "localhost";
+              };
+            };
             users.users.${cfg.user} = {
-              linger = false;
+              inherit uid;
               # Read the system journal (journalctl), for the homelab status use case.
               extraGroups = [ "systemd-journal" ];
+            };
+            users.groups.${cfg.group}.gid = gid;
+
+            # The bot account's password (`clan vars get serx hermes-matrix/password`, used once to
+            # register @hermes) and the env file Hermes logs in with.
+            clan.core.vars.generators.hermes-matrix = {
+              files.password.deploy = false;
+              files.env = { }; # merged into Hermes' .env by activation, as root
+              runtimeInputs = [
+                pkgs.coreutils
+                pkgs.openssl
+              ];
+              script = ''
+                openssl rand -hex 24 | tr -d "\n" > "$out"/password
+                printf 'MATRIX_PASSWORD=%s\n' "$(cat "$out"/password)" > "$out"/env
+              '';
             };
 
             # `hermes` for the admin user: runs the sandboxed CLI via a fixed root helper, so no

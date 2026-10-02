@@ -9,7 +9,8 @@ Personal NixOS configuration flake, managed with [clan](https://clan.lol) (machi
 - `mewx` — Hyprland desktop; uses `serx` as a distributed Nix builder
 - `quex` — Hyprland desktop; uses `serx` as a distributed Nix builder
 - `serx` — headless server hosting services (Nextcloud, Home Assistant, Actual, Minecraft) exposed via Tailscale,
-  plus a local LLM + [Hermes Agent](https://hermes-agent.nousresearch.com) (CLI-only, see below)
+  plus a private Matrix server + ntfy, and a local LLM + [Hermes Agent](https://hermes-agent.nousresearch.com)
+  chatting over Matrix (see below)
 - `baxx` — off-site, low-power (Intel N, 16 GB RAM, single 4 TB NVMe SSD) headless backup target for `serx`
 
 There is also one standalone (non-NixOS) Home-Manager config, `homes/standalone/`, exposed as
@@ -223,15 +224,34 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     (`restic-monitor-client` on serx, `restic-monitor-server` on baxx, owner `restic`), so the
     URL never lands in the Nix store; the ping is best-effort (`|| true`) so it can't fail the
     backup. The two healthchecks checks' period/grace are configured on the healthchecks side.
+- **Matrix + ntfy on `serx`** (`clan/services/{matrix,ntfy}.nix`): Continuwuity at
+  `matrix.gate-catla.ts.net` (federation off, token-gated registration via the
+  `matrix-registration-token` var; the first account, `@lytharn`, is server admin) and ntfy at
+  `ntfy.gate-catla.ts.net` as the phones' UnifiedPush distributor, so notifications go
+  homeserver → ntfy → Element X without Google. Both are tailnet-only via `tailscale serve`.
+  - Continuwuity's outbound `ip_range_denylist` drops the tailnet ranges so it can push to
+    ntfy's tailnet address (serx *can* reach its own `svc:` addresses; only `cloud` is pinned to
+    localhost by Nextcloud).
+  - Its RocksDB is backed up online by `continuwuity-db-backup` (01:00, SIGUSR2 →
+    `admin_signal_execute = [ "server backup-database" ]`) into `/var/backup/continuwuity`,
+    which restic ships; the live DB dir isn't consistent to copy.
+  - ntfy is deny-all; the declarative `lytharn` user (bcrypt, cost ≥ 10 or ntfy rejects it)
+    comes from the `ntfy-user` var's env file; anyone may only write to `up*` topics.
 - **Hermes Agent on `serx`** (`clan/services/hermes.nix`): `llama-server` (Vulkan on the Arc
-  iGPU, `127.0.0.1:8012`) serves Qwen3.6-35B-A3B, and Hermes talks to it. CLI-only: the
-  gateway daemon is disabled, so nothing runs unattended. Use it with `ssh serx` → `hermes`, a
-  wrapper that (via a NOPASSWD sudo rule for a fixed root helper) starts the CLI as the
-  `hermes` user in a transient hardened unit: network limited to localhost (`IPAddressDeny=any`),
-  writes limited to `/var/lib/hermes`, plus read-only journal access for status questions.
+  iGPU, `127.0.0.1:8012`) serves Qwen3.6-35B-A3B, and Hermes talks to it. The gateway logs in to
+  the local homeserver as `@hermes` (password from the `hermes-matrix` var, device `HERMES_BOT`,
+  E2EE required — Element X encrypts DMs) and only answers `@lytharn` in their DM, which is also
+  the home room for cron output (pinned in config: `!sethome` can't persist in managed mode).
+  `ssh serx` → `hermes` gives the CLI, via a NOPASSWD sudo rule for a fixed root helper that runs
+  it as the `hermes` user in a transient hardened unit.
+  - Every Hermes process is sandboxed to localhost-only network (`IPAddressDeny=any`) as the
+    unprivileged `hermes` user (uid pinned to 987): the CLI unit, the gateway unit, and the
+    `user-987.slice` holding the cron jobs the gateway spawns in its systemd user manager.
+    Writes are confined to `/var/lib/hermes`; it has read-only journal access.
   - The model is a `pkgs.fetchurl` pinned to a Hugging Face commit + SHA-256, so a deploy
     downloads it onto `serx` (~21 GB). To switch models, change `url` + `hash`; to avoid a
     re-download of a file already on disk, `nix-store --add-fixed sha256 <file>` on serx first.
-  - Notes, memories and sessions live in `/var/lib/hermes` (backed up by the restic client).
-    Settings are declarative (`services.hermes-agent.settings`); managed mode blocks
-    `hermes setup` / `hermes config set`.
+  - Notes, memories, sessions and the bot's E2EE store + cross-signing recovery key live in
+    `/var/lib/hermes` (backed up by the restic client). Settings are declarative
+    (`services.hermes-agent.settings`/`environment`); managed mode blocks `hermes setup` /
+    `hermes config set`, and `restartTriggers` restart the gateway when they change.
