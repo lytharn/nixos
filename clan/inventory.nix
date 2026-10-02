@@ -120,6 +120,16 @@
       roles.default.machines.serx = { };
     };
 
+    instances.ntfy = {
+      module = {
+        name = "ntfy";
+        input = "self";
+      };
+      # serx-only: the UnifiedPush distributor for Matrix notifications. Not backed up: users
+      # and ACLs are declarative, and its state is only a short-lived message cache.
+      roles.default.machines.serx = { };
+    };
+
     instances.hermes = {
       module = {
         name = "hermes";

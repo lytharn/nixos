@@ -42,6 +42,29 @@
                 # A closed island: no other servers, so no notaries to trust either.
                 allow_federation = false;
                 trusted_servers = [ ];
+                # The default outbound denylist minus the tailnet ranges (100.64.0.0/10 and the ULA
+                # fc00::/7 holding Tailscale's fd7a:115c:a1e0::/48): push notifications go to ntfy
+                # at its tailnet service address. With federation and URL previews off, pushers
+                # registered by our own accounts are the only outbound requests left.
+                ip_range_denylist = [
+                  "127.0.0.0/8"
+                  "10.0.0.0/8"
+                  "172.16.0.0/12"
+                  "192.168.0.0/16"
+                  "192.0.0.0/24"
+                  "169.254.0.0/16"
+                  "192.88.99.0/24"
+                  "198.18.0.0/15"
+                  "192.0.2.0/24"
+                  "198.51.100.0/24"
+                  "203.0.113.0/24"
+                  "224.0.0.0/4"
+                  "::1/128"
+                  "fe80::/10"
+                  "2001:db8::/32"
+                  "ff00::/8"
+                  "fec0::/10"
+                ];
                 # Phones home to continuwuity.org otherwise.
                 allow_announcements_check = false;
                 # Token-gated registration; the token is a clan var
