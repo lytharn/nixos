@@ -110,6 +110,16 @@
       };
     };
 
+    instances.matrix = {
+      module = {
+        name = "matrix";
+        input = "self";
+      };
+      # serx-only. Declares its own matrix-registration-token var; its online DB backup dir is
+      # picked up by the restic client below.
+      roles.default.machines.serx = { };
+    };
+
     instances.hermes = {
       module = {
         name = "hermes";

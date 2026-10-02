@@ -299,6 +299,8 @@
                 config.services.forgejo.stateDir
                 # Hermes' notes, memories, skills and sessions (the model itself is in the store).
                 config.services.hermes-agent.stateDir
+                # Continuwuity's online RocksDB backups (the live DB dir isn't consistent to copy).
+                config.services.matrix-continuwuity.settings.global.database_backup_path
                 staging
               ];
 
