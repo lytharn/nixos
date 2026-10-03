@@ -248,6 +248,12 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     unprivileged `hermes` user (uid pinned to 987): the CLI unit, the gateway unit, and the
     `user-987.slice` holding the cron jobs the gateway spawns in its systemd user manager.
     Writes are confined to `/var/lib/hermes`; it has read-only journal access.
+  - **Nextcloud access** is via the agent's own non-admin `hermes` Nextcloud account (password
+    from the `hermes-nextcloud` var; created by the `hermes-nextcloud-user` oneshot, in an
+    `agents` group excluded from sharing). It sees only what lytharn shares with it (Notes rw,
+    Documents ro, calendars + task lists rw). `nc-sync` (nextcloudcmd + vdirsyncer, over plain
+    HTTP to localhost) mirrors them into `/var/lib/hermes/{nextcloud,calendars}`, run every 10
+    min by `hermes-nc-sync.timer` and by the agent itself; it uses khal/todoman on the copies.
   - The model is a `pkgs.fetchurl` pinned to a Hugging Face commit + SHA-256, so a deploy
     downloads it onto `serx` (~21 GB). To switch models, change `url` + `hash`; to avoid a
     re-download of a file already on disk, `nix-store --add-fixed sha256 <file>` on serx first.
