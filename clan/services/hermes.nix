@@ -108,6 +108,87 @@
                 ${cfg.package}/bin/hermes "$@"
             '';
 
+            # ---- Nextcloud: the agent's own non-admin account, seeing only what lytharn shares
+            # with it (Notes rw, Documents ro, calendars + task lists rw). Reached over plain HTTP
+            # on localhost (Nextcloud's bendDomainToLocalhost pins this name to it), so the
+            # sandbox stays offline. Files and calendars are synced into the state dir, where the
+            # agent works on them as plain files and with khal/todoman.
+            ncUrl = "http://cloud.gate-catla.ts.net";
+            ncDir = "${cfg.stateDir}/nextcloud";
+            calDir = "${cfg.stateDir}/calendars";
+            ncSecrets = config.clan.core.vars.generators.hermes-nextcloud.files;
+
+            vdirsyncerConfig = pkgs.writeText "vdirsyncer-config" ''
+              [general]
+              status_path = "${cfg.stateDir}/.local/share/vdirsyncer/status/"
+
+              [pair nextcloud]
+              a = "nextcloud_remote"
+              b = "nextcloud_local"
+              collections = ["from a"]
+              conflict_resolution = "a wins"
+              metadata = ["displayname", "color"]
+
+              [storage nextcloud_remote]
+              type = "caldav"
+              url = "${ncUrl}/remote.php/dav/"
+              username = "hermes"
+              password.fetch = ["command", "cat", "${ncSecrets.password.path}"]
+
+              [storage nextcloud_local]
+              type = "filesystem"
+              path = "${calDir}/"
+              fileext = ".ics"
+            '';
+            khalConfig = pkgs.writeText "khal-config" ''
+              [calendars]
+              [[nextcloud]]
+              path = ${calDir}/*
+              type = discover
+
+              [locale]
+              timeformat = %H:%M
+              dateformat = %Y-%m-%d
+              longdateformat = %Y-%m-%d
+              datetimeformat = %Y-%m-%d %H:%M
+              longdatetimeformat = %Y-%m-%d %H:%M
+              firstweekday = 0
+              local_timezone = ${config.time.timeZone}
+              default_timezone = ${config.time.timeZone}
+            '';
+            todomanConfig = pkgs.writeText "todoman-config.py" ''
+              path = "${calDir}/*"
+              date_format = "%Y-%m-%d"
+              time_format = "%H:%M"
+              humanize = False
+            '';
+
+            # Two-way sync of the shared files (nextcloudcmd: Nextcloud's own sync engine, with its
+            # conflict copies) and calendars/task lists (vdirsyncer). Run by a timer and by the
+            # agent itself before reading and after writing.
+            ncSync = pkgs.writeShellApplication {
+              name = "nc-sync";
+              runtimeInputs = [
+                pkgs.coreutils
+                pkgs.util-linux
+                pkgs.nextcloud-client
+                pkgs.vdirsyncer
+              ];
+              text = ''
+                exec 9>"${cfg.stateDir}/.nc-sync.lock"
+                flock 9
+                mkdir -p ${ncDir} ${calDir}
+                # -n: credentials from ~/.netrc (not argv, which other users could read).
+                nextcloudcmd --non-interactive --silent -n ${ncDir} ${ncUrl}
+                export VDIRSYNCER_CONFIG=${vdirsyncerConfig}
+                # Picks up newly shared calendars; answers its "create locally?" prompts.
+                vdirsyncer discover > /dev/null < <(yes)
+                vdirsyncer metasync > /dev/null || true
+                vdirsyncer sync
+                echo "nc-sync: done"
+              '';
+            };
+
             # Few toolsets: every tool schema is re-read on every turn, and prefill is the slow part
             # here. No web/browser (the sandbox has no internet anyway). cronjob = reminders and
             # scheduled tasks, delivered to the Matrix home room.
@@ -178,6 +259,12 @@
                 fd
                 jq
                 tirith
+                # Nextcloud: sync, calendar, tasks, and reading shared documents.
+                ncSync
+                khal
+                todoman
+                pandoc
+                poppler-utils
               ];
               # mautrix (with E2EE: python-olm, built with its bundled libolm by the package).
               extraDependencyGroups = [ "matrix" ];
@@ -233,18 +320,28 @@
                 sandboxed: you can write only under ${cfg.stateDir}, and the network is limited
                 to localhost (no internet, LAN or tailnet).
 
-                ## Notes
+                ## Nextcloud: notes, documents, calendar, tasks
 
-                The user's notes are things they want to remember and query later.
+                The user's Nextcloud is synced into ${ncDir} (files) and ${calDir} (calendars and
+                task lists). Run `nc-sync` before answering anything about these, and again right
+                after you change something, so your changes reach the user's phone and desktop.
 
-                - Keep them as Markdown files in `notes/` (relative to this directory), one file
-                  per topic, with short kebab-case names (`car.md`, `passwords-hints.md`).
-                - Add to the relevant file, creating it if needed. Date new entries (YYYY-MM-DD).
-                - To answer a question about something remembered, search first
-                  (`rg -i <words> notes/`) and say which file the answer came from. If nothing
-                  matches, say so instead of guessing.
-                - Store notes in `notes/`, not in your memory tool. Memory is only for stable
-                  facts about the user and how they want you to work.
+                - Notes: Markdown files in `${ncDir}/Notes/`, the user's Nextcloud Notes (edited on
+                  their phone and desktop). The file name is the note's title. Search with
+                  `rg -i <words> ${ncDir}/Notes/` and say which note the answer came from; if
+                  nothing matches, say so instead of guessing. Add to an existing note when one
+                  fits; otherwise create `<Title>.md`.
+                - Documents: `${ncDir}/Documents/`, read-only. Read .odt/.docx with
+                  `pandoc -t plain <file>` and PDFs with `pdftotext <file> -`.
+                - Calendar (khal): `khal list today 7d`, `khal search <text>`, `khal printcalendars`.
+                  Create: `khal new -a <calendar> 2026-10-07 10:00 11:00 Dentist`. Use the user's
+                  calendars (shared with you, named like `personal_shared_by_lytharn`), not your
+                  own `personal` one.
+                - Tasks (todoman): `todo list`, `todo list <list>`, `todo show <id>`,
+                  `todo new -l <list> --due 2026-10-07 "Buy milk"`, `todo done <id>`.
+                - Never delete notes, events or tasks unless the user explicitly asks.
+                - Facts about the user and how they want you to work go in your memory tool;
+                  everything they ask you to remember goes in a note.
 
                 ## Homelab status (read-only)
 
@@ -311,6 +408,74 @@
               extraGroups = [ "systemd-journal" ];
             };
             users.groups.${cfg.group}.gid = gid;
+
+            # Configs and credentials where the tools look for them (HOME is the state dir).
+            systemd.tmpfiles.rules = [
+              "L+ ${cfg.stateDir}/.netrc - - - - ${ncSecrets.netrc.path}"
+              "d ${cfg.stateDir}/.config 0750 ${cfg.user} ${cfg.group} - -"
+              "d ${cfg.stateDir}/.config/vdirsyncer 0750 ${cfg.user} ${cfg.group} - -"
+              "L+ ${cfg.stateDir}/.config/vdirsyncer/config - - - - ${vdirsyncerConfig}"
+              "d ${cfg.stateDir}/.config/khal 0750 ${cfg.user} ${cfg.group} - -"
+              "L+ ${cfg.stateDir}/.config/khal/config - - - - ${khalConfig}"
+              "d ${cfg.stateDir}/.config/todoman 0750 ${cfg.user} ${cfg.group} - -"
+              "L+ ${cfg.stateDir}/.config/todoman/config.py - - - - ${todomanConfig}"
+            ];
+
+            # Background sync, so the local copy is fresh even when the agent forgets to run it.
+            systemd.services.hermes-nc-sync = {
+              description = "Sync Hermes' Nextcloud files and calendars";
+              after = [ "hermes-nextcloud-user.service" ];
+              environment.HOME = cfg.stateDir;
+              serviceConfig = sandbox // {
+                Type = "oneshot";
+                User = cfg.user;
+                Group = cfg.group;
+                ExecStart = lib.getExe ncSync;
+              };
+            };
+            systemd.timers.hermes-nc-sync = {
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnBootSec = "2min";
+                OnUnitActiveSec = "10min";
+              };
+            };
+
+            # The agent's Nextcloud account: non-admin, in an `agents` group that is excluded from
+            # sharing, so it can't reshare what it sees (or make public links). Idempotent.
+            systemd.services.hermes-nextcloud-user = {
+              description = "Ensure the hermes Nextcloud account exists";
+              after = [ "nextcloud-setup.service" ];
+              requires = [ "nextcloud-setup.service" ];
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig.Type = "oneshot";
+              script =
+                let
+                  occ = lib.getExe config.services.nextcloud.occ;
+                in
+                ''
+                  ${occ} group:add agents > /dev/null 2>&1 || true
+                  if ! ${occ} user:info hermes > /dev/null 2>&1; then
+                    OC_PASS="$(cat ${ncSecrets.password.path})" ${occ} user:add \
+                      --password-from-env --display-name "Hermes (agent)" --group agents hermes
+                  fi
+                  ${occ} config:app:set core shareapi_exclude_groups --value=yes
+                  ${occ} config:app:set core shareapi_exclude_groups_list --value='["agents"]'
+                '';
+            };
+            clan.core.vars.generators.hermes-nextcloud = {
+              files.password.owner = cfg.user; # read by vdirsyncer (and once by the oneshot above)
+              files.netrc.owner = cfg.user; # read by nextcloudcmd
+              runtimeInputs = [
+                pkgs.coreutils
+                pkgs.openssl
+              ];
+              script = ''
+                openssl rand -hex 24 | tr -d "\n" > "$out"/password
+                printf 'machine cloud.gate-catla.ts.net login hermes password %s\n' \
+                  "$(cat "$out"/password)" > "$out"/netrc
+              '';
+            };
 
             # The bot account's password (`clan vars get serx hermes-matrix/password`, used once to
             # register @hermes) and the env file Hermes logs in with.
