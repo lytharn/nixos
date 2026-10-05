@@ -58,6 +58,7 @@
     manix.enable = true;
     mangohud.enable = true;
     neovim.enable = true;
+    nextcloud-client.enable = true;
     prismlauncher.enable = true;
     rclone-nextcloud.enable = true;
     starship.enable = true;
