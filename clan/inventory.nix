@@ -110,6 +110,15 @@
       };
     };
 
+    instances.postgresql-collation = {
+      module = {
+        name = "postgresql-collation";
+        input = "self";
+      };
+      # serx is the only Postgres host (nextcloud + forgejo).
+      roles.default.machines.serx = { };
+    };
+
     instances.matrix = {
       module = {
         name = "matrix";
