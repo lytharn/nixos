@@ -261,3 +261,8 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     `/var/lib/hermes` (backed up by the restic client). Settings are declarative
     (`services.hermes-agent.settings`/`environment`); managed mode blocks `hermes setup` /
     `hermes config set`, and `restartTriggers` restart the gateway when they change.
+  - A session's system prompt (incl. the `AGENTS.md` document) is frozen when the session
+    starts, so prompt/instruction changes don't reach an ongoing chat: after deploying one, tell
+    the user to send `!new` in the Hermes DM. All bundled skills are disabled
+    (`skills.disabled`, derived from the input's `skills/` dir) since they target cloud
+    services and lured the model away from the local tools.
