@@ -189,6 +189,17 @@
               '';
             };
 
+            # Hermes' bundled skills (Google Workspace, Notion, GitHub, ...) target cloud services
+            # this offline agent can't reach, and lure the model away from the local tools (asked
+            # to add a calendar event, it reached for google-workspace). Disable every bundled
+            # skill by name (each skill's dir name is its name); skills the agent writes itself
+            # stay enabled.
+            bundledSkills = map (f: baseNameOf (dirOf f)) (
+              lib.filter (f: baseNameOf f == "SKILL.md") (
+                lib.filesystem.listFilesRecursive (inputs.hermes-agent + "/skills")
+              )
+            );
+
             # Few toolsets: every tool schema is re-read on every turn, and prefill is the slow part
             # here. No web/browser (the sandbox has no internet anyway). cronjob = reminders and
             # scheduled tasks, delivered to the Matrix home room.
@@ -301,6 +312,7 @@
                   cli = toolsets;
                   matrix = toolsets;
                 };
+                skills.disabled = bundledSkills;
                 # Every flagged command asks first; the "smart" mode would have the local model
                 # judge its own commands.
                 approvals.mode = "manual";
@@ -321,6 +333,9 @@
                 to localhost (no internet, LAN or tailnet).
 
                 ## Nextcloud: notes, documents, calendar, tasks
+
+                You have no Google, Microsoft or other cloud accounts and no internet. For the
+                user's notes, calendar and tasks, always use the local tools below.
 
                 The user's Nextcloud is synced into ${ncDir} (files) and ${calDir} (calendars and
                 task lists). Run `nc-sync` before answering anything about these, and again right
