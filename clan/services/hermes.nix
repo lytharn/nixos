@@ -202,14 +202,15 @@
 
             # Few toolsets: every tool schema is re-read on every turn, and prefill is the slow part
             # here. No web/browser (the sandbox has no internet anyway). cronjob = reminders and
-            # scheduled tasks, delivered to the Matrix home room.
+            # scheduled tasks, delivered to the Matrix home room. Deliberately no `todo` toolset:
+            # its `todo_list` is the agent's own scratch plan, and the model confused it with the
+            # user's tasks (todoman's `todo` command), looping on it.
             toolsets = [
               "terminal"
               "file"
               "memory"
               "session_search"
               "skills"
-              "todo"
               "clarify"
               "cronjob"
             ];
@@ -352,8 +353,11 @@
                   Create: `khal new -a <calendar> 2026-10-07 10:00 11:00 Dentist`. Use the user's
                   calendars (shared with you, named like `personal_shared_by_lytharn`), not your
                   own `personal` one.
-                - Tasks (todoman): `todo list`, `todo list <list>`, `todo show <id>`,
-                  `todo new -l <list> --due 2026-10-07 "Buy milk"`, `todo done <id>`.
+                - Tasks: the user's task lists are managed with the
+                  `todo` shell command (todoman), run through the terminal tool:
+                  `todo list`, `todo list <list>`, `todo show <id>`,
+                  `todo new -l <list> --due 2026-10-07 "Buy milk"` (`--due` is optional),
+                  `todo done <id>`. Use the list's name as `khal printcalendars` shows it.
                 - Never delete notes, events or tasks unless the user explicitly asks.
                 - Facts about the user and how they want you to work go in your memory tool;
                   everything they ask you to remember goes in a note.
