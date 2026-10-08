@@ -35,8 +35,9 @@
             uid = 987;
             gid = 985;
             matrixUser = "@hermes:matrix.gate-catla.ts.net";
-            # lytharn's (encrypted) DM with the bot.
-            homeRoom = "!YzGipjm7ceaqo-t1OWMXTmS94XxC5KI3OSFGvhkbMQw:matrix.gate-catla.ts.net";
+            # lytharn's (encrypted) DM with the bot. Room version 12: room IDs have no
+            # ":server" suffix (appending one points at a nonexistent room).
+            homeRoom = "!YzGipjm7ceaqo-t1OWMXTmS94XxC5KI3OSFGvhkbMQw";
             port = 8012;
             modelAlias = "qwen3.6-35b-a3b";
             # Hermes wants >= 64k context per session; llama-server splits ctx-size across its
@@ -314,7 +315,14 @@
                 platform_toolsets = {
                   cli = toolsets;
                   matrix = toolsets;
+                  # Scheduled jobs run unattended, so they get no terminal/file/write tools at all
+                  # (session_search only reads past chats): a job's input (e.g. email in the
+                  # morning briefing) can't make it change anything. Their data comes from
+                  # pre-run scripts instead; reminders need no tools.
+                  cron = [ "session_search" ];
                 };
+                # Cron schedules ("0 7 * * *") in local time.
+                timezone = config.time.timeZone;
                 skills.disabled = bundledSkills;
                 # Every flagged command asks first; the "smart" mode would have the local model
                 # judge its own commands.
@@ -328,6 +336,22 @@
                 # Fetched from the internet, which the sandbox blocks.
                 model_catalog.enabled = false;
               };
+              # Pre-run script for the morning briefing cron job: its stdout becomes the job's
+              # input. Data is gathered here, not by the (tool-less) cron agent. Email: senders and
+              # subjects only, not bodies.
+              hermesHomeFiles."scripts/morning-briefing.sh" = ''
+                export HOME=${cfg.stateDir}
+                export NOTMUCH_CONFIG=/etc/mail-mirror/notmuch-config
+                ${lib.getExe ncSync} > /dev/null 2>&1 || echo "(sync failed; calendar/tasks may be up to 10 min old)"
+                echo "== Calendar: today and tomorrow =="
+                ${pkgs.khal}/bin/khal list today 2d 2>&1 || true
+                echo
+                echo "== Tasks due within 48 hours =="
+                ${pkgs.todoman}/bin/todo list --due 48 2>&1 || true
+                echo
+                echo "== Email in the inbox from the last 24 hours (sender; subject) =="
+                ${pkgs.notmuch}/bin/notmuch search --limit=40 'folder:INBOX and date:1d..' 2>&1 || true
+              '';
               documents."AGENTS.md" = ''
                 # Working on serx
 

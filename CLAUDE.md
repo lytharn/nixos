@@ -272,3 +272,12 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     the user to send `!new` in the Hermes DM. All bundled skills are disabled
     (`skills.disabled`, derived from the input's `skills/` dir) since they target cloud
     services and lured the model away from the local tools.
+  - **Never make the CLI talk to Matrix** (`hermes cron run`, `hermes send`): it logs in with the
+    gateway's password + device ID, which invalidates the gateway's access token — the gateway
+    then stops syncing ("permanent auth error … Invalid token") until `systemctl restart
+    hermes-agent`. Test a cron job by creating a one-off copy instead (`hermes cron create '2m'
+    … --repeat 1`), which the gateway runs and delivers. `cron create/list/remove` are safe.
+  - Scheduled jobs get no tools (`platform_toolsets.cron = [ "session_search" ]`); their data
+    comes from pre-run scripts in `hermesHomeFiles."scripts/*"` (e.g. `morning-briefing.sh`,
+    used by the `morning-briefing` job at 07:00). The jobs themselves are runtime state in
+    `/var/lib/hermes/.hermes/cron`, created via `hermes cron create`, not declared in Nix.
