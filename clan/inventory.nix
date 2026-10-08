@@ -139,6 +139,23 @@
       roles.default.machines.serx = { };
     };
 
+    instances.mail-mirror = {
+      module = {
+        name = "mail-mirror";
+        input = "self";
+      };
+      # serx-only: a read-only local copy of the mailbox for the Hermes agent (which stays
+      # offline; only this service talks to the IMAP server). Login is a clan var prompt.
+      roles.default.machines.serx.settings = {
+        host = "imap.websupport.se";
+        folders = [
+          "INBOX"
+          "Sent"
+        ];
+        readers = [ "hermes" ];
+      };
+    };
+
     instances.hermes = {
       module = {
         name = "hermes";

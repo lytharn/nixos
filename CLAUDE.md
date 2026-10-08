@@ -254,6 +254,12 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     Documents ro, calendars + task lists rw). `nc-sync` (nextcloudcmd + vdirsyncer, over plain
     HTTP to localhost) mirrors them into `/var/lib/hermes/{nextcloud,calendars}`, run every 10
     min by `hermes-nc-sync.timer` and by the agent itself; it uses khal/todoman on the copies.
+  - **Email** is a read-only mirror (`clan/services/mail-mirror.nix`): the `mailsync` user pulls
+    Inbox + Sent from IMAP every 5 min with mbsync (`Sync Pull`, never modifies the server) and
+    indexes it with notmuch (config in `/etc/mail-mirror/notmuch-config`). The IMAP login is the
+    `mail-mirror` var (prompts, readable only by `mailsync`); `hermes` is in the `mailsync` group,
+    so it can search/read but its sandbox makes the Maildir read-only. Not backed up (the server
+    holds the mail).
   - The model is a `pkgs.fetchurl` pinned to a Hugging Face commit + SHA-256, so a deploy
     downloads it onto `serx` (~21 GB). To switch models, change `url` + `hash`; to avoid a
     re-download of a file already on disk, `nix-store --add-fixed sha256 <file>` on serx first.
