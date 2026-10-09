@@ -32,6 +32,12 @@
       inputs.home-manager.follows = "home-manager";
     };
 
+    # NixOS-WSL: the module that makes NixOS boot as a WSL distro, used by machines/wslx.
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     clan-core = {
       url = "git+https://git.clan.lol/clan/clan-core";
       inputs.nixpkgs.follows = "nixpkgs";

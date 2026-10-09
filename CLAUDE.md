@@ -5,13 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Overview
 
 Personal NixOS configuration flake, managed with [clan](https://clan.lol) (machine lifecycle
-+ secrets + deployment). Four hosts (all `x86_64-linux`):
++ secrets + deployment). Five hosts (all `x86_64-linux`):
 - `mewx` — Hyprland desktop; uses `serx` as a distributed Nix builder
 - `quex` — Hyprland desktop; uses `serx` as a distributed Nix builder
 - `serx` — headless server hosting services (Nextcloud, Home Assistant, Actual, Minecraft) exposed via Tailscale,
   plus a private Matrix server + ntfy, and a local LLM + [Hermes Agent](https://hermes-agent.nousresearch.com)
   chatting over Matrix (see below)
 - `baxx` — off-site, low-power (Intel N, 16 GB RAM, single 4 TB NVMe SSD) headless backup target for `serx`
+- `wslx` — NixOS under WSL on a Windows box ([NixOS-WSL](https://github.com/nix-community/NixOS-WSL),
+  `nixos-wsl` input). Shell toolkit + neovim only; tagged `wsl`, so it gets **no** Tailscale
+  (that service targets `desktop`/`server`) and has **no clan vars** — keep it that way, or it
+  needs a sops machine key. No SSH: deploy from inside WSL with `sudo nixos-rebuild switch
+  --flake .`, never `clan machines update wslx`. clan defaults `networking.useNetworkd`
+  on; wslx turns it off because WSL owns the network/resolv.conf.
 
 There is also one standalone (non-NixOS) Home-Manager config, `homes/standalone/`, exposed as
 the `homeConfigurations.standalone` flake output and applied with `home-manager switch -b backup
@@ -21,7 +27,7 @@ distribution-specific assumptions out of it.
 > The flake used to be built on [Snowfall Lib](https://github.com/snowfallorg/lib); it has
 > been fully migrated to clan. `flake.nix` is now plain outputs (no `mkFlake`), inputs are
 > `nixpkgs`, `home-manager`, `nix-minecraft`, `clan-core` (clan-core bundles disko + sops-nix),
-> `wallpapers`, `nixpkgs-collabora`, `hermes-agent`, and there is no raw sops-nix / `secrets/` / `.sops.yaml`
+> `wallpapers`, `nixpkgs-collabora`, `hermes-agent`, `nixos-wsl`, and there is no raw sops-nix / `secrets/` / `.sops.yaml`
 > anymore — all secrets are clan vars.
 >
 > `nixpkgs-collabora` is a **pin, not a second channel**: a fixed older nixos-unstable rev that

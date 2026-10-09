@@ -14,6 +14,7 @@ convention, cross-host wiring).
 - `quex` — Hyprland desktop
 - `serx` — headless server (Nextcloud, Home Assistant, Actual, Minecraft over Tailscale)
 - `baxx` — off-site backup target for `serx`
+- `wslx` — NixOS under WSL on a Windows box (see [NixOS on WSL](#nixos-on-wsl-wslx))
 
 Plus a standalone (non-NixOS) Home-Manager config for a foreign distro — see
 [Standalone Home Manager](#standalone-home-manager-non-nixos).
@@ -24,7 +25,7 @@ What runs on which host is wired through clan's **inventory** (in `clan/`), not 
 imports. Three pieces:
 
 - **Tags** — `clan/inventory.nix` gives each machine capability tags. `all`/`nixos`/`darwin`
-  are built in; `desktop` (mewx, quex) and `server` (serx, baxx) are ours.
+  are built in; `desktop` (mewx, quex), `server` (serx, baxx) and `wsl` (wslx) are ours.
 - **Service modules** — reusable `clan.service` modules in `clan/services/<name>.nix`, each
   auto-registered as `clan.modules.<name>` by `clan/services-modules.nix` (a `readDir` over the
   directory, mirroring `clan/home-modules.nix`). Dropping a file in is all it takes — no edit to
@@ -134,6 +135,47 @@ sudo nixos-rebuild switch --flake .        # or .#<host>
 — sops decrypts the vars using the machine's existing SSH host key, so nothing extra is
 provisioned. (For `clan machines update <host>` over SSH instead, the host must authorize an
 ssh key for `lytharn` — each host authorizes its own.)
+
+## NixOS on WSL (`wslx`)
+
+`machines/wslx/` is a full NixOS running as a WSL distro, via the
+[NixOS-WSL](https://github.com/nix-community/NixOS-WSL) module. It gets the servers' shell
+toolkit plus neovim (the same set as the standalone home), and nothing else: no Tailscale
+(Windows runs it, and WSL shares its network) and no clan vars, so it has no sops machine key.
+It isn't reachable over SSH, so it's never deployed with `clan machines update` — always
+from inside WSL.
+
+### First-time setup
+
+1. **Install the NixOS-WSL base image** from PowerShell: download `nixos.wsl` from the
+   [NixOS-WSL releases](https://github.com/nix-community/NixOS-WSL/releases), then
+   ```powershell
+   wsl --install --from-file nixos.wsl
+   ```
+   It starts as the stock `nixos` user.
+2. **Clone this flake to `~/flake`** (path matters for neovim, see the standalone section
+   below) and build it as the next boot generation. `boot`, not `switch`: the config renames
+   the default user to `lytharn`, which can't happen while logged in as `nixos`. The explicit
+   `.#wslx` is needed only here, while the hostname is still the stock `nixos`; afterwards
+   `nixos-rebuild` picks `wslx` from the hostname.
+   ```bash
+   nix-shell -p git --run 'git clone https://github.com/lytharn/nixos ~/flake'
+   cd ~/flake
+   sudo nixos-rebuild boot --flake .#wslx
+   ```
+3. **Restart the distro as root once** so the user rename is applied, then normally:
+   ```powershell
+   wsl -t NixOS
+   wsl -d NixOS --user root exit
+   wsl -t NixOS
+   ```
+   Re-clone the flake into `/home/lytharn/flake` (the old checkout stays in `/home/nixos`).
+
+### Switching after a change
+
+```bash
+cd ~/flake && sudo nixos-rebuild switch --flake .
+```
 
 ## Standalone Home Manager (non-NixOS)
 

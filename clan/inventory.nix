@@ -1,6 +1,6 @@
 # Inventory: machine tags + service instances. Deploys clan services to machines by tag/role
 # instead of each machine importing a module path in its configuration.nix. `all`/`nixos`/
-# `darwin` are built-in tags; `desktop`/`server` are ours. Local services referenced here are
+# `darwin` are built-in tags; `desktop`/`server`/`wsl` are ours. Local services referenced here are
 # auto-registered as clan.modules.<name> in ./services-modules.nix.
 {
   inventory = {
@@ -9,6 +9,7 @@
       quex.tags = [ "desktop" ];
       serx.tags = [ "server" ];
       baxx.tags = [ "server" ];
+      wslx.tags = [ "wsl" ];
     };
 
     instances.neovim = {
@@ -55,8 +56,12 @@
         name = "tailscale";
         input = "self";
       };
-      # Every host is on the tailnet (desktops + servers).
-      roles.default.tags = [ "all" ];
+      # Every real host is on the tailnet. Not the WSL distros: the Windows host runs
+      # Tailscale itself and WSL shares its network.
+      roles.default.tags = [
+        "desktop"
+        "server"
+      ];
     };
 
     instances.actual = {
