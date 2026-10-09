@@ -66,8 +66,10 @@
   # nix-ld provides it (the approach NixOS-WSL's docs recommend over patching the server).
   programs.nix-ld.enable = true;
 
-  # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
-  # (greeting, nix-shell fn) comes from the fish home module enabled in server-home.nix.
+  # System-level fish: completions for system-installed tools (nix, nixos-rebuild, ...) and
+  # man-page-generated ones. Not the login shell (that stays bash; tmux starts fish). The
+  # user-facing fish config (greeting, nix-shell fn) comes from the fish home module
+  # enabled in server-home.nix.
   programs.fish.enable = true;
 
   # Automatically delete older generations and garbage collect

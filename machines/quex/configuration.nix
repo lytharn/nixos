@@ -102,8 +102,10 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
-  # (greeting, nix-shell fn) comes from the fish home module (slask.apps.fish in desktop-home.nix).
+  # System-level fish: completions for system-installed tools (nix, nixos-rebuild, ...) and
+  # man-page-generated ones. Not the login shell (that stays bash; tmux starts fish). The
+  # user-facing fish config (greeting, nix-shell fn) comes from the fish home module
+  # (slask.apps.fish in desktop-home.nix).
   programs.fish.enable = true;
 
   # Enable distributed builds on serx

@@ -72,8 +72,10 @@
     ripgrep
   ];
 
-  # System-level fish (login shell, completions, /etc/shells); the user-facing fish config
-  # (greeting, nix-shell fn) comes from the fish home module enabled in server-home.nix.
+  # System-level fish: completions for system-installed tools (nix, nixos-rebuild, ...) and
+  # man-page-generated ones. Not the login shell (that stays bash; tmux starts fish). The
+  # user-facing fish config (greeting, nix-shell fn) comes from the fish home module
+  # enabled in server-home.nix.
   programs.fish.enable = true;
 
   # How clan reaches baxx for deploys (as lytharn, escalating via sudo): it's off-site and
