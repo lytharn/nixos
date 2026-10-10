@@ -101,9 +101,7 @@
     initialPassword = "slaskfisk";
     # Authorize mewx's own key so clan can deploy over SSH (as lytharn@mewx, escalating via
     # sudo) from mewx itself. PasswordAuthentication is off.
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJART1vYgHpeweIlQ4hpcJQQ12WnKJydXaSSkvehteCC lytharn@users.noreply.github.com" # mewx
-    ];
+    openssh.authorizedKeys.keys = [ (import ../../lib/ssh-keys.nix).mewx ];
   };
 
   # Allow unfree packages
