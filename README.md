@@ -157,19 +157,23 @@ from inside WSL.
    below) and build it as the next boot generation. `boot`, not `switch`: the config renames
    the default user to `lytharn`, which can't happen while logged in as `nixos`. The explicit
    `.#wslx` is needed only here, while the hostname is still the stock `nixos`; afterwards
-   `nixos-rebuild` picks `wslx` from the hostname.
+   `nixos-rebuild` picks `wslx` from the hostname. The stock image doesn't enable flakes
+   either (our config does), so turn them on just for this build via `NIX_CONFIG`; `git` comes
+   from the image's `nixos` channel.
    ```bash
    nix-shell -p git --run 'git clone https://github.com/lytharn/nixos ~/flake'
    cd ~/flake
-   sudo nixos-rebuild boot --flake .#wslx
+   sudo env NIX_CONFIG='experimental-features = nix-command flakes' \
+     nixos-rebuild boot --flake .#wslx
    ```
 3. **Restart the distro as root once** so the user rename is applied, then normally:
    ```powershell
    wsl -t NixOS
    wsl -d NixOS --user root exit
    wsl -t NixOS
+   wsl -d NixOS
    ```
-   Re-clone the flake into `/home/lytharn/flake` (the old checkout stays in `/home/nixos`).
+   The last command opens a shell as `lytharn`. Re-clone the flake into `/home/lytharn/flake` (the old checkout stays in `/home/nixos`).
 
 ### Switching after a change
 
