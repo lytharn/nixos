@@ -174,6 +174,10 @@ from inside WSL.
    wsl -d NixOS
    ```
    The last command opens a shell as `lytharn`. Re-clone the flake into `/home/lytharn/flake` (the old checkout stays in `/home/nixos`).
+4. **Leave direnv off for the checkout.** direnv will offer to load the repo's `.envrc`; don't
+   `direnv allow` it (or run `direnv deny` in `~/flake` if you did). The dev shell is for the
+   desktops: it brings the `clan` CLI and fetches Hyprland + Neovim for the Lua LSP configs,
+   none of which wslx uses, and nix-direnv pins all of it against garbage collection.
 
 ### Switching after a change
 
