@@ -229,6 +229,12 @@ is not involved with these hosts at all.
 4. **Open a new shell.** Everything (PATH, `EDITOR`, `TERMINFO_DIRS`, `NIX_PATH`) is exported
    from `~/.bashrc` / `~/.profile`, which only get sourced on a fresh login.
 
+5. **Leave direnv off for the checkout.** Once direnv is installed it will offer to load the
+   repo's `.envrc`; don't `direnv allow` it (or run `direnv deny` in `~/flake` if you did).
+   The dev shell is for the NixOS desktops: it brings the `clan` CLI and fetches Hyprland +
+   Neovim for the Lua LSP configs, none of which this home uses, and nix-direnv pins all of
+   it against garbage collection.
+
 ### Switching after a change
 
 `home-manager` is on PATH from then on, so subsequent applies are just:
