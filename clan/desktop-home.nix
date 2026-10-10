@@ -44,7 +44,15 @@
     fzf.enable = true;
     gh.enable = true;
     ghostty.enable = true;
-    git.enable = true;
+    git = {
+      enable = true;
+      # Each desktop signs with its own ~/.ssh/id_ed25519; both are registered as GitHub
+      # signing keys. Not on the servers, which may lack the key and would then fail to commit.
+      sshSigning = {
+        enable = true;
+        allowedSigners = builtins.attrValues (import ../lib/ssh-keys.nix);
+      };
+    };
     gtk.enable = true;
     helix.enable = true;
     hyprland = {

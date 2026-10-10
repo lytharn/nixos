@@ -129,6 +129,19 @@ sudo nixos-rebuild switch --flake .        # or .#<host>
    ```
    `--reset` clears the half-applied `--accept-routes` state; approving reuses the old node
    name if you didn't delete it from the admin console. After this the autoconnect unit no-ops.
+8. **Desktops: restore the personal SSH key.** `~/.ssh/id_ed25519` is hand-managed, not a clan
+   var, so a wipe loses it — and it's what serx and baxx authorize for `lytharn`, what mewx's
+   serx-built deploys copy back with, what git signs commits with, and what GitHub knows
+   (as both an authentication and a signing key). Restore it from backup:
+   ```bash
+   install -Dm600 <backup> ~/.ssh/id_ed25519 && ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
+   ```
+   and check the `.pub` matches the host's entry in `lib/ssh-keys.nix`. If the key is lost
+   instead, generate a new one (`ssh-keygen -t ed25519 -C lytharn@users.noreply.github.com`),
+   replace the host's entry in `lib/ssh-keys.nix`, deploy serx and baxx from the other desktop
+   (this one can't reach them yet), for mewx also deploy mewx itself locally with `sudo
+   nixos-rebuild switch --flake .` (it authorizes its own key), and re-add the key on GitHub
+   under both *Authentication* and *Signing* keys.
 
 **Adopting an already-installed machine in-place** (no wipe): create `machines/<host>/`,
 `clan vars generate <host>`, then on that machine `sudo nixos-rebuild switch --flake .#<host>`

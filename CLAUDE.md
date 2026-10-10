@@ -65,6 +65,10 @@ clan auto-discovers **machines** by directory; everything else is imported expli
 - `shells/default/default.nix` → dev shell (provides the `clan` CLI + generates the gitignored
   `.luarc.json` LSP configs); entered via direnv / `nix develop`.
 - `lib/palette/` → the tokyonight theme palette, imported directly by the hyprland/wayle modules.
+- `lib/ssh-keys.nix` → the desktops' personal SSH public keys (`~/.ssh/id_ed25519`, hand-managed,
+  not clan vars), the single source for serx/baxx/mewx `authorizedKeys` and git's allowed
+  signers. Imported directly. The desktops sign every commit/tag with that key
+  (`slask.apps.git.sshSigning`, desktop-only so servers without the key can still commit).
 - `sops/` + `vars/` → clan's own encrypted secret store (see Secrets). **Not** raw sops-nix.
 
 The namespace is `slask`, injected as a module arg (`namespace = "slask"`) via clan's
