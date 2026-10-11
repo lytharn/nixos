@@ -8,6 +8,7 @@
 let
   cfg = config.${namespace}.apps.git;
   email = "lytharn@users.noreply.github.com";
+  withDifftastic = "-c diff.external=${lib.getExe config.programs.difftastic.package}";
 in
 {
   options.${namespace}.apps.git = {
@@ -66,8 +67,10 @@ in
                 amend = "commit --amend --no-edit";
                 # Plain git diff, without delta.
                 dp = "-c pager.diff=less diff";
-                # Diff with difftastic instead of delta; takes the same arguments as `git diff`.
-                dt = "-c diff.external=${lib.getExe config.programs.difftastic.package} diff";
+                # difftastic instead of delta; each takes the same arguments as the command it wraps.
+                dt = "${withDifftastic} diff";
+                dts = "${withDifftastic} show --ext-diff";
+                dtl = "${withDifftastic} log -p --ext-diff";
                 # Log aliases: l/ll one-line/full; lt follows first parents only (the mainline);
                 # ltr is the last 15 mainline commits, oldest first. rl/rll are the reflog equivalents.
                 l = "log --graph --pretty=customone";
