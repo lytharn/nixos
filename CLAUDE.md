@@ -291,3 +291,7 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     comes from pre-run scripts in `hermesHomeFiles."scripts/*"` (e.g. `morning-briefing.sh`,
     used by the `morning-briefing` job at 07:00). The jobs themselves are runtime state in
     `/var/lib/hermes/.hermes/cron`, created via `hermes cron create`, not declared in Nix.
+    Hermes' built-in cron prompt lets the model reply `[SILENT]` to skip delivery when "nothing
+    is new" (no config switch): a job that must always arrive, like the briefing, needs its own
+    prompt to forbid that (`hermes cron edit <id> --prompt …`). Find out why a run didn't
+    deliver with `hermes logs agent --component cron` (the journal only shows warnings).
