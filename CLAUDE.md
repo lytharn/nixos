@@ -289,9 +289,12 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     … --repeat 1`), which the gateway runs and delivers. `cron create/list/remove` are safe.
   - Scheduled jobs get no tools (`platform_toolsets.cron = [ "session_search" ]`); their data
     comes from pre-run scripts in `hermesHomeFiles."scripts/*"` (e.g. `morning-briefing.sh`,
-    used by the `morning-briefing` job at 07:00). The jobs themselves are runtime state in
-    `/var/lib/hermes/.hermes/cron`, created via `hermes cron create`, not declared in Nix.
+    used by the `morning-briefing` job at 07:00). The jobs are declared in `cronJobs` in
+    `hermes.nix` (schedule, delivery, script, prompt) and reconciled into Hermes' runtime job
+    list (`/var/lib/hermes/.hermes/cron/jobs.json`) on deploy by the `hermes-cron-jobs` oneshot,
+    matched by name (created if missing, else edited). Removing an entry does not delete the
+    job (`hermes cron remove <name>`); jobs the user creates in chat (reminders) stay untouched.
     Hermes' built-in cron prompt lets the model reply `[SILENT]` to skip delivery when "nothing
     is new" (no config switch): a job that must always arrive, like the briefing, needs its own
-    prompt to forbid that (`hermes cron edit <id> --prompt …`). Find out why a run didn't
-    deliver with `hermes logs agent --component cron` (the journal only shows warnings).
+    prompt to forbid that. Find out why a run didn't deliver with
+    `hermes logs agent --component cron` (the journal only shows warnings).
