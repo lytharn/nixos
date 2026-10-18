@@ -20,6 +20,9 @@
               steam = {
                 enable = true;
                 extraCompatPackages = [ pkgs.proton-ge-bin ];
+                # Remote Play / Steam Link ports, incl. the UDP 10400 SteamVR's vrlink driver
+                # streams over: without them the Steam Frame only offers theater mode.
+                remotePlay.openFirewall = true;
               };
               gamescope.enable = true;
               gamemode.enable = true;
