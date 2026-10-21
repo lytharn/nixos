@@ -52,6 +52,15 @@
     };
   };
 
+  # Apps don't get to add login entries behind Nix's back (e.g. the Nextcloud client's
+  # "Launch on system startup" duplicating its systemd service): ~/.config/autostart is a
+  # read-only store dir holding only `xdg.autostart.entries`. Start things via systemd user
+  # services or declare them there instead.
+  xdg.autostart = {
+    enable = true;
+    readOnly = true;
+  };
+
   slask.apps = {
     bat.enable = true;
     claude.enable = true;

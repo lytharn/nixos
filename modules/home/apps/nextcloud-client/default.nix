@@ -22,6 +22,9 @@ in
       enable = true;
       startInBackground = true;
     };
+    # The systemd service above starts the client. Its own "Launch on system startup" (on by
+    # default) would add a second instance via ~/.config/autostart, and the two race at login
+    # and both exit; the desktops' read-only autostart dir (clan/desktop-home.nix) prevents it.
     home.packages = [ pkgs.nextcloud-client ];
   };
 }
