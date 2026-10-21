@@ -2,6 +2,7 @@
   mkShell,
   pkgs,
   inputs,
+  gitHooks,
   ...
 }:
 let
@@ -63,14 +64,20 @@ let
 in
 mkShell {
   # clan CLI, so `clan machines …` / `clan vars …` are on PATH via direnv on `cd`.
-  packages = [ inputs.clan-core.packages.${pkgs.stdenv.hostPlatform.system}.clan-cli ];
+  packages = [
+    inputs.clan-core.packages.${pkgs.stdenv.hostPlatform.system}.clan-cli
+  ]
+  # The hooks' tools (nixfmt, …), so they can also be run by hand.
+  ++ gitHooks.enabledPackages;
 
   # Regenerate the (gitignored) .luarc.json files on shell entry. The repo root
   # is resolved at runtime, so no checkout path is hardcoded.
+  # Then install the git hooks (./git-hooks.nix) into .git/hooks.
   shellHook = ''
     root="$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")"
     install -m644 ${mkLuarc "hyprland-luarc.json" hyprlandCfg} "$root/modules/home/apps/hyprland/.luarc.json"
     install -m644 ${mkLuarc "neovim-luarc.json" neovimCfg} "$root/modules/home/apps/neovim/config/.luarc.json"
     install -m644 ${mkLuarc "root-luarc.json" rootCfg} "$root/.luarc.json"
+    ${gitHooks.shellHook}
   '';
 }

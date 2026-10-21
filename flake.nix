@@ -38,6 +38,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Git hooks (nixfmt on staged files, commit-message line lengths), installed into
+    # .git/hooks by the dev shell and also run by `nix flake check`. See ./git-hooks.nix.
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     clan-core = {
       url = "git+https://git.clan.lol/clan/clan-core";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -64,6 +71,15 @@
           config.allowUnfree = true;
         };
       forAllSystems = f: lib.genAttrs systems (system: f (pkgsFor system));
+
+      # Git hooks (see ./git-hooks.nix): one run per system, shared by `checks` and the dev
+      # shell, which installs them.
+      gitHooksFor =
+        pkgs:
+        import ./git-hooks.nix {
+          inherit pkgs;
+          inherit (inputs) git-hooks;
+        };
 
       # clan owns the machine lifecycle. It auto-discovers machines/<name>/ and wires each
       # machine's configuration.nix / hardware-configuration.nix / disko.nix, and bundles its
@@ -106,10 +122,15 @@
 
       formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
 
+      checks = forAllSystems (pkgs: {
+        git-hooks = gitHooksFor pkgs;
+      });
+
       devShells = forAllSystems (pkgs: {
         default = import ./shells/default/default.nix {
           inherit (pkgs) mkShell;
           inherit pkgs inputs;
+          gitHooks = gitHooksFor pkgs;
         };
       });
 

@@ -81,6 +81,9 @@ This mirrors clan's own official services (e.g. `borgbackup`).
 ## The clan CLI
 
 `clan` is provided by the dev shell — `nix develop`, or automatically via direnv on `cd`.
+Entering it also installs the repo's git hooks (`git-hooks.nix`): nixfmt on staged Nix files,
+and a commit-message check (subject and body lines at most 72 chars, blank second line). Skip
+them for one commit with `git commit --no-verify`.
 
 ```bash
 clan machines list                 # list machines

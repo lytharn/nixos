@@ -27,7 +27,7 @@ distribution-specific assumptions out of it.
 > The flake used to be built on [Snowfall Lib](https://github.com/snowfallorg/lib); it has
 > been fully migrated to clan. `flake.nix` is now plain outputs (no `mkFlake`), inputs are
 > `nixpkgs`, `home-manager`, `nix-minecraft`, `clan-core` (clan-core bundles disko + sops-nix),
-> `wallpapers`, `nixpkgs-collabora`, `hermes-agent`, `nixos-wsl`, and there is no raw sops-nix / `secrets/` / `.sops.yaml`
+> `wallpapers`, `nixpkgs-collabora`, `hermes-agent`, `nixos-wsl`, `git-hooks`, and there is no raw sops-nix / `secrets/` / `.sops.yaml`
 > anymore — all secrets are clan vars.
 >
 > `nixpkgs-collabora` is a **pin, not a second channel**: a fixed older nixos-unstable rev that
@@ -63,7 +63,15 @@ clan auto-discovers **machines** by directory; everything else is imported expli
   `server-home.nix` (shared HM app sets per host class), `restic-secrets.nix` (the shared restic
   vars generator).
 - `shells/default/default.nix` → dev shell (provides the `clan` CLI + generates the gitignored
-  `.luarc.json` LSP configs); entered via direnv / `nix develop`.
+  `.luarc.json` LSP configs + installs the git hooks); entered via direnv / `nix develop`.
+- `git-hooks.nix` → git hooks via the `git-hooks` input
+  ([git-hooks.nix](https://github.com/cachix/git-hooks.nix)): **pre-commit** runs nixfmt on
+  staged `.nix` files; **commit-msg** rejects a subject over 72 chars, a non-blank second line,
+  or a body line over 72 chars (lines without a space, e.g. URLs, are exempt). Installed into
+  `.git/hooks` by the dev shell, also exposed as `checks.<system>.git-hooks`. So wrap commit
+  bodies at 72 — a `git commit -m "<long paragraph>"` is rejected; pass one `-m` per wrapped
+  paragraph or a file via `-F`. A nixfmt rejection has already reformatted the file: re-`git add`
+  it and commit again.
 - `lib/palette/` → the tokyonight theme palette, imported directly by the hyprland/wayle modules.
 - `lib/ssh-keys.nix` → the desktops' personal SSH public keys (`~/.ssh/id_ed25519`, hand-managed,
   not clan vars), the single source for serx/baxx/mewx `authorizedKeys` and git's allowed
@@ -169,6 +177,7 @@ Other:
 clan machines list                 # list clan machines
 clan vars list <host>              # show a host's vars and whether they're set
 nix fmt                            # format all Nix files (nixfmt-tree)
+nix build .#checks.x86_64-linux.git-hooks  # run the pre-commit hooks over the whole tree
 nix flake update [<input>]         # update all / one input
 ```
 
