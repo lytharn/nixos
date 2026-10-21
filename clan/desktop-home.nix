@@ -36,6 +36,22 @@
     chromium
   ];
 
+  # Firefox is the default browser; without this the most recently installed browser wins.
+  # HM owns mimeapps.list once this is set, so Claude Code's own URL handler (which it would
+  # otherwise write there itself) is declared here too.
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "text/html" = "firefox.desktop";
+      "application/xhtml+xml" = "firefox.desktop";
+      "x-scheme-handler/http" = "firefox.desktop";
+      "x-scheme-handler/https" = "firefox.desktop";
+      "x-scheme-handler/about" = "firefox.desktop";
+      "x-scheme-handler/unknown" = "firefox.desktop";
+      "x-scheme-handler/claude-cli" = "claude-code-url-handler.desktop";
+    };
+  };
+
   slask.apps = {
     bat.enable = true;
     claude.enable = true;
