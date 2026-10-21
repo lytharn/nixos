@@ -33,6 +33,7 @@
     # Apps
     firefox
     keepassxc
+    chromium
   ];
 
   slask.apps = {
