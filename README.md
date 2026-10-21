@@ -346,6 +346,14 @@ keeping it out of the world-readable store. Use a dedicated fine-grained PAT wit
 > `--option`. (`$(gh auth token)` works if `gh` is logged in on that host; otherwise pass the PAT
 > literally.)
 
+> **If a deploy 404s on the input anyway.** A provisioned desktop has once failed `clan machines
+> update` with an HTTP 404 on `github.com/lytharn/wallpapers/archive/<rev>.tar.gz` ("Detected
+> potential issue when fetching flake inputs on remote"), though the token was valid and both
+> the user and root (`sudo nix flake prefetch --refresh github:lytharn/wallpapers/<rev>`) could
+> fetch the input. Cause unknown (not reproduced; plain deploys worked afterwards). Workaround:
+> `clan machines update <host> --upload-inputs`, which fetches all inputs on the deploying
+> machine and copies them to the target. If it recurs, keep the full output and investigate.
+
 > **Standalone Home-Manager users** (`.#standalone`) are unaffected — that config never
 > references `inputs.wallpapers`, and Nix fetches inputs lazily, so the private repo is never
 > pulled. Only whole-flake commands (`nix flake check`/`archive`/`update`) would touch it.
