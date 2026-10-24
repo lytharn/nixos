@@ -154,25 +154,6 @@
 
   services.flatpak.enable = true;
 
-  # Automatically delete older generations and garbage collect
-  nix = {
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 90d";
-    };
-  };
-
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-
-  # Dedupe the store as paths are added, so the cost lands only while Nix is already
-  # working — a scheduled optimise would catch up right after boot on a machine that's off
-  # at night.
-  nix.settings.auto-optimise-store = true;
-
   # Expose the pinned nixpkgs + home-manager on the legacy NIX_PATH so manix can build its
   # options caches — it evaluates `import <nixpkgs> {}` and `import <home-manager/docs>`.
   # (Setting nix.nixPath replaces the default, so nixpkgs=flake:nixpkgs is re-listed here.)

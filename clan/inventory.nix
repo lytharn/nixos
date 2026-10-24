@@ -12,6 +12,20 @@
       wslx.tags = [ "wsl" ];
     };
 
+    instances.nix-settings = {
+      module = {
+        name = "nix-settings";
+        input = "self";
+      };
+      # Every host. Store optimisation defaults to "auto" (dedupe on store writes) for the
+      # machines that are off at night; the always-on servers optimise on a nightly timer.
+      roles.default.tags = [ "all" ];
+      roles.default.machines = {
+        serx.settings.optimise = "timer";
+        baxx.settings.optimise = "timer";
+      };
+    };
+
     instances.neovim = {
       module = {
         name = "neovim";
