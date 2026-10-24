@@ -182,6 +182,10 @@
     "flakes"
   ];
 
+  # Always on, so optimise on a nightly timer instead of on every store write, keeping
+  # build/deploy throughput unaffected.
+  nix.optimise.automatic = true;
+
   # Home-Manager for the shell tooling used when logged in to serx (see clan/server-home.nix).
   home-manager = {
     useGlobalPkgs = true;

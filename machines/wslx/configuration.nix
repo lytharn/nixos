@@ -86,6 +86,11 @@
     "flakes"
   ];
 
+  # Dedupe the store as paths are added, so the cost lands only while Nix is already
+  # working — a scheduled optimise would catch up right after boot on a machine that's off
+  # at night.
+  nix.settings.auto-optimise-store = true;
+
   # Home-Manager: the servers' shell toolkit (clan/server-home.nix) plus neovim, since this
   # is a machine that gets worked on — the same set as homes/standalone.
   home-manager = {
