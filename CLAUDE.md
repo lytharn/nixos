@@ -72,7 +72,7 @@ clan auto-discovers **machines** by directory; everything else is imported expli
   bodies at 72 — a `git commit -m "<long paragraph>"` is rejected; pass one `-m` per wrapped
   paragraph or a file via `-F`. A nixfmt rejection has already reformatted the file: re-`git add`
   it and commit again.
-- `lib/palette/` → the tokyonight theme palette, imported directly by the hyprland/wayle modules.
+- `lib/palette/` → the tokyonight theme palette, imported directly by the hyprland/noctalia modules.
 - `lib/ssh-keys.nix` → the desktops' personal SSH public keys (`~/.ssh/id_ed25519`, hand-managed,
   not clan vars), the single source for serx/baxx/mewx `authorizedKeys` and git's allowed
   signers. Imported directly. The desktops sign every commit/tag with that key

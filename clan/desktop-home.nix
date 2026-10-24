@@ -93,12 +93,12 @@
     mangohud.enable = true;
     neovim.enable = true;
     nextcloud-client.enable = true;
+    noctalia.enable = true;
     prismlauncher.enable = true;
     rclone-nextcloud.enable = true;
     starship.enable = true;
     thunderbird.enable = true;
     tmux.enable = true;
-    wayle.enable = true;
     yazi.enable = true;
     zoxide.enable = true;
   };
