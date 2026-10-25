@@ -9,7 +9,9 @@
     Matrix notifications go homeserver → ntfy → phone without Google. Access is deny-all by
     default: the `lytharn` user (password from the `ntfy-user` var) can read/write everything,
     and anyone may only *write* to `up*` topics, which is what UnifiedPush senders (the Matrix
-    homeserver) need. Users and ACLs are declarative. serx-only.
+    homeserver) need. The `alerts` user may only write to the `alerts` topic, with the token
+    from the shared `ntfy-alerts` var; that's how hosts push failure alerts (btrfs-health).
+    Users, ACLs and tokens are declarative. serx-only.
   '';
 
   roles.default = {
@@ -42,13 +44,17 @@
                   "${user}:*:rw"
                   # UnifiedPush: senders (the homeserver) publish anonymously; topics are random.
                   "everyone:up*:wo"
+                  # Host alerts (btrfs-health), published with the shared ntfy-alerts token.
+                  "alerts:alerts:wo"
                 ];
                 enable-signup = false;
                 enable-login = true;
               };
-              # NTFY_AUTH_USERS, kept out of the Nix store.
-              environmentFile = config.clan.core.vars.generators.ntfy-user.files.env.path;
+              # NTFY_AUTH_USERS + NTFY_AUTH_TOKENS, kept out of the Nix store.
+              environmentFile = config.clan.core.vars.generators.ntfy-env.files.env.path;
             };
+
+            imports = [ ../ntfy-alerts.nix ];
 
             # Need to have a tailscale service named ntfy, already created
             systemd.services.tailscale-serve-ntfy = {
@@ -76,10 +82,26 @@
               };
             };
 
-            # The password to enter in the ntfy app (`clan vars get serx ntfy-user/password`), and
-            # the env file declaring the user with its bcrypt hash (ntfy rejects cost < 10).
+            # The password to enter in the ntfy app (`clan vars get serx ntfy-user/password`).
             clan.core.vars.generators.ntfy-user = {
               files.password.deploy = false;
+              runtimeInputs = [
+                pkgs.coreutils
+                pkgs.openssl
+              ];
+              script = ''
+                openssl rand -base64 24 | tr -d "\n" > "$out"/password
+              '';
+            };
+
+            # The env file declaring the users with their bcrypt hashes (ntfy rejects cost < 10)
+            # and the alerts user's token. That user only ever authenticates with the token, so
+            # its password is random and thrown away.
+            clan.core.vars.generators.ntfy-env = {
+              dependencies = [
+                "ntfy-user"
+                "ntfy-alerts"
+              ];
               files.env = { }; # read by systemd as root (EnvironmentFile), so no owner needed
               runtimeInputs = [
                 pkgs.coreutils
@@ -87,9 +109,12 @@
                 pkgs.mkpasswd
               ];
               script = ''
-                openssl rand -base64 24 | tr -d "\n" > "$out"/password
-                hash="$(mkpasswd -s -m bcrypt -R 10 < "$out"/password)"
-                printf "NTFY_AUTH_USERS='${user}:%s:user'\n" "$hash" > "$out"/env
+                user_hash="$(mkpasswd -s -m bcrypt -R 10 < "$in"/ntfy-user/password)"
+                alerts_hash="$(openssl rand -base64 24 | mkpasswd -s -m bcrypt -R 10)"
+                {
+                  printf "NTFY_AUTH_USERS='${user}:%s:user,alerts:%s:user'\n" "$user_hash" "$alerts_hash"
+                  printf "NTFY_AUTH_TOKENS='alerts:%s:host alerts'\n" "$(cat "$in"/ntfy-alerts/token)"
+                } > "$out"/env
               '';
             };
           };

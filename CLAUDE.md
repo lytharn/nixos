@@ -255,7 +255,13 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     `admin_signal_execute = [ "server backup-database" ]`) into `/var/backup/continuwuity`,
     which restic ships; the live DB dir isn't consistent to copy.
   - ntfy is deny-all; the declarative `lytharn` user (bcrypt, cost ≥ 10 or ntfy rejects it)
-    comes from the `ntfy-user` var's env file; anyone may only write to `up*` topics.
+    comes from the `ntfy-env` var's env file (bcrypt-hashed from the `ntfy-user` password);
+    anyone may only write to `up*` topics.
+  - Host alerts: an `alerts` user (token-only, from the shared `ntfy-alerts` var in
+    `clan/ntfy-alerts.nix`) may write the `alerts` topic. `clan/services/btrfs-health.nix` (all
+    desktops/servers) uses it: autoScrub (desktops weekly, servers monthly) plus a daily
+    `btrfs device stats --check`, each with `OnFailure=btrfs-alert@%n` pushing the failed
+    unit's log tail. Test with `systemctl start btrfs-alert@test.service`.
 - **Hermes Agent on `serx`** (`clan/services/hermes.nix`): `llama-server` (Vulkan on the Arc
   iGPU, `127.0.0.1:8012`) serves Qwen3.6-35B-A3B, and Hermes talks to it. The gateway logs in to
   the local homeserver as `@hermes` (password from the `hermes-matrix` var, device `HERMES_BOT`,

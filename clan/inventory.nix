@@ -26,6 +26,23 @@
       };
     };
 
+    instances.btrfs-health = {
+      module = {
+        name = "btrfs-health";
+        input = "self";
+      };
+      # Every btrfs host (not wslx: no btrfs, no clan vars). The desktops scrub weekly, since a
+      # scrub cut short by a shutdown isn't retried until the next interval.
+      roles.default.tags = [
+        "desktop"
+        "server"
+      ];
+      roles.default.machines = {
+        mewx.settings.scrubInterval = "weekly";
+        quex.settings.scrubInterval = "weekly";
+      };
+    };
+
     instances.neovim = {
       module = {
         name = "neovim";
