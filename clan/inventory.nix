@@ -43,6 +43,16 @@
       };
     };
 
+    instances.home-snapshots = {
+      module = {
+        name = "home-snapshots";
+        input = "self";
+      };
+      # Desktops only: their /home has no other undo (serx's data is versioned by Nextcloud and
+      # backed up nightly; snapshots on baxx would only pin what pruning frees).
+      roles.default.tags = [ "desktop" ];
+    };
+
     instances.neovim = {
       module = {
         name = "neovim";
