@@ -13,6 +13,17 @@ in
 {
   options.${namespace}.apps.noctalia = {
     enable = lib.mkEnableOption "Noctalia Wayland shell (bar, notifications, OSD)";
+
+    calendarPasswordFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "/run/secrets/noctalia-calendar";
+      description = ''
+        Path to a file holding a Nextcloud app password. When set, Noctalia syncs every
+        Nextcloud calendar over CalDAV into the control-center calendar. Supplied by the caller
+        (a clan var) so the password never lands in the Nix store.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -85,6 +96,22 @@ in
 
         # The week starts on the LC_TIME locale's first weekday (sv_SE → Monday).
         control_center.calendar.show_week_numbers = true;
+
+        # Read-only CalDAV sync (every 15 min by default). Accounts added in the settings GUI
+        # (e.g. ICS subscriptions) go to settings.toml, which deploys don't overwrite.
+        calendar = lib.mkIf (cfg.calendarPasswordFile != null) {
+          enabled = true;
+          account.home_nextcloud = {
+            type = "caldav";
+            name = "Nextcloud";
+            provider = "custom";
+            server_url = "https://cloud.gate-catla.ts.net/remote.php/dav/";
+            username = "lytharn";
+            calendars = [ ]; # all discovered calendars
+            credential_source = "file";
+            password_file = cfg.calendarPasswordFile;
+          };
+        };
 
         weather = {
           enabled = true;

@@ -11,6 +11,7 @@
   imports = [
     inputs.home-manager.nixosModules.home-manager
     ../../clan/rclone-nextcloud-secrets.nix
+    ../../clan/noctalia-calendar-secrets.nix
     ../../clan/remotebuilder-secrets.nix
     ../../clan/deploy-ssh-secrets.nix
     ../../clan/nix-github-token.nix
