@@ -262,6 +262,21 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     desktops/servers) uses it: autoScrub (desktops weekly, servers monthly) plus a daily
     `btrfs device stats --check`, each with `OnFailure=btrfs-alert@%n` pushing the failed
     unit's log tail. Test with `systemctl start btrfs-alert@test.service`.
+- **Calendar feeds on `serx`** (`clan/services/calendar-feeds.nix`): Nextcloud's own webcal
+  subscriptions can't be shared and reach CalDAV clients only as a `cs:subscribed` pointer, which
+  Noctalia and vdirsyncer skip. So a `feeds` system user copies each external feed (vdirsyncer,
+  http → caldav, feed wins, every 15 min) into a calendar owned by a non-admin `feeds` Nextcloud
+  account (created by the `calendar-feeds-user` oneshot), shared read-only with `shareWith`
+  (lytharn + hermes). Every client then sees them as ordinary `<id>_shared_by_feeds` calendars:
+  the desktops' Noctalia (its `home_nextcloud` CalDAV account, app password = the per-desktop
+  `noctalia-calendar` var), phones, and Hermes via `nc-sync`.
+  - The feed list is the `calendar-feeds` var prompt (one `<id> <url>` per line, `webcal://`
+    ok), so the private URLs and names stay out of the repo. Change it with `clan vars generate
+    serx --regenerate calendar-feeds` + deploy; the account password is a separate generator
+    (`calendar-feeds-account`) so that doesn't rotate it. Removing a line stops the sync but
+    keeps the calendar (`occ dav:delete-calendar feeds <id>`).
+  - `sudo` on serx needs a password, so to sync now rather than wait for the timer, hand over
+    `! ssh -t serx sudo systemctl start calendar-feeds`.
 - **Hermes Agent on `serx`** (`clan/services/hermes.nix`): `llama-server` (Vulkan on the Arc
   iGPU, `127.0.0.1:8012`) serves Qwen3.6-35B-A3B, and Hermes talks to it. The gateway logs in to
   the local homeserver as `@hermes` (password from the `hermes-matrix` var, device `HERMES_BOT`,
