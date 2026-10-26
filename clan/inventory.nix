@@ -202,6 +202,20 @@
       };
     };
 
+    instances.calendar-feeds = {
+      module = {
+        name = "calendar-feeds";
+        input = "self";
+      };
+      # serx-only (next to Nextcloud): external iCalendar feeds copied into read-only calendars
+      # shared with lytharn (Noctalia, phones) and hermes (its nc-sync). The feed list is a
+      # clan var prompt, so the URLs stay out of the repo.
+      roles.default.machines.serx.settings.shareWith = [
+        "lytharn"
+        "hermes"
+      ];
+    };
+
     instances.hermes = {
       module = {
         name = "hermes";

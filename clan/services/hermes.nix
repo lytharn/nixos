@@ -404,7 +404,9 @@
                 - Calendar (khal): `khal list today 7d`, `khal search <text>`, `khal printcalendars`.
                   Create: `khal new -a <calendar> 2026-10-07 10:00 11:00 Dentist`. Use the user's
                   calendars (shared with you, named like `personal_shared_by_lytharn`), not your
-                  own `personal` one.
+                  own `personal` one. Calendars named `*_shared_by_feeds` are read-only copies
+                  of external activity schedules: include them when listing, never add events
+                  to them.
                 - Tasks: the user's task lists are managed with the
                   `todo` shell command (todoman), run through the terminal tool:
                   `todo list`, `todo list <list>`, `todo show <id>`,
