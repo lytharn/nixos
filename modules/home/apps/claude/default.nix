@@ -22,10 +22,8 @@ let
   diffAddedWord = "#405847";
   diffRemovedWord = "#673745";
 
-  # Custom theme for `/theme`. Claude Code watches this directory and hot-reloads,
-  # but *selecting* the theme is not declarative: it writes "custom:tokyonight"
-  # into the mutable ~/.claude.json, so pick it once per machine via `/theme`.
-  # Tokens left out fall through to the `dark` base — notably the `ultrathink`
+  # Custom theme, selected by `settings.theme` below. Claude Code watches the
+  # themes directory and hot-reloads it. Tokens left out fall through to the `dark` base — notably the `ultrathink`
   # rainbow, which is deliberately not theme-colored.
   tokyonightTheme = {
     name = "Tokyo Night";
@@ -106,15 +104,36 @@ in
     home.file."${lib.removePrefix "${config.home.homeDirectory}/" config.programs.claude-code.configDir}/themes/tokyonight.json".source =
       (pkgs.formats.json { }).generate "claude-tokyonight.json" tokyonightTheme;
 
+    # Some preferences are only read from the mutable global config
+    # ~/.claude.json (login, per-project state, counters), which Claude Code
+    # rewrites constantly, so it can't be a managed file. Merge these keys into
+    # it on every activation instead; a running Claude Code may write back its
+    # in-memory copy, so restart it after a deploy.
+    #
+    # lspRecommendationDisabled: LSP servers are provided below; suppress the
+    # marketplace-plugin "install an LSP for <lang>?" popup, which never checks
+    # the configured lspServers. Ignored if put in settings.json.
+    home.activation.claudeGlobalConfig =
+      let
+        globalConfig = {
+          lspRecommendationDisabled = true;
+        };
+      in
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        f="$HOME/.claude.json"
+        if [ -z "''${DRY_RUN:-}" ]; then
+          [ -s "$f" ] || (umask 077; echo '{}' > "$f")
+          (umask 077; ${lib.getExe pkgs.jq} --argjson c ${lib.escapeShellArg (builtins.toJSON globalConfig)} \
+            '. * $c' "$f" > "$f.hm-tmp") && mv "$f.hm-tmp" "$f"
+        fi
+      '';
+
     programs.claude-code = {
       enable = true;
       settings = {
         model = "opus";
         tui = "fullscreen";
-        # LSP servers are provided below; suppress Claude Code's separate
-        # marketplace-plugin "install an LSP for <lang>?" recommendation nag,
-        # which is independent of configured lspServers and never checks them.
-        lspRecommendationDisabled = true;
+        theme = "custom:tokyonight";
         attribution = {
           commit = "";
           pr = "";

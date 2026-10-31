@@ -118,8 +118,9 @@ or a repo-root `.mcp.json` — they are generated and will be clobbered. Edit th
 - `modules/home/apps/claude/default.nix` → the Home-Manager module, wrapping upstream HM's
   `programs.claude-code`. Enabled via `slask.apps.claude.enable` in `clan/desktop-home.nix`,
   so it lands on the two **desktops** only (not `serx`/`baxx`). It sets `settings`
-  (model, fullscreen TUI, empty commit/PR attribution), `lspServers` (nixd, lua-language-server,
-  rust-analyzer), `mcpServers`, and writes the tokyonight `themes/tokyonight.json`.
+  (model, fullscreen TUI, theme, empty commit/PR attribution), `lspServers` (nixd,
+  lua-language-server, rust-analyzer), `mcpServers`, and writes the tokyonight
+  `themes/tokyonight.json`.
 - **MCP servers** go in `programs.claude-code.mcpServers.<name>` (`type = "stdio"` plus
   `command`, pointed at a nixpkgs binary with `lib.getExe` — same idiom as `lspServers`).
   HM renders them into a generated personal plugin (manifest name `hm`) at
@@ -129,8 +130,11 @@ or a repo-root `.mcp.json` — they are generated and will be clobbered. Edit th
   search.nixos.org, Home-Manager, nix-darwin, Noogle; tools `nix` and `nix_versions`).
   HM also has a tool-agnostic `programs.mcp.servers`, deliberately unused — Claude Code is the
   only consumer.
-- **Not everything is declarative.** Selecting the theme writes `custom:tokyonight` into the
-  mutable `~/.claude.json`, so it's a one-off `/theme` per machine (see the module's comment).
+- **`~/.claude.json` is mutable**, but some preferences are only read from there (e.g.
+  `lspRecommendationDisabled`; it's ignored in `settings.json`). The module's
+  `home.activation.claudeGlobalConfig` `jq`-merges those keys into it on each activation, since
+  Claude Code rewrites the file constantly and it can't be a managed file. The theme is a plain
+  `settings.theme = "custom:tokyonight"`.
 - Changes take effect after a deploy **plus a Claude Code restart**. Per the deploy rule below,
   a change here touches both desktops and so must be deployed from each in turn.
 
