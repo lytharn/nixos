@@ -15,6 +15,13 @@ hl.config({
   },
   decoration = {
     rounding = 5,
+    -- A tight, unoffset shadow in the border's gradient reads as a glow.
+    shadow = {
+      range = 4,
+      render_power = 4,
+      color = { colors = { "rgba(@colRed@55)", "rgba(@colBlue@55)" }, angle = 45 },
+      color_inactive = "rgba(@colComment@33)",
+    },
   },
   input = {
     kb_layout = "@kbLayout@",
