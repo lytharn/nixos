@@ -81,14 +81,6 @@
                 # Includes dependencies for a basic setup
                 # https://www.home-assistant.io/integrations/default_config/
                 default_config = { };
-                # Needed for reverse proxies like tailscale serve
-                http = {
-                  use_x_forwarded_for = true;
-                  trusted_proxies = [
-                    "127.0.0.1"
-                    "::1"
-                  ];
-                };
                 # A light+switch group for all the lights.
                 group.lampor = {
                   name = "Lampor";
