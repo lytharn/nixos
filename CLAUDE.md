@@ -72,7 +72,8 @@ clan auto-discovers **machines** by directory; everything else is imported expli
   bodies at 72 — a `git commit -m "<long paragraph>"` is rejected; pass one `-m` per wrapped
   paragraph or a file via `-F`. A nixfmt rejection has already reformatted the file: re-`git add`
   it and commit again.
-- `lib/palette/` → the tokyonight theme palette, imported directly by the hyprland/noctalia modules.
+- `lib/palette/` → the tokyonight theme palette, imported directly by the hyprland/noctalia/claude
+  modules.
 - `lib/ssh-keys.nix` → the desktops' personal SSH public keys (`~/.ssh/id_ed25519`, hand-managed,
   not clan vars), the single source for serx/baxx/mewx `authorizedKeys` and git's allowed
   signers. Imported directly. The desktops sign every commit/tag with that key
@@ -135,6 +136,8 @@ or a repo-root `.mcp.json` — they are generated and will be clobbered. Edit th
   `home.activation.claudeGlobalConfig` `jq`-merges those keys into it on each activation, since
   Claude Code rewrites the file constantly and it can't be a managed file. The theme is a plain
   `settings.theme = "custom:tokyonight"`.
+- `package` is wrapped to set `CLAUDE_CODE_TMUX_TRUECOLOR=1`: inside tmux Claude Code otherwise
+  drops to 256 colors, which turns the theme's dark backgrounds (diffs) grey.
 - Changes take effect after a deploy **plus a Claude Code restart**. Per the deploy rule below,
   a change here touches both desktops and so must be deployed from each in turn.
 

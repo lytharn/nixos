@@ -14,18 +14,20 @@ let
   # Claude Code takes "#rrggbb"; the palette stores bare hex.
   c = name: "#${palette.${name}}";
 
-  # Diff backgrounds from tokyonight's delta theme (the plus/minus styles in
-  # extras/delta/tokyonight_night.gitconfig), so diffs here match `git show`;
-  # the palette's diffAdd/diffDelete are too subtle to tell apart.
-  # *Word is delta's emph style; *Dimmed (unchanged context, not in delta) is
-  # the line background mixed 50% toward `bg`.
-  diffAdded = "#243e4a";
-  diffRemoved = "#4a272f";
-  diffAddedWord = "#2c5a66";
-  diffRemovedWord = "#713137";
-  diffAddedDimmed = "#1f2c38";
-  diffRemovedDimmed = "#32212a";
-
+  # Mix two palette colors: `t` = 0 gives `a`, 1 gives `b`.
+  mix =
+    t: a: b:
+    let
+      channel = hex: i: lib.fromHexString (builtins.substring (i * 2) 2 palette.${hex});
+      mixed =
+        i:
+        let
+          v = builtins.floor (channel a i + (channel b i - channel a i) * t + 0.5);
+          h = lib.toLower (lib.toHexString v);
+        in
+        lib.fixedWidthString 2 "0" h;
+    in
+    "#${mixed 0}${mixed 1}${mixed 2}";
   # Custom theme, selected by `settings.theme` below. Claude Code watches the
   # themes directory and hot-reloads it. Tokens left out fall through to the `dark` base — notably the `ultrathink`
   # rainbow, which is deliberately not theme-colored.
@@ -63,15 +65,15 @@ let
       fastMode = c "orange";
       fastModeShimmer = c "yellow";
 
-      # Diffs
-      inherit
-        diffAdded
-        diffRemoved
-        diffAddedDimmed
-        diffRemovedDimmed
-        diffAddedWord
-        diffRemovedWord
-        ;
+      # Diffs, in delta's colors so they match `git show` (the nvim diff
+      # backgrounds are too subtle to tell apart). *Dimmed (unchanged context,
+      # not in delta) is the line background mixed 50% toward `bg`.
+      diffAdded = c "deltaPlus";
+      diffRemoved = c "deltaMinus";
+      diffAddedWord = c "deltaPlusEmph";
+      diffRemovedWord = c "deltaMinusEmph";
+      diffAddedDimmed = mix 0.5 "deltaPlus" "bg";
+      diffRemovedDimmed = mix 0.5 "deltaMinus" "bg";
 
       # Fullscreen message backgrounds (tui = "fullscreen" below)
       userMessageBackground = c "bgHighlight";
@@ -134,6 +136,16 @@ in
 
     programs.claude-code = {
       enable = true;
+      # Inside tmux Claude Code clamps itself to 256 colors unless told
+      # otherwise, which turns the dark theme backgrounds (e.g. diffs) grey.
+      # tmux here passes truecolor through (Tc), so opt back in. A wrapper
+      # rather than settings.env, so it's set before color detection runs.
+      package = pkgs.symlinkJoin {
+        inherit (pkgs.claude-code) name version meta;
+        paths = [ pkgs.claude-code ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = "wrapProgram $out/bin/claude --set CLAUDE_CODE_TMUX_TRUECOLOR 1";
+      };
       settings = {
         model = "opus";
         tui = "fullscreen";

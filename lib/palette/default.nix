@@ -38,5 +38,12 @@
     diffDelete = "37222c";
     diffChange = "1f2231";
     diffText = "394b70";
+
+    # Stronger diff backgrounds from tokyonight's delta theme
+    # (extras/delta/tokyonight_night.gitconfig: plus/minus and their emph styles)
+    deltaPlus = "243e4a";
+    deltaPlusEmph = "2c5a66";
+    deltaMinus = "4a272f";
+    deltaMinusEmph = "713137";
   };
 }
