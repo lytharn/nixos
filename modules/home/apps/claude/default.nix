@@ -14,13 +14,17 @@ let
   # Claude Code takes "#rrggbb"; the palette stores bare hex.
   c = name: "#${palette.${name}}";
 
-  # Shades tokyonight doesn't define, derived from the diff backgrounds above:
-  # *Dimmed is the line background mixed 50% toward `bg` (unchanged context),
-  # *Word is it mixed 25% toward the matching accent (word-level highlight).
-  diffAddedDimmed = "#1d2530";
-  diffRemovedDimmed = "#281e29";
-  diffAddedWord = "#405847";
-  diffRemovedWord = "#673745";
+  # Diff backgrounds from tokyonight's delta theme (the plus/minus styles in
+  # extras/delta/tokyonight_night.gitconfig), so diffs here match `git show`;
+  # the palette's diffAdd/diffDelete are too subtle to tell apart.
+  # *Word is delta's emph style; *Dimmed (unchanged context, not in delta) is
+  # the line background mixed 50% toward `bg`.
+  diffAdded = "#243e4a";
+  diffRemoved = "#4a272f";
+  diffAddedWord = "#2c5a66";
+  diffRemovedWord = "#713137";
+  diffAddedDimmed = "#1f2c38";
+  diffRemovedDimmed = "#32212a";
 
   # Custom theme, selected by `settings.theme` below. Claude Code watches the
   # themes directory and hot-reloads it. Tokens left out fall through to the `dark` base — notably the `ultrathink`
@@ -60,9 +64,9 @@ let
       fastModeShimmer = c "yellow";
 
       # Diffs
-      diffAdded = c "diffAdd";
-      diffRemoved = c "diffDelete";
       inherit
+        diffAdded
+        diffRemoved
         diffAddedDimmed
         diffRemovedDimmed
         diffAddedWord
