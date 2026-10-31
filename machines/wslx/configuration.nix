@@ -53,6 +53,12 @@
     extraGroups = [ "wheel" ];
   };
 
+  # Windows Terminal renders 24-bit color but advertises only TERM=xterm-256color (whose
+  # terminfo lacks RGB) and no COLORTERM. Without the hint, tmux downsamples to 256 colors,
+  # which turns dark backgrounds like delta's diff colors grey. tmux reads it from the
+  # attaching client's environment, so it applies on the next attach.
+  environment.sessionVariables.COLORTERM = "truecolor";
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
