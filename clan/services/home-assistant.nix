@@ -39,7 +39,13 @@
             # otherwise defaults to 0xfff1, which does not match the existing fabric — the
             # legacy loader would find no matching fabric and orphan every commissioned
             # device. Keeping this pinned is what makes the migrated fabric keep working.
-            services.matterjs-server.extraArgs = [ "--vendorid=4939" ];
+            services.matterjs-server.extraArgs = [
+              "--vendorid=4939"
+              # Push UTC time, time zone and DST (from the host, NTP-synced by timesyncd) to
+              # every node with the TimeSynchronization cluster, e.g. the clock on IKEA's
+              # ALPSTUGA: on startup, every 24 h, around DST changes and on a TimeFailure.
+              "--enable-time-sync"
+            ];
 
             # Allow Thread devices to initiate BDX connections for Matter OTA firmware updates
             networking.firewall.trustedInterfaces = [ "wpan0" ];
