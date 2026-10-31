@@ -307,6 +307,12 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     `mail-mirror` var (prompts, readable only by `mailsync`); `hermes` is in the `mailsync` group,
     so it can search/read but its sandbox makes the Maildir read-only. Not backed up (the server
     holds the mail).
+  - **Indoor sensors** the same way (`clan/services/sensor-mirror.nix`): the `sensormirror` user
+    queries Home Assistant's REST API every 15 min and writes
+    `/var/lib/sensor-mirror/summary.txt` (every `sensor.*` with device class temperature/humidity:
+    current + 24 h min/max). Its token is the `sensor-mirror` var prompt (a long-lived token of a
+    dedicated non-admin HA user); `hermes` only reads the file, since an HA token could also call
+    services (lights, locks). The morning briefing includes it.
   - The model is a `pkgs.fetchurl` pinned to a Hugging Face commit + SHA-256, so a deploy
     downloads it onto `serx` (~21 GB). To switch models, change `url` + `hash`; to avoid a
     re-download of a file already on disk, `nix-store --add-fixed sha256 <file>` on serx first.

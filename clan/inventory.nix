@@ -202,6 +202,16 @@
       };
     };
 
+    instances.sensor-mirror = {
+      module = {
+        name = "sensor-mirror";
+        input = "self";
+      };
+      # serx-only, next to Home Assistant: a temperature/humidity summary file for the Hermes
+      # agent, so the agent never holds a Home Assistant token. The token is a clan var prompt.
+      roles.default.machines.serx.settings.readers = [ "hermes" ];
+    };
+
     instances.calendar-feeds = {
       module = {
         name = "calendar-feeds";
