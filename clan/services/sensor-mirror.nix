@@ -44,7 +44,48 @@
             stateDir = "/var/lib/sensor-mirror";
             # Home Assistant's default port (its http settings are managed in its UI).
             hassUrl = "http://127.0.0.1:8123";
+            wsUrl = "ws://127.0.0.1:8123/api/websocket";
             secrets = config.clan.core.vars.generators.sensor-mirror.files;
+
+            # The REST API doesn't say which room (area) an entity is in, and its template endpoint
+            # is admin-only, so read the registries over the websocket API instead. Prints
+            # {entity_id: area name} for the sensors that have one, their own area overriding
+            # their device's.
+            sensorAreas =
+              pkgs.writers.writePython3Bin "sensor-areas"
+                {
+                  libraries = [ pkgs.python3Packages.websockets ];
+                }
+                ''
+                  import json
+                  import sys
+                  from websockets.sync.client import connect
+
+                  # The header file is "Authorization: Bearer <token>".
+                  token = open(sys.argv[1]).read().split()[-1]
+                  with connect("${wsUrl}", max_size=None) as ws:
+                      ws.recv()  # auth_required
+                      ws.send(json.dumps({"type": "auth", "access_token": token}))
+                      if json.loads(ws.recv())["type"] != "auth_ok":
+                          sys.exit("Home Assistant rejected the token")
+
+                      def registry(i, name):
+                          ws.send(json.dumps({"id": i, "type": f"config/{name}/list"}))
+                          msg = json.loads(ws.recv())
+                          if not msg.get("success"):
+                              sys.exit(f"{name}: {msg.get('error')}")
+                          return msg["result"]
+
+                      areas = {a["area_id"]: a["name"] for a in registry(1, "area_registry")}
+                      devices = {d["id"]: d["area_id"] for d in registry(2, "device_registry")}
+                      entities = registry(3, "entity_registry")
+                  print(json.dumps({
+                      e["entity_id"]: areas[a]
+                      for e in entities
+                      if e["entity_id"].startswith("sensor.")
+                      and (a := e["area_id"] or devices.get(e["device_id"])) in areas
+                  }))
+                '';
 
             sensorMirror = pkgs.writeShellApplication {
               name = "sensor-mirror";
@@ -67,18 +108,25 @@
                   if [ -z "$ids" ]; then
                     echo "(no temperature or humidity sensors found)"
                   else
+                    areas="$(${lib.getExe sensorAreas} ${secrets.header.path})"
                     start="$(date -u -d '-24 hours' +%Y-%m-%dT%H:%M:%SZ)"
                     api "history/period/$start" \
                       --data-urlencode "filter_entity_id=$ids" \
                       --data-urlencode minimal_response \
                       --data-urlencode no_attributes \
-                      | jq -r --argjson sensors "$sensors" '
+                      | jq -r --argjson sensors "$sensors" --argjson areas "$areas" '
                         (INDEX($sensors[]; .entity_id)) as $s
                         | [.[] | select(length > 0)
                            | $s[.[0].entity_id] as $cur
                            | ($cur.attributes.unit_of_measurement // "") as $u
                            | [.[].state | tonumber?] as $v
-                           | "\($cur.attributes.friendly_name // $cur.entity_id): now \($cur.state) \($u)"
+                           # By room ("Bedroom temperature"): there is at most one sensor of
+                           # each kind per room, while device names repeat (two of the same
+                           # model). Unassigned sensors keep their own name.
+                           | ($areas[$cur.entity_id] as $room
+                              | if $room then "\($room) \($cur.attributes.device_class)"
+                                else $cur.attributes.friendly_name // $cur.entity_id end) as $name
+                           | "\($name): now \($cur.state) \($u)"
                              + (if ($v | length) > 0
                                 then ", last 24 h: min \($v | min) \($u), max \($v | max) \($u)"
                                 else ", no data in the last 24 h" end)]
