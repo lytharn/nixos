@@ -81,6 +81,7 @@
     };
     gtk.enable = true;
     helix.enable = true;
+    iamb.enable = true;
     hyprland = {
       enable = true;
       # Sourced from the private `wallpapers` flake input (baked into the build, present offline
