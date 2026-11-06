@@ -131,8 +131,12 @@ in
             "workspaces"
             "audio_visualizer"
             "media"
+            # Not centered: on a narrow screen (tpax) a centered title overlaps the
+            # right-hand widgets.
+            "active_window"
           ];
-          center = [ "active_window" ];
+          center = [ ]; # explicit: left unset, noctalia falls back to a default clock
+
           end = [
             "keyboard_layout"
             "volume"
