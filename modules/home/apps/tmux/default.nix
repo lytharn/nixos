@@ -17,22 +17,21 @@ let
   # upstream issue on cursor landing (and previously fixed here with a local
   # patch -- see git history).
   #
-  # An open upstream PR (arcaartem's search-positioning branch) fixes it by
-  # moving to the target row with cursor-down, then within the row either
-  # pressing cursor-right (plain text) or running copy-mode's own
-  # search-forward-text (when emoji/combining marks are present). This tracks
-  # that PR's head, which also brings in upstream's custom jump keys and case
-  # options (nixpkgs pins a 2020-06-26 rev). Known miss: a line indented past
-  # the pane width, whose all-space first row looks blank to capture-pane. Go
-  # back to plain tmuxPlugins.jump once the PR is merged and nixpkgs has
-  # bumped past it.
+  # Upstream fixed it in PR #50 (merged 2026-10-31): move to the target row
+  # with cursor-down first, then along the row with jump-forward, counting
+  # only the cells holding the target character. This tracks upstream master
+  # past that merge, which also brings in the custom jump keys and case
+  # options (nixpkgs pins a 2020-06-26 rev). The cell widths assume a tmux
+  # built with utf8proc, which nixpkgs' tmux is (the follow-up PR #51, which
+  # queries tmux for widths, only matters for builds without it). Go back to
+  # plain tmuxPlugins.jump once nixpkgs has bumped past the merge.
   jumpPlugin = pkgs.tmuxPlugins.jump.overrideAttrs {
-    version = "0-unstable-2026-10-01";
+    version = "0-unstable-2026-10-31";
     src = pkgs.fetchFromGitHub {
-      owner = "arcaartem";
+      owner = "schasse";
       repo = "tmux-jump";
-      rev = "3b926dcef0a4aabc1999fb8a4879328ab1f77276";
-      hash = "sha256-IiDKvnn7YwaVuKHNy7dODZ06/+X35jtF8DrI+9/1pk8=";
+      rev = "b547c5ec10fc33baa75953479892007e8eca34a0";
+      hash = "sha256-ia9AfVa6akDEzZVcESVqwnY3nB1uLbxU1ZlBH1j1/tk=";
     };
   };
 in
