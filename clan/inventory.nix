@@ -7,6 +7,7 @@
     machines = {
       mewx.tags = [ "desktop" ];
       quex.tags = [ "desktop" ];
+      tpax.tags = [ "desktop" ];
       serx.tags = [ "server" ];
       baxx.tags = [ "server" ];
       wslx.tags = [ "wsl" ];
@@ -40,6 +41,7 @@
       roles.default.machines = {
         mewx.settings.scrubInterval = "weekly";
         quex.settings.scrubInterval = "weekly";
+        tpax.settings.scrubInterval = "weekly";
       };
     };
 
@@ -76,11 +78,12 @@
         name = "oom-guard";
         input = "self";
       };
-      # Both desktops run swapless (swapDevices = []); zram + oomd keeps a memory spike from
+      # The desktops run swapless (swapDevices = []); zram + oomd keeps a memory spike from
       # freezing them.
       roles.default.machines = {
         mewx.settings.memoryPercent = 50;
         quex.settings.memoryPercent = 25;
+        tpax = { };
       };
     };
 

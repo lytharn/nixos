@@ -7,7 +7,7 @@
 # optional, so a machine that doesn't have the var deployed yet still parses nix.conf fine (and
 # the very first build passes the token via `--option access-tokens` out-of-band).
 #
-# Imported by the desktops (quex, mewx) — the machines that evaluate the flake locally and so
+# Imported by the desktops (quex, mewx, tpax) — the machines that evaluate the flake locally and so
 # fetch the private input. `share = true`: it's a single token, entered once and reused. Use a
 # dedicated fine-grained PAT scoped to just Contents:read on the private repo, not a powerful one.
 {
@@ -42,7 +42,7 @@
 
   # Dedicated one-member group that owns the deployed token file (see files.token above),
   # so read access is scoped to `lytharn` alone rather than the whole `users` group. This
-  # module is imported only by the desktops (quex, mewx), which both define `lytharn`;
+  # module is imported only by the desktops (quex, mewx, tpax), which all define `lytharn`;
   # `extraGroups` is list-merged with each machine's own user definition.
   users.groups.nix-github-token = { };
   users.users.lytharn.extraGroups = [ "nix-github-token" ];

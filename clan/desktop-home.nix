@@ -1,12 +1,12 @@
-# Shared Home-Manager profile for the Hyprland desktops (quex, mewx). Imported into each
+# Shared Home-Manager profile for the Hyprland desktops (quex, mewx, tpax). Imported into each
 # desktop's home-manager.users.lytharn alongside home-modules.nix; hosts layer on their
-# specifics (quex: zed; mewx: hyprland scale; each: gh.hostsFile, wired at machine scope
+# specifics (quex: zed; mewx/tpax: hyprland scale; each: gh.hostsFile, wired at machine scope
 # where clan.core.vars is visible).
 { pkgs, inputs, ... }:
 {
   home.username = "lytharn";
   home.homeDirectory = "/home/lytharn";
-  # Shared toolchain for both desktops (dev tools + apps present on quex and mewx alike).
+  # Shared toolchain for the desktops (dev tools + apps present on all of them).
   # Host-specific extras live in each machine's home-manager.users.lytharn block.
   home.packages = with pkgs; [
     htop

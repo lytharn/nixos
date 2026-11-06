@@ -5,9 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Overview
 
 Personal NixOS configuration flake, managed with [clan](https://clan.lol) (machine lifecycle
-+ secrets + deployment). Five hosts (all `x86_64-linux`):
++ secrets + deployment). Six hosts (all `x86_64-linux`):
 - `mewx` — Hyprland desktop; uses `serx` as a distributed Nix builder
 - `quex` — Hyprland desktop; uses `serx` as a distributed Nix builder
+- `tpax` — Hyprland laptop (Intel/AMD graphics); set up like `quex` (clan-var self-deploy key,
+  builds locally offloading to `serx`)
 - `serx` — headless server hosting services (Nextcloud, Home Assistant, Actual, Minecraft) exposed via Tailscale,
   plus a private Matrix server + ntfy, and a local LLM + [Hermes Agent](https://hermes-agent.nousresearch.com)
   chatting over Matrix (see below)
@@ -118,7 +120,7 @@ or a repo-root `.mcp.json` — they are generated and will be clobbered. Edit th
 
 - `modules/home/apps/claude/default.nix` → the Home-Manager module, wrapping upstream HM's
   `programs.claude-code`. Enabled via `slask.apps.claude.enable` in `clan/desktop-home.nix`,
-  so it lands on the two **desktops** only (not `serx`/`baxx`). It sets `settings`
+  so it lands on the **desktops** only (not `serx`/`baxx`). It sets `settings`
   (model, fullscreen TUI, theme, empty commit/PR attribution), `lspServers` (nixd,
   lua-language-server, rust-analyzer), `mcpServers`, and writes the tokyonight
   `themes/tokyonight.json`.
@@ -139,7 +141,7 @@ or a repo-root `.mcp.json` — they are generated and will be clobbered. Edit th
 - `package` is wrapped to set `CLAUDE_CODE_TMUX_TRUECOLOR=1`: inside tmux Claude Code otherwise
   drops to 256 colors, which turns the theme's dark backgrounds (diffs) grey.
 - Changes take effect after a deploy **plus a Claude Code restart**. Per the deploy rule below,
-  a change here touches both desktops and so must be deployed from each in turn.
+  a change here touches every desktop and so must be deployed from each in turn.
 
 ## Common commands
 
@@ -150,10 +152,10 @@ any missing vars across the fleet first):
 clan machines update <host>
 ```
 > **Which host can deploy which.** Each desktop authorizes only *its own* `lytharn` key
-> (`machines/<host>/configuration.nix`), so a desktop can deploy **itself** but **not the other
-> desktop** — `quex` cannot `clan machines update mewx`, and vice versa. There is no shared deploy
-> key between them. So a change touching both desktops must be deployed **from each desktop in
-> turn** (run `clan machines update <that-host>` while sitting at it, or `sudo nixos-rebuild
+> (`machines/<host>/configuration.nix`), so a desktop can deploy **itself** but **not another
+> desktop** — e.g. `quex` cannot `clan machines update mewx` or `tpax`, and vice versa. There is
+> no shared deploy key between them. So a change touching several desktops must be deployed
+> **from each desktop in turn** (run `clan machines update <that-host>` while sitting at it, or `sudo nixos-rebuild
 > switch --flake .`). Never offer to deploy the *other* desktop from the one you're on — it will
 > fail on SSH auth. (`serx`/`baxx` are reachable from the desktops as usual.)
 
@@ -215,8 +217,8 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
 
 ## Cross-host wiring to be aware of
 
-- **Distributed builds**: `quex` and `mewx` use `serx` as a remote builder (`nix.buildMachines`
-  in their `machines/<host>/configuration.nix`), dispatching over SSH as the `remotebuilder`
+- **Distributed builds**: `quex`, `mewx` and `tpax` use `serx` as a remote builder
+  (`nix.buildMachines` in their `machines/<host>/configuration.nix`), dispatching over SSH as the `remotebuilder`
   user. `serx`'s SSH host key is pinned in each client (`programs.ssh.knownHosts."serx"`), and
   `serx` authorizes the clients' root keys under `users.users.remotebuilder`. clan preserves
   each host's SSH host key across deploys, so this keeps working.

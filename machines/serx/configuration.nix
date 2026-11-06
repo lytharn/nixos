@@ -154,7 +154,7 @@
     isSystemUser = true;
     group = "remotebuilder";
     useDefaultShell = true;
-    # Shared remotebuilder key (clan/remotebuilder-secrets.nix): quex and mewx hold the private
+    # Shared remotebuilder key (clan/remotebuilder-secrets.nix): the desktops hold the private
     # half, this is its public half. `.value` reads the plaintext public var committed under vars/.
     openssh.authorizedKeys.keys = [
       (lib.removeSuffix "\n"

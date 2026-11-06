@@ -12,6 +12,7 @@ convention, cross-host wiring).
 ## Hosts
 - `mewx` — Hyprland desktop
 - `quex` — Hyprland desktop
+- `tpax` — Hyprland desktop
 - `serx` — headless server (Nextcloud, Home Assistant, Actual, Minecraft over Tailscale)
 - `baxx` — off-site backup target for `serx`
 - `wslx` — NixOS under WSL on a Windows box (see [NixOS on WSL](#nixos-on-wsl-wslx))
@@ -25,7 +26,7 @@ What runs on which host is wired through clan's **inventory** (in `clan/`), not 
 imports. Three pieces:
 
 - **Tags** — `clan/inventory.nix` gives each machine capability tags. `all`/`nixos`/`darwin`
-  are built in; `desktop` (mewx, quex), `server` (serx, baxx) and `wsl` (wslx) are ours.
+  are built in; `desktop` (mewx, quex, tpax), `server` (serx, baxx) and `wsl` (wslx) are ours.
 - **Service modules** — reusable `clan.service` modules in `clan/services/<name>.nix`, each
   auto-registered as `clan.modules.<name>` by `clan/services-modules.nix` (a `readDir` over the
   directory, mirroring `clan/home-modules.nix`). Dropping a file in is all it takes — no edit to

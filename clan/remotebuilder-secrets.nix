@@ -1,4 +1,4 @@
-# Shared clan var for the desktop -> serx distributed-build SSH key. The desktops (quex, mewx)
+# Shared clan var for the desktop -> serx distributed-build SSH key. The desktops (quex, mewx, tpax)
 # connect to serx's `remotebuilder` user over SSH to offload Nix builds; this generator creates
 # that keypair once (`share = true`) so it's reproducible and survives a desktop reinstall (no
 # more hand-placed /root/.ssh/remotebuilder, no manual re-auth on serx).
@@ -14,7 +14,7 @@
 # has root over itself.
 #
 # Kept in clan/ (not machines/, where clan would treat the dir as a machine) and imported
-# explicitly by the quex, mewx, and serx configs.
+# explicitly by the quex, mewx, tpax, and serx configs.
 { pkgs, ... }:
 {
   clan.core.vars.generators.remotebuilder-ssh = {
