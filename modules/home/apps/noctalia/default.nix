@@ -94,6 +94,10 @@ in
         # Keep hyprpaper (configured in the hyprland module) as the wallpaper source.
         wallpaper.enabled = false;
 
+        # Keep swaylock (run by hypridle, configured in the hyprland module) as the lock
+        # screen. Otherwise Noctalia grabs the session lock first and swaylock fails.
+        lockscreen.enabled = false;
+
         # The week starts on the LC_TIME locale's first weekday (sv_SE → Monday).
         control_center.calendar.show_week_numbers = true;
 
