@@ -1,5 +1,9 @@
 [
   {
+    "publickey": "age16t2jkf7kjdlwx00xu59duehj4tld72j0ryxgtw4u29je67mrppsqvqyx3w",
+    "type": "age"
+  },
+  {
     "publickey": "age19990vl6ulugxxnepy344tmm92l53cxcmcw9efzqu778k0ms3036q7kpkqk",
     "type": "age"
   },
