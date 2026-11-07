@@ -22,6 +22,11 @@ NTFY_URL = os.environ["NTFY_URL"]
 NIX = ["nix", "--extra-experimental-features", "nix-command flakes"]
 
 
+class UpdatedBuildError(RuntimeError):
+    """The host's config doesn't build with its inputs updated: news for the next update, not
+    a scanner problem."""
+
+
 def run(cmd, **kwargs):
     p = subprocess.run(cmd, capture_output=True, text=True, **kwargs)
     if p.returncode != 0:
@@ -142,10 +147,13 @@ def scan_host(host, hostdir, info):
         # the updated system alive between runs.
         key = f"{flake} " + hashlib.sha256(json.dumps(lock, sort_keys=True).encode()).hexdigest()
         if read(state / "updated-key") != key or not link.exists():
-            run(NIX + [
-                "build", "--out-link", str(link),
-                f"path:{workdir}#nixosConfigurations.{host}.config.system.build.toplevel",
-            ])
+            try:
+                run(NIX + [
+                    "build", "--out-link", str(link),
+                    f"path:{workdir}#nixosConfigurations.{host}.config.system.build.toplevel",
+                ])
+            except RuntimeError as e:
+                raise UpdatedBuildError(str(e)) from e
             (state / "updated-key").write_text(key)
     updated = vulnix(os.path.realpath(link))
 
@@ -166,7 +174,8 @@ def alert_lines(host, info):
     error = info.get("error")
     if error:
         if read(state / "error").splitlines()[:1] != error.splitlines()[:1]:
-            lines.append(f"{host}: scan failed: {error.splitlines()[0]}")
+            what = "won't build with updated inputs" if info.get("failure") == "updated-build" else "scan failed"
+            lines.append(f"{host}: {what}: {error.splitlines()[0]}")
         (state / "error").write_text(error)
         return lines
     (state / "error").unlink(missing_ok=True)
@@ -227,7 +236,8 @@ def main():
             print(f"{host}: {info['cves']} CVEs, {len(info['fixed'])} fixed by the update "
                   f"(nixpkgs {info['nixpkgs']['date']} -> {info['updatedNixpkgs']['date']})")
         except Exception as e:  # one host failing must not stop the others
-            info.update({"status": "error", "error": str(e)})
+            failure = "updated-build" if isinstance(e, UpdatedBuildError) else "scan"
+            info.update({"status": "error", "failure": failure, "error": str(e)})
             print(f"{host}: {e}", file=sys.stderr)
         report["hosts"][host] = info
         lines += alert_lines(host, info)
