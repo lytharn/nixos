@@ -13,7 +13,9 @@ convention, cross-host wiring).
 - `mewx` — Hyprland desktop
 - `quex` — Hyprland desktop
 - `tpax` — Hyprland desktop
-- `serx` — headless server (Nextcloud, Home Assistant, Actual, Minecraft over Tailscale)
+- `serx` — headless server over Tailscale: Nextcloud, Home Assistant, Actual, Minecraft,
+  Forgejo, a private Matrix server + ntfy, a local-LLM agent (Hermes) on Matrix, and the
+  nightly [security scan](#security-updates) of every host
 - `baxx` — off-site backup target for `serx`
 - `wslx` — NixOS under WSL on a Windows box (see [NixOS on WSL](#nixos-on-wsl-wslx))
 
@@ -47,6 +49,11 @@ imports. Three pieces:
   Target by **tag** for a whole class of machines, or by **machine name** for a single host. The
   `server` tag is serx+baxx, but most server apps are serx-only (baxx is just the backup target),
   so those target `machines.serx`.
+
+The servers' heavy or order-dependent nightly jobs (database dump, backup, prune, store
+optimise/GC, scrub, security scan) get their times as instance settings in
+`clan/inventory.nix`, under a timeline comment at its top. Check it before scheduling
+something new there.
 
 ### Adding a service
 
@@ -133,7 +140,15 @@ sudo nixos-rebuild switch --flake .        # or .#<host>
    ```
    `--reset` clears the half-applied `--accept-routes` state; approving reuses the old node
    name if you didn't delete it from the admin console. After this the autoconnect unit no-ops.
-8. **Desktops: restore the personal SSH key.** `~/.ssh/id_ed25519` is hand-managed, not a clan
+8. **Update the pinned SSH host key.** Host keys aren't clan vars, so a (re)installed host has
+   a new one, and the other hosts pin it (`programs.ssh.knownHosts`) from
+   `lib/ssh-host-keys.nix`: until it's updated, connecting to the host from them fails host-key
+   verification. Replace (or, for a new host others connect to, add) its entry:
+   ```bash
+   ssh-keyscan -t ed25519 <host> 2>/dev/null | cut -d' ' -f2-
+   ```
+   then commit and redeploy the hosts that pin it (`grep -rn ssh-host-keys machines clan`).
+9. **Desktops: restore the personal SSH key.** `~/.ssh/id_ed25519` is hand-managed, not a clan
    var, so a wipe loses it — and it's what serx and baxx authorize for `lytharn`, what mewx's
    serx-built deploys copy back with, what git signs commits with, and what GitHub knows
    (as both an authentication and a signing key). Restore it from backup:
@@ -152,6 +167,43 @@ sudo nixos-rebuild switch --flake .        # or .#<host>
 — sops decrypts the vars using the machine's existing SSH host key, so nothing extra is
 provisioned. (For `clan machines update <host>` over SSH instead, the host must authorize an
 ssh key for `lytharn` — each host authorizes its own.)
+
+## Security updates
+
+NixOS has no security-advisory feed, so the fleet checks itself, and you get told when
+updating would fix known vulnerabilities:
+
+- **Deploy reports.** After every switch (and hourly as a retry) each desktop/server reports
+  the system it's running, plus the flake source it was built from, to serx
+  (`clan/services/deploy-report.nix`). New hosts with the `desktop` or `server` tag join
+  automatically; wslx is deliberately left out.
+- **Nightly scan, 02:15 on serx** (`clan/services/vuln-scan.nix`). For each reported host it
+  scans the running system with [vulnix](https://github.com/nix-community/vulnix), rebuilds
+  the same config with its flake inputs updated, scans that too, and compares the two. Only
+  the difference counts (vulnix's raw output is mostly false matches). Results:
+  `/var/lib/vuln-scan/report.json` on serx.
+- **ntfy alert** (the `alerts` topic), sent only when something is new:
+  - `<host>: updating fixes N CVEs (M new): <package> <count> (max <score>), …`: an update
+    is worth doing.
+  - `<host>: nixpkgs is N days old`: the host hasn't been updated in 14 days.
+  - `<host>: won't build with updated inputs: error: …`: upstream changed something this
+    config uses (e.g. a removed option). Fix it as part of the next update.
+  - `<host>: scan failed: …`: the scanner itself broke for that host.
+- **Hermes summary, 07:10:** a short explanation in the Matrix DM of which of the new CVEs
+  matter on which host and whether to update now. It stays silent on a quiet night. It's
+  written by the local model, so treat it as a reading aid: the ntfy alert and `report.json`
+  are the source of truth.
+
+**Acting on it:** `nix flake update`, fix whatever doesn't build, commit and push, then deploy
+each host. serx/baxx/the desktop you're at go via `clan machines update <host>`; every other
+desktop deploys itself (see [CLAUDE.md](./CLAUDE.md)). The next night's scan should then come
+back quiet.
+
+**Run the scan now** instead of waiting for the night (it blocks until done, a few minutes
+when nothing needs rebuilding):
+```bash
+ssh -t serx sudo systemctl start vuln-scan
+```
 
 ## NixOS on WSL (`wslx`)
 
