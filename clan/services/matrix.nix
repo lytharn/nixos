@@ -13,8 +13,20 @@
 
   roles.default = {
     description = "Machine hosting the Matrix homeserver";
+    interface =
+      { lib, ... }:
+      {
+        options.backupSchedule = lib.mkOption {
+          type = lib.types.str;
+          default = "01:00";
+          description = ''
+            systemd OnCalendar expression for the online database backup. Must finish before
+            the restic backup that ships its output.
+          '';
+        };
+      };
     perInstance =
-      { ... }:
+      { settings, ... }:
       {
         nixosModule =
           {
@@ -115,7 +127,7 @@
             systemd.timers.continuwuity-db-backup = {
               wantedBy = [ "timers.target" ];
               timerConfig = {
-                OnCalendar = "01:00";
+                OnCalendar = settings.backupSchedule;
                 Persistent = true;
               };
             };

@@ -37,6 +37,16 @@
             "How to deduplicate the store: \"auto\" on every store write (machines that are off "
             + "at night), \"timer\" nightly (always-on machines).";
         };
+        options.optimiseSchedule = lib.mkOption {
+          type = lib.types.str;
+          default = "03:45";
+          description = "systemd OnCalendar expression for the optimise timer (optimise = \"timer\"); up to 30 min random delay is added.";
+        };
+        options.gcSchedule = lib.mkOption {
+          type = lib.types.str;
+          default = "weekly";
+          description = "systemd OnCalendar expression for the garbage collection.";
+        };
       };
     perInstance =
       { settings, ... }:
@@ -50,12 +60,15 @@
               ];
               auto-optimise-store = settings.optimise == "auto";
             };
-            optimise.automatic = settings.optimise == "timer";
+            optimise = {
+              automatic = settings.optimise == "timer";
+              dates = [ settings.optimiseSchedule ];
+            };
 
             # Automatically delete older generations and garbage collect
             gc = {
               automatic = true;
-              dates = "weekly";
+              dates = settings.gcSchedule;
               options = "--delete-older-than 90d";
             };
           };

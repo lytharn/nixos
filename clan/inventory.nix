@@ -2,6 +2,20 @@
 # instead of each machine importing a module path in its configuration.nix. `all`/`nixos`/
 # `darwin` are built-in tags; `desktop`/`server`/`wsl` are ours. Local services referenced here are
 # auto-registered as clan.modules.<name> in ./services-modules.nix.
+#
+# Nightly schedule of the always-on servers (local time). The heavy and order-dependent jobs
+# get their times here, as settings of their instances below, so clashes are visible in one
+# place; frequent pollers (mail/sensor/calendar mirrors, nextcloud-cron, deploy-report) keep
+# their intervals in their own services.
+#
+#   serx  00:00      Mon: nix-gc; 1st of month: btrfs scrub
+#         01:00      Matrix DB backup        (matrix.backupSchedule)
+#         01:30      restic backup -> baxx   (restic client.schedule; ships the 01:00 dump)
+#         03:45      nix-optimise, +0-30 min random delay
+#   baxx  00:00      Mon: nix-gc; 1st of month: btrfs scrub
+#         01:30      receives serx's backup
+#         Sun 03:00  restic prune/check      (restic server.pruneSchedule)
+#         03:45      nix-optimise, +0-30 min random delay
 {
   inventory = {
     machines = {
@@ -22,8 +36,16 @@
       # machines that are off at night; the always-on servers optimise on a nightly timer.
       roles.default.tags = [ "all" ];
       roles.default.machines = {
-        serx.settings.optimise = "timer";
-        baxx.settings.optimise = "timer";
+        serx.settings = {
+          optimise = "timer";
+          optimiseSchedule = "03:45";
+          gcSchedule = "Mon 00:00";
+        };
+        baxx.settings = {
+          optimise = "timer";
+          optimiseSchedule = "03:45";
+          gcSchedule = "Mon 00:00";
+        };
       };
     };
 
@@ -42,6 +64,8 @@
         mewx.settings.scrubInterval = "weekly";
         quex.settings.scrubInterval = "weekly";
         tpax.settings.scrubInterval = "weekly";
+        serx.settings.scrubInterval = "monthly";
+        baxx.settings.scrubInterval = "monthly";
       };
     };
 
@@ -190,8 +214,8 @@
         input = "self";
       };
       # serx-only. Declares its own matrix-registration-token var; its online DB backup dir is
-      # picked up by the restic client below.
-      roles.default.machines.serx = { };
+      # picked up by the restic client below, so it must finish before that runs.
+      roles.default.machines.serx.settings.backupSchedule = "01:00";
     };
 
     instances.ntfy = {
@@ -265,11 +289,15 @@
       # generator deriving its per-host files.
       # monitor = healthchecks.io dead-man's-switch; each role pings its own check (backup vs
       # prune/check). The ping URLs are secret clan var prompts (restic-monitor-{client,server}).
-      roles.client.machines.serx.settings.monitor = true;
+      roles.client.machines.serx.settings = {
+        monitor = true;
+        schedule = "01:30"; # after the 01:00 Matrix DB backup
+      };
       roles.server.machines.baxx.settings = {
         address = "baxx.gate-catla.ts.net"; # tailnet MagicDNS name serx reaches baxx at
         dataDir = "/backup"; # dedicated btrfs subvolume (compress=no)
         monitor = true;
+        pruneSchedule = "Sun 03:00";
       };
     };
   };
