@@ -11,6 +11,7 @@
 #   serx  00:00      Mon: nix-gc; 1st of month: btrfs scrub
 #         01:00      Matrix DB backup        (matrix.backupSchedule)
 #         01:30      restic backup -> baxx   (restic client.schedule; ships the 01:00 dump)
+#         02:15      vulnix scan of all hosts (vuln-scan.schedule; heavy: evals + builds)
 #         03:45      nix-optimise, +0-30 min random delay
 #   baxx  00:00      Mon: nix-gc; 1st of month: btrfs scrub
 #         01:30      receives serx's backup
@@ -83,6 +84,20 @@
         "server"
       ];
       roles.reporter.machines.baxx.settings.copyPaths = false;
+    };
+
+    instances.vuln-scan = {
+      module = {
+        name = "vuln-scan";
+        input = "self";
+      };
+      # Next to deploy-report's server: diffs each reported host's CVEs against its updated
+      # flake inputs nightly and alerts via ntfy. After the backup, before nix-optimise.
+      # wallpapers is private (no GitHub token on serx) and holds no software anyway.
+      roles.default.machines.serx.settings = {
+        schedule = "02:15";
+        keepInputs = [ "wallpapers" ];
+      };
     };
 
     instances.home-snapshots = {

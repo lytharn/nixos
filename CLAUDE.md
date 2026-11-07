@@ -263,7 +263,15 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
   serx) only registers. Registration is SSH to serx's `deployreport` user with a per-host
   `deploy-report-ssh` key whose forced command binds the host name; serx roots the paths in
   `/var/lib/deploy-report/<host>/{system,flake,inputs/*}` with `since`/`last-seen` stamps.
-  Groundwork for a nightly vulnix scan of the deployed closures vs. an updated nixpkgs.
+- **Nightly CVE scan on `serx`** (`clan/services/vuln-scan.{nix,py}`, 02:15): for every host in
+  `/var/lib/deploy-report/`, vulnix (`-C`, runtime closure) scans the deployed system and the
+  same flake rebuilt after `nix flake update` of all inputs but `keepInputs` (`wallpapers`:
+  private, no token on serx). Updating nixpkgs alone breaks eval (home-manager mismatch), so
+  don't narrow it. Only the diff matters (vulnix's raw output is mostly false positives).
+  Writes `/var/lib/vuln-scan/report.json`; pushes to ntfy `alerts` only on news (new fixable
+  CVEs, nixpkgs older than `staleDays`, a host's scan starting to fail). The updated system is
+  rebuilt only when the updated lock or deployed source changes. Run now:
+  `! ssh -t serx sudo systemctl start vuln-scan`.
 - **Matrix + ntfy on `serx`** (`clan/services/{matrix,ntfy}.nix`): Continuwuity at
   `matrix.gate-catla.ts.net` (federation off, token-gated registration via the
   `matrix-registration-token` var; the first account, `@lytharn`, is server admin) and ntfy at
