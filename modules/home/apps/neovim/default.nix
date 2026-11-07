@@ -153,7 +153,9 @@ in
     home.sessionVariables.EDITOR = "nvim";
 
     # Symlink to the working checkout, not the store: edits to the lua show up
-    # immediately and lazy.nvim can persist lazy-lock.json.
+    # immediately and lazy.nvim can persist lazy-lock.json. Since Nix never reads
+    # the dir, clan/services/deploy-report.nix leaves it out of the source it
+    # embeds in every system; drop that exclusion if this ever copies it instead.
     xdg.configFile."nvim".source =
       config.lib.file.mkOutOfStoreSymlink "${cfg.flakePath}/modules/home/apps/neovim/config";
 

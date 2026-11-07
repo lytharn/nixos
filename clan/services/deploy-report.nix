@@ -168,15 +168,22 @@
             serverName = lib.head (lib.attrNames roles.server.machines);
             isServer = machine.name == serverName;
 
-            # The flake source this system was built from, minus top-level files no host's
-            # evaluation depends on, so editing them doesn't change every system. Top level
-            # only: a module may well read a .md deeper in the tree.
-            excluded = [
+            # The flake source this system was built from, minus files no host's evaluation
+            # reads, so editing them doesn't change every system: top-level docs and tooling
+            # files (top level only, since a module may well read a .md deeper in the tree),
+            # plus exact paths that are only referenced as strings (out-of-store symlinks). A
+            # wrong entry fails loudly: evaluating the reported source hits a missing file.
+            excludedTopLevel = [
               ".claude"
               ".envrc"
               ".gitignore"
               "LICENSE"
             ];
+            excludedPaths = [
+              # Linked live from the checkout by mkOutOfStoreSymlink, never read by Nix.
+              "modules/home/apps/neovim/config"
+            ];
+            root = toString inputs.self;
             flakeSrc = builtins.path {
               name = "source";
               path = inputs.self;
@@ -184,9 +191,12 @@
                 path: _type:
                 let
                   base = baseNameOf path;
-                  topLevel = dirOf path == toString inputs.self;
+                  topLevel = dirOf path == root;
                 in
-                !(topLevel && (lib.elem base excluded || lib.hasSuffix ".md" base));
+                !(
+                  (topLevel && (lib.elem base excludedTopLevel || lib.hasSuffix ".md" base))
+                  || lib.elem (lib.removePrefix "${root}/" path) excludedPaths
+                );
             };
 
             nixFlags = [
