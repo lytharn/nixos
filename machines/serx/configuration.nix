@@ -143,10 +143,8 @@
   # would force `--host-key-check accept-new` on the first deploy after any serx reinstall).
   # Mirrors how the desktops pin serx for the remote-builder SSH.
   programs.ssh.knownHosts = {
-    "baxx".publicKey =
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG4W+zDBhmm3KV4tRs4O2aY8s+06dCGLJbZzKf+0ApJ2";
-    "mewx".publicKey =
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICBRqLxFBuuBq2yhQOzxNzLO0ArNwyfCCZQflCKxhDuj";
+    "baxx".publicKey = (import ../../lib/ssh-host-keys.nix).baxx;
+    "mewx".publicKey = (import ../../lib/ssh-host-keys.nix).mewx;
   };
 
   # Enable this machine to be a remote builder

@@ -122,8 +122,7 @@
   # Enable distributed builds on serx. nix silently skips serx when unreachable, so it's
   # harmless off-network.
   nix.distributedBuilds = true;
-  programs.ssh.knownHosts."serx".publicKey =
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHA94CzkE/GsVvqsPkUyFCwuA+MXQXSBposOrq4HxSHB";
+  programs.ssh.knownHosts."serx".publicKey = (import ../../lib/ssh-host-keys.nix).serx;
   nix.buildMachines = [
     {
       hostName = "serx";
@@ -155,8 +154,7 @@
   # trust-on-first-use on a clean known_hosts. Unlike quex, tpax's clan-vars age identity is a
   # separate key (/var/lib/sops-nix/key.txt, placed by `clan machines install`), so this host key
   # can be rotated without touching sops/machines/tpax.
-  programs.ssh.knownHosts."tpax".publicKey =
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKIVruTApvm+rav+NxI5K7rKlGqpEUbLiEs7BIhIBqOL";
+  programs.ssh.knownHosts."tpax".publicKey = (import ../../lib/ssh-host-keys.nix).tpax;
 
   services.openssh = {
     enable = true;

@@ -111,8 +111,7 @@
 
   # Enable distributed builds on serx
   nix.distributedBuilds = true;
-  programs.ssh.knownHosts."serx".publicKey =
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHA94CzkE/GsVvqsPkUyFCwuA+MXQXSBposOrq4HxSHB";
+  programs.ssh.knownHosts."serx".publicKey = (import ../../lib/ssh-host-keys.nix).serx;
   nix.buildMachines = [
     {
       hostName = "serx";
@@ -145,8 +144,7 @@
   # trust-on-first-use on a clean known_hosts. This is the same host key that derives quex's
   # clan-vars age identity (sops/machines/quex), so it's stable across deploys and only changes
   # on a deliberate host-key rotation. Mirrors the serx pin above.
-  programs.ssh.knownHosts."quex".publicKey =
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILnv3ccPSBMhuE5FVCgfD1EQ0djGJC6yi/lS2mLz+Dnr";
+  programs.ssh.knownHosts."quex".publicKey = (import ../../lib/ssh-host-keys.nix).quex;
 
   services.openssh = {
     enable = true;

@@ -45,6 +45,22 @@
       };
     };
 
+    instances.deploy-report = {
+      module = {
+        name = "deploy-report";
+        input = "self";
+      };
+      # Every real host (not wslx: no tailnet, no clan vars) reports what it runs to serx, so
+      # serx can scan the deployed closures. baxx is built on serx, so its paths are already
+      # there and it only registers them.
+      roles.server.machines.serx = { };
+      roles.reporter.tags = [
+        "desktop"
+        "server"
+      ];
+      roles.reporter.machines.baxx.settings.copyPaths = false;
+    };
+
     instances.home-snapshots = {
       module = {
         name = "home-snapshots";

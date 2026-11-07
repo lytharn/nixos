@@ -80,6 +80,9 @@ clan auto-discovers **machines** by directory; everything else is imported expli
   not clan vars), the single source for serx/baxx/mewx `authorizedKeys` and git's allowed
   signers. Imported directly. The desktops sign every commit/tag with that key
   (`slask.apps.git.sshSigning`, desktop-only so servers without the key can still commit).
+- `lib/ssh-host-keys.nix` → the hosts' SSH **host** public keys, the single source for every
+  `programs.ssh.knownHosts` pin. Deliberately separate from `ssh-keys.nix`, whose entries are
+  all trusted as login/signing keys (`builtins.attrValues`). Update an entry after a reinstall.
 - `sops/` + `vars/` → clan's own encrypted secret store (see Secrets). **Not** raw sops-nix.
 
 The namespace is `slask`, injected as a module arg (`namespace = "slask"`) via clan's
@@ -252,6 +255,15 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
     (`restic-monitor-client` on serx, `restic-monitor-server` on baxx, owner `restic`), so the
     URL never lands in the Nix store; the ping is best-effort (`|| true`) so it can't fail the
     backup. The two healthchecks checks' period/grace are configured on the healthchecks side.
+- **Deploy reports to `serx`** (`clan/services/deploy-report.nix`; every desktop/server, not
+  wslx): each host embeds its flake source in its system (top-level `*.md`, `LICENSE`,
+  `.claude`, `.envrc`, `.gitignore` filtered out, so doc-only commits don't change systems)
+  and, after each switch plus hourly, reports to serx. Desktops first `nix flake archive` the
+  source + all inputs and `nix copy` the system over the remotebuilder store; baxx (built on
+  serx) only registers. Registration is SSH to serx's `deployreport` user with a per-host
+  `deploy-report-ssh` key whose forced command binds the host name; serx roots the paths in
+  `/var/lib/deploy-report/<host>/{system,flake,inputs/*}` with `since`/`last-seen` stamps.
+  Groundwork for a nightly vulnix scan of the deployed closures vs. an updated nixpkgs.
 - **Matrix + ntfy on `serx`** (`clan/services/{matrix,ntfy}.nix`): Continuwuity at
   `matrix.gate-catla.ts.net` (federation off, token-gated registration via the
   `matrix-registration-token` var; the first account, `@lytharn`, is server admin) and ntfy at

@@ -147,16 +147,14 @@
   # isn't a nix build so it stays on mewx. nix silently skips serx when unreachable, so it's
   # harmless off-network.
   nix.distributedBuilds = true;
-  programs.ssh.knownHosts."serx".publicKey =
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHA94CzkE/GsVvqsPkUyFCwuA+MXQXSBposOrq4HxSHB";
+  programs.ssh.knownHosts."serx".publicKey = (import ../../lib/ssh-host-keys.nix).serx;
 
   # Pin mewx's own host key so a self-deploy (`clan machines update mewx` run here, which SSHes
   # to lytharn@mewx) verifies non-interactively instead of a trust-on-first-use prompt on a clean
   # known_hosts. This is the same key serx already pins for the buildHost closure copy
   # (machines/serx/configuration.nix); it's stable across deploys and changes only on a deliberate
   # host-key rotation. Mirrors quex's self-pin.
-  programs.ssh.knownHosts."mewx".publicKey =
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICBRqLxFBuuBq2yhQOzxNzLO0ArNwyfCCZQflCKxhDuj";
+  programs.ssh.knownHosts."mewx".publicKey = (import ../../lib/ssh-host-keys.nix).mewx;
   nix.buildMachines = [
     {
       hostName = "serx";
