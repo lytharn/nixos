@@ -25,11 +25,25 @@ NIX = ["nix", "--extra-experimental-features", "nix-command flakes"]
 def run(cmd, **kwargs):
     p = subprocess.run(cmd, capture_output=True, text=True, **kwargs)
     if p.returncode != 0:
-        # Lead with Nix's own "error:" line; the stack trace before it is rarely the point.
-        errors = [line.strip() for line in p.stderr.splitlines() if line.strip().startswith("error:")]
-        summary = errors[-1] if errors else f"{cmd[0]} exited {p.returncode}"
-        raise RuntimeError(f"{summary}\n{p.stderr.strip()[-1500:]}")
+        raise RuntimeError(f"{error_summary(p.stderr) or f'{cmd[0]} exited {p.returncode}'}\n"
+                           f"{p.stderr.strip()[-1500:]}")
     return p.stdout
+
+
+def error_summary(stderr):
+    """Nix's last "error:" line; the stack trace before it is rarely the point. A bare "error:"
+    (e.g. failed assertions) gets the first line with content after it."""
+    lines = [line.strip() for line in stderr.splitlines()]
+    starts = [i for i, line in enumerate(lines) if line.startswith("error:")]
+    if not starts:
+        return None
+    first = lines[starts[-1]]
+    if first == "error:":
+        rest = [line for line in lines[starts[-1] + 1:] if line and line != "Failed assertions:"]
+        if rest:
+            more = sum(line.startswith("- ") for line in rest) - 1
+            first = f"error: {rest[0]}" + (f" (+{more} more)" if more > 0 else "")
+    return first
 
 
 def vulnix(path):
@@ -106,6 +120,16 @@ def scan_host(host, hostdir, info):
         "lastSeen": read(hostdir / "last-seen").strip(),
     })
 
+    # vulnix reads package names/versions from the derivations, which a system copied from
+    # another host lacks: re-instantiate it from its reported source (same .drv, eval is pure).
+    deriver = run(["nix-store", "--query", "--deriver", system]).strip()
+    if not os.path.exists(deriver):
+        drv = run(NIX + [
+            "eval", "--raw",
+            f"path:{flake}#nixosConfigurations.{host}.config.system.build.toplevel.drvPath",
+        ]).strip()
+        if drv != deriver or not os.path.exists(deriver):
+            raise RuntimeError(f"error: can't recreate {host}'s derivation (got {drv}, deployed {deriver})")
     current = vulnix(system)
     info["cves"] = len(current)
     link = state / "updated"
