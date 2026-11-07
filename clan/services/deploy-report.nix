@@ -272,9 +272,15 @@
               description = "Report the deployed system to ${serverName}";
               wants = [ "network-online.target" ];
               after = [ "network-online.target" ];
+              # The switch that triggers it often restarts tailscaled/resolved too, so the server's
+              # name may briefly not resolve: retry a few times, then leave it to the timer.
+              startLimitIntervalSec = 600;
+              startLimitBurst = 5;
               serviceConfig = {
                 Type = "oneshot";
                 ExecStart = lib.getExe report;
+                Restart = "on-failure";
+                RestartSec = 30;
               };
             };
             # Hourly retry, for a host that was offline or couldn't reach the server.
