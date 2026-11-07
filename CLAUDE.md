@@ -215,8 +215,8 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
   `clan/restic-secrets.nix`. A consumer that needs a shared secret in a different shape derives
   per-host files from it via generator `dependencies` (e.g. the `restic` service's client/server
   roles in `clan/services/restic.nix`).
-- Vestigial secrets on already-provisioned hosts (a host's tailscale auth key once enrolled,
-  Nextcloud's initial admin password once set up) are generated as throwaway placeholders.
+- Vestigial secrets on already-provisioned hosts (e.g. a host's tailscale auth key once
+  enrolled) are generated as throwaway placeholders.
 
 ## Cross-host wiring to be aware of
 

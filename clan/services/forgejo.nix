@@ -7,8 +7,9 @@
     Runs Forgejo on localhost (Postgres-backed) and fronts its web + HTTPS git on the tailnet
     via `tailscale serve` (svc:forge, TLS terminated by Tailscale). Git-over-SSH is served by
     Forgejo's own built-in SSH server on a tailnet-only port (no host sshd involvement). A
-    native gitea-actions-runner (host execution, no Docker) runs CI; its registration token is
-    a clan var prompt (forgejo-runner-token). serx-only.
+    native forgejo-runner (host execution, no Docker) runs CI; it is pre-registered
+    declaratively from a generated shared secret (forgejo-runner var), so it needs no manual
+    token. serx-only.
 
     Backup: Forgejo's Postgres DB rides serx's existing `pg_dumpall` in the restic client
     (clan/services/restic.nix), and its `stateDir` (repos, LFS, data) is added to that job's
@@ -21,22 +22,11 @@
     with the UI or `forgejo admin user change-password`). Leave `adminUser` null to skip it and
     create the admin manually instead.
 
-    First-boot bootstrap (Forgejo must be up before a runner token exists):
+    First-boot bootstrap:
       1. Create + approve the `svc:forge` tailnet service in the Tailscale admin panel once
          (exactly like svc:cloud/svc:actual).
-      2. `clan machines update serx` — prompts for the admin password and the runner token
-         (paste any placeholder for the token; Forgejo isn't up yet). The admin account is
-         created automatically during activation.
-      3. Mint a runner registration token with the server CLI (run on serx as the forgejo user):
-           `sudo -u forgejo env FORGEJO_WORK_DIR=/var/lib/forgejo \
-              FORGEJO_CUSTOM=/var/lib/forgejo/custom forgejo actions generate-runner-token`
-         Use the CLI, NOT the web UI's "Create new runner": that flow issues a per-runner token
-         that this module's (deprecated) `register` API rejects with 400 "token not found"; only
-         the CLI's global registration token registers.
-      4. `clan vars set serx forgejo-runner-token/token` (paste the token — it's stored verbatim,
-         so no `TOKEN=` prefix), then `clan vars generate serx --generator forgejo-runner-token-env`
-         to rebuild the runner's EnvironmentFile from it, then redeploy. The runner self-heals
-         (it retries until a valid token lands), so no manual restart is needed.
+      2. `clan machines update serx` — prompts for the admin password. The admin account and
+         the runner's registration are created automatically during activation.
   '';
 
   roles.default = {
@@ -77,6 +67,8 @@
             internalPort = 3000;
             sshPort = 2222;
             domain = "forge.gate-catla.ts.net";
+            runnerVar = config.clan.core.vars.generators.forgejo-runner;
+            runnerLabel = "native:host";
           in
           {
             services.forgejo = {
@@ -144,65 +136,88 @@
             # `:host` suffix is what selects host execution and keeps the module from requiring a
             # container runtime). hostPackages is the PATH for `:host` jobs; we take the module's
             # default set and add nix + direnv, since our CI is "run nix inside a flake" and nix
-            # itself does the real work (talking to serx's nix daemon), so the list stays short.
-            # Workflows target this runner with `runs-on: native`.
-            services.gitea-actions-runner = {
-              package = pkgs.forgejo-runner;
-              instances.serx = {
-                enable = true;
-                name = "serx-native";
-                url = "http://localhost:${toString internalPort}";
-                # systemd EnvironmentFile (`TOKEN=<raw>`), derived from the raw-token var below.
-                tokenFile = config.clan.core.vars.generators.forgejo-runner-token-env.files.env.path;
-                labels = [ "native:host" ];
-                hostPackages = with pkgs; [
-                  bash
-                  coreutils
-                  curl
-                  gawk
-                  gitMinimal
-                  gnused
-                  nodejs
-                  wget
-                  nix
-                  direnv
-                  nix-direnv
+            # itself does the real work (talking to serx's nix daemon), so the list stays short
+            # (git is always included by the module). Workflows target it with `runs-on: native`.
+            services.forgejo-runner.instances.serx = {
+              enable = true;
+              settings = {
+                runner.labels = [ runnerLabel ];
+                server.connections.default = {
+                  url = "http://localhost:${toString internalPort}";
+                  # Must be inline: the module can't read the uuid from a file yet.
+                  uuid = lib.removeSuffix "\n" runnerVar.files.uuid.value;
+                };
+              };
+              secrets.server.connections.default.token_url = runnerVar.files.secret.path;
+              hostPackages = with pkgs; [
+                bash
+                coreutils
+                curl
+                gawk
+                gnused
+                nodejs
+                wget
+                nix
+                direnv
+                nix-direnv
+              ];
+            };
+
+            # Pre-register the runner from the shared secret (Forgejo's offline registration):
+            # `forgejo-cli actions register` is idempotent, so this runs on every boot/switch and
+            # the runner never needs a registration token. Runs as the forgejo user after
+            # forgejo.service, with the module's FORGEJO_WORK_DIR/FORGEJO_CUSTOM so the CLI finds
+            # its config, like forgejo-admin-user below.
+            systemd.services.forgejo-runner-register = {
+              description = "Register the Forgejo Actions runner";
+              after = [ "forgejo.service" ];
+              requires = [ "forgejo.service" ];
+              before = [ "forgejo-runner-serx.service" ];
+              requiredBy = [ "forgejo-runner-serx.service" ];
+              environment = {
+                FORGEJO_WORK_DIR = config.services.forgejo.stateDir;
+                FORGEJO_CUSTOM = config.services.forgejo.customDir;
+              };
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+                User = config.services.forgejo.user;
+                Group = config.services.forgejo.group;
+                ExecStart = lib.escapeShellArgs [
+                  (lib.getExe config.services.forgejo.package)
+                  "forgejo-cli"
+                  "actions"
+                  "register"
+                  "--secret-file"
+                  runnerVar.files.secret.path
+                  "--name"
+                  "serx-native"
+                  "--labels"
+                  runnerLabel
                 ];
               };
             };
 
-            # The module's runner unit uses systemd's default start-limit (5 starts / 10 s) with
-            # Restart=on-failure, so during bootstrap (token not valid yet, or Forgejo briefly
-            # unreachable) it hits the limit and gives up. The token is a runtime secret, so a later
-            # fix is invisible to switch-to-configuration and wouldn't restart it either. Disabling
-            # the rate limit makes it retry indefinitely (every RestartSec) and self-heal the moment
-            # a valid token is deployed — no manual restart needed.
-            systemd.services."gitea-runner-serx".unitConfig.StartLimitIntervalSec = 0;
-
-            # Runner registration token from Forgejo's admin UI (Site Admin → Actions → Runners),
-            # obtainable only once Forgejo is running — see the readme's bootstrap steps. Split into
-            # two generators so the update path is robust: `clan vars set` writes a var file
-            # verbatim (bypassing the generator script), so the *raw* token is its own settable
-            # secret (input-only, not deployed), and the systemd EnvironmentFile the runner actually
-            # consumes (`TOKEN=<raw>`) is *derived* from it — the same raw→derived pattern the restic
-            # service uses. This way a raw `clan vars set` can't corrupt the EnvironmentFile shape.
-            # Both are prompt/derived so the token never lands in the Nix store; the env file is read
-            # by systemd as root, so no owner override is needed despite the runner's DynamicUser.
-            clan.core.vars.generators.forgejo-runner-token = {
-              files.token.deploy = false; # raw token; only consumed to derive the env file below
-              prompts.token = {
-                description = "Forgejo Actions runner registration token (Site Admin → Actions → Runners → Create new runner)";
-                type = "hidden";
-                persist = true;
-              };
-              runtimeInputs = [ pkgs.coreutils ];
-              script = ''tr -d "\n" < "$prompts"/token > "$out"/token'';
-            };
-            clan.core.vars.generators.forgejo-runner-token-env = {
-              dependencies = [ "forgejo-runner-token" ];
-              files.env = { }; # deployed; the runner's EnvironmentFile (read by systemd as root)
-              runtimeInputs = [ pkgs.coreutils ];
-              script = ''printf 'TOKEN=%s\n' "$(cat "$in"/forgejo-runner-token/token)" > "$out"/env'';
+            # The runner's shared secret (40 hex chars, Forgejo's offline-registration format): its
+            # token, registered on the Forgejo side by forgejo-runner-register. forgejo-runner
+            # derives the runner's UUID from the secret's first 16 characters, as raw bytes; the
+            # uuid is public (committed) because the module needs it inline, which leaves 24 of
+            # the 40 characters (96 bits) secret. Rotate with
+            # `clan vars generate serx --regenerate forgejo-runner` + deploy.
+            clan.core.vars.generators.forgejo-runner = {
+              files.secret.owner = config.services.forgejo.user; # read by the register oneshot
+              files.uuid.secret = false;
+              runtimeInputs = [
+                pkgs.coreutils
+                pkgs.openssl
+              ];
+              script = ''
+                secret=$(openssl rand -hex 20)
+                printf %s "$secret" > "$out"/secret
+                h=$(printf %s "''${secret:0:16}" | od -An -tx1 | tr -d ' \n')
+                printf '%s-%s-%s-%s-%s\n' "''${h:0:8}" "''${h:8:4}" "''${h:12:4}" "''${h:16:4}" "''${h:20:12}" \
+                  > "$out"/uuid
+              '';
             };
 
             assertions = [

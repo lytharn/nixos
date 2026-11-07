@@ -73,12 +73,9 @@
               appstoreEnable = false;
               phpExtraExtensions = all: [ all.imagick ];
               phpOptions."opcache.interned_strings_buffer" = "16";
-              config = {
-                dbtype = "pgsql";
-                # Initial admin password: read only at first setup. Comes from the nextcloud var
-                # generator declared below (owned by the nextcloud user).
-                adminpassFile = config.clan.core.vars.generators.nextcloud.files.adminpass.path;
-              };
+              # No initial admin: nixpkgs dropped adminpassFile; on a fresh install, create one
+              # with `nextcloud-occ user:add` + `group:adduser admin`.
+              config.dbtype = "pgsql";
               settings = {
                 default_phone_region = "SE";
                 # Hour (0-23, UTC) when heavy daily background jobs run. 01:00 UTC ≈ 02-03 Stockholm.
@@ -348,17 +345,6 @@
               pkgs.which
               pkgs.procps
             ];
-
-            # Initial admin password: read only at first setup, and serx's instance already
-            # exists, so a fresh random value has no effect on the live admin account.
-            clan.core.vars.generators.nextcloud = {
-              files.adminpass.owner = "nextcloud";
-              runtimeInputs = [
-                pkgs.openssl
-                pkgs.coreutils
-              ];
-              script = ''openssl rand -base64 24 | tr -d "\n" > "$out"/adminpass'';
-            };
           };
       };
   };
