@@ -123,6 +123,10 @@
   # harmless off-network.
   nix.distributedBuilds = true;
   programs.ssh.knownHosts."serx".publicKey = (import ../../lib/ssh-host-keys.nix).serx;
+
+  # Pin baxx too, so deploying it from here (`clan machines update baxx`) verifies
+  # non-interactively instead of failing on a clean known_hosts.
+  programs.ssh.knownHosts."baxx".publicKey = (import ../../lib/ssh-host-keys.nix).baxx;
   nix.buildMachines = [
     {
       hostName = "serx";

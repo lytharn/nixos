@@ -149,6 +149,10 @@
   nix.distributedBuilds = true;
   programs.ssh.knownHosts."serx".publicKey = (import ../../lib/ssh-host-keys.nix).serx;
 
+  # Pin baxx too, so deploying it from here (`clan machines update baxx`) verifies
+  # non-interactively instead of failing on a clean known_hosts.
+  programs.ssh.knownHosts."baxx".publicKey = (import ../../lib/ssh-host-keys.nix).baxx;
+
   # Pin mewx's own host key so a self-deploy (`clan machines update mewx` run here, which SSHes
   # to lytharn@mewx) verifies non-interactively instead of a trust-on-first-use prompt on a clean
   # known_hosts. This is the same key serx already pins for the buildHost closure copy
