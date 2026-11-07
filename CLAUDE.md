@@ -271,7 +271,10 @@ Reference a deployed file with `config.clan.core.vars.generators.<name>.files.<f
   Writes `/var/lib/vuln-scan/report.json`; pushes to ntfy `alerts` only on news (new fixable
   CVEs, nixpkgs older than `staleDays`, a host's scan starting to fail). The updated system is
   rebuilt only when the updated lock or deployed source changes. Run now:
-  `! ssh -t serx sudo systemctl start vuln-scan`.
+  `! ssh -t serx sudo systemctl start vuln-scan`. It also writes `news.json` (just that
+  night's news, the new CVEs' details capped at 30/host), which Hermes' `security-summary`
+  cron job (07:10) explains in the Matrix DM; on a quiet night its script prints `NO NEWS` and
+  the job answers `[SILENT]`. The ntfy alert stays the reliable signal.
 - **Matrix + ntfy on `serx`** (`clan/services/{matrix,ntfy}.nix`): Continuwuity at
   `matrix.gate-catla.ts.net` (federation off, token-gated registration via the
   `matrix-registration-token` var; the first account, `@lytharn`, is server admin) and ntfy at

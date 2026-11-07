@@ -167,9 +167,11 @@ def scan_host(host, hostdir, info):
 
 
 def alert_lines(host, info):
-    """What's worth pushing for this host tonight, tracking state so nothing repeats nightly."""
+    """What's worth pushing for this host tonight, tracking state so nothing repeats nightly.
+    Returns the alert lines and the newly fixable CVE ids."""
     state = STATE / "hosts" / host
     lines = []
+    new = []
 
     error = info.get("error")
     if error:
@@ -177,7 +179,7 @@ def alert_lines(host, info):
             what = "won't build with updated inputs" if info.get("failure") == "updated-build" else "scan failed"
             lines.append(f"{host}: {what}: {error.splitlines()[0]}")
         (state / "error").write_text(error)
-        return lines
+        return lines, new
     (state / "error").unlink(missing_ok=True)
 
     # Fixable CVEs: alert only when ones we haven't alerted about appear.
@@ -205,7 +207,13 @@ def alert_lines(host, info):
             (state / "stale").touch()
     else:
         (state / "stale").unlink(missing_ok=True)
-    return lines
+    return lines, new
+
+
+def write_json(name, obj):
+    tmp = STATE / f"{name}.tmp"
+    tmp.write_text(json.dumps(obj, indent=2))
+    tmp.replace(STATE / name)
 
 
 def push(title, body):
@@ -226,7 +234,11 @@ def push(title, body):
 
 
 def main():
-    report = {"generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "hosts": {}}
+    now = time.time()
+    report = {"generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), "hosts": {}}
+    # Only tonight's news (what the alert says, with the new CVEs' details), for the Hermes
+    # summary (clan/services/hermes.nix): the full report is far too long for its prompt.
+    news = {"generated": report["generated"], "generatedEpoch": int(now), "hosts": {}}
     lines = []
     for hostdir in sorted(p for p in REPORTS.iterdir() if (p / "system").exists()):
         host = hostdir.name
@@ -240,11 +252,19 @@ def main():
             info.update({"status": "error", "failure": failure, "error": str(e)})
             print(f"{host}: {e}", file=sys.stderr)
         report["hosts"][host] = info
-        lines += alert_lines(host, info)
+        host_lines, new = alert_lines(host, info)
+        lines += host_lines
+        if host_lines:
+            new_set = set(new)
+            news["hosts"][host] = {
+                "alerts": host_lines,
+                "fixableTotal": len(info.get("fixed", [])),
+                # Highest-scoring first (info["fixed"] is sorted), capped to keep the prompt small.
+                "newFixed": [e for e in info.get("fixed", []) if e["cve"] in new_set][:30],
+            }
 
-    tmp = STATE / "report.json.tmp"
-    tmp.write_text(json.dumps(report, indent=2))
-    tmp.replace(STATE / "report.json")
+    write_json("report.json", report)
+    write_json("news.json", news)
 
     if lines:
         fixes = any(": updating fixes " in line for line in lines)
