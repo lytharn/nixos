@@ -132,30 +132,10 @@
               };
             };
 
-            # Need to have a tailscale service named matrix, already created
-            systemd.services.tailscale-serve-matrix = {
+            systemd.services.tailscale-serve-matrix = import ../tailscale-serve.nix { inherit lib pkgs; } {
+              name = "matrix";
               description = "Tailscale Serve for the Matrix homeserver";
-              after = [
-                "tailscaled.service"
-                "network-online.target"
-              ];
-              wants = [ "network-online.target" ];
-              wantedBy = [ "multi-user.target" ];
-              serviceConfig = {
-                Type = "oneshot";
-                RemainAfterExit = true;
-                TimeoutStartSec = 60;
-                ExecStartPre = "${lib.getExe pkgs.bash} -c 'until ${lib.getExe pkgs.tailscale} status > /dev/null 2>&1; do sleep 2; done'";
-                ExecStart = ''
-                  ${lib.getExe pkgs.tailscale} serve \
-                    --service=svc:matrix \
-                    --https=443 \
-                    --yes \
-                    http://localhost:${toString internalPort}
-                '';
-                # See actual.nix: drain, not clear, so the service keeps its tailnet approval.
-                ExecStop = "${lib.getExe pkgs.tailscale} serve drain svc:matrix";
-              };
+              url = "http://localhost:${toString internalPort}";
             };
 
             clan.core.vars.generators.matrix-registration-token = {

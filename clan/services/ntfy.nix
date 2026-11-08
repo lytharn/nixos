@@ -55,30 +55,10 @@
 
             imports = [ ../ntfy-alerts.nix ];
 
-            # Need to have a tailscale service named ntfy, already created
-            systemd.services.tailscale-serve-ntfy = {
+            systemd.services.tailscale-serve-ntfy = import ../tailscale-serve.nix { inherit lib pkgs; } {
+              name = "ntfy";
               description = "Tailscale Serve for ntfy";
-              after = [
-                "tailscaled.service"
-                "network-online.target"
-              ];
-              wants = [ "network-online.target" ];
-              wantedBy = [ "multi-user.target" ];
-              serviceConfig = {
-                Type = "oneshot";
-                RemainAfterExit = true;
-                TimeoutStartSec = 60;
-                ExecStartPre = "${lib.getExe pkgs.bash} -c 'until ${lib.getExe pkgs.tailscale} status > /dev/null 2>&1; do sleep 2; done'";
-                ExecStart = ''
-                  ${lib.getExe pkgs.tailscale} serve \
-                    --service=svc:ntfy \
-                    --https=443 \
-                    --yes \
-                    http://127.0.0.1:${toString internalPort}
-                '';
-                # See actual.nix: drain, not clear, so the service keeps its tailnet approval.
-                ExecStop = "${lib.getExe pkgs.tailscale} serve drain svc:ntfy";
-              };
+              url = "http://127.0.0.1:${toString internalPort}";
             };
 
             # The password to enter in the ntfy app (`clan vars get serx ntfy-user/password`).

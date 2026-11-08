@@ -28,33 +28,10 @@
                 allowedLoginMethods = [ "password" ];
               };
             };
-            # Need to have a tailscale service named actual, already created
-            systemd.services.tailscale-serve-actual = {
+            systemd.services.tailscale-serve-actual = import ../tailscale-serve.nix { inherit lib pkgs; } {
+              name = "actual";
               description = "Tailscale Serve for Actual Budget";
-              after = [
-                "tailscaled.service"
-                "network-online.target"
-              ];
-              wants = [ "network-online.target" ];
-              wantedBy = [ "multi-user.target" ];
-              serviceConfig = {
-                Type = "oneshot";
-                RemainAfterExit = true;
-                TimeoutStartSec = 60;
-                ExecStartPre = "${lib.getExe pkgs.bash} -c 'until ${lib.getExe pkgs.tailscale} status > /dev/null 2>&1; do sleep 2; done'";
-                ExecStart = ''
-                  ${lib.getExe pkgs.tailscale} serve \
-                    --service=svc:actual \
-                    --https=443 \
-                    --yes \
-                    http://localhost:${toString internalPort}
-                '';
-                # drain stops accepting new incoming connections while letting existing ones close
-                # gracefully. We deliberately do NOT `clear` — that unregisters the service from the
-                # tailnet control plane, which also drops its admin approval and requires re-approval
-                # in the admin panel on the next start.
-                ExecStop = "${lib.getExe pkgs.tailscale} serve drain svc:actual";
-              };
+              url = "http://localhost:${toString internalPort}";
             };
           };
       };

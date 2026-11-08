@@ -157,32 +157,10 @@
               sslCertificateKey = "/var/lib/nginx-loopback/key.pem";
             };
 
-            systemd.services.tailscale-serve-cloud = {
+            systemd.services.tailscale-serve-cloud = import ../tailscale-serve.nix { inherit lib pkgs; } {
+              name = "cloud";
               description = "Tailscale Serve for Nextcloud";
-              after = [
-                "tailscaled.service"
-                "network-online.target"
-              ];
-              wants = [ "network-online.target" ];
-              wantedBy = [ "multi-user.target" ];
-              serviceConfig = {
-                Type = "oneshot";
-                RemainAfterExit = true;
-                TimeoutStartSec = 60;
-                ExecStartPre = "${lib.getExe pkgs.bash} -c 'until ${lib.getExe pkgs.tailscale} status > /dev/null 2>&1; do sleep 2; done'";
-                ExecStart = ''
-                  ${lib.getExe pkgs.tailscale} serve \
-                    --service=svc:cloud \
-                    --https=443 \
-                    --yes \
-                    http://localhost:${toString internalPort}
-                '';
-                # drain stops accepting new incoming connections while letting existing ones close
-                # gracefully. We deliberately do NOT `clear` — that unregisters the service from the
-                # tailnet control plane, which also drops its admin approval and requires re-approval
-                # in the admin panel on the next start.
-                ExecStop = "${lib.getExe pkgs.tailscale} serve drain svc:cloud";
-              };
+              url = "http://localhost:${toString internalPort}";
             };
 
             # Nextcloud Office backend. coolwsd runs plain HTTP on localhost:9980; TLS is terminated
@@ -203,32 +181,11 @@
               };
             };
 
-            # Expose Collabora on the tailnet, mirroring tailscale-serve-cloud. Like svc:cloud, the
-            # svc:office service needs one-time approval in the Tailscale admin panel before it
-            # serves. ExecStop drains (not clears) to keep that approval across restarts.
-            systemd.services.tailscale-serve-office = {
+            systemd.services.tailscale-serve-office = import ../tailscale-serve.nix { inherit lib pkgs; } {
+              name = "office";
               description = "Tailscale Serve for Collabora Online (Nextcloud Office)";
-              after = [
-                "tailscaled.service"
-                "network-online.target"
-                "coolwsd.service"
-              ];
-              wants = [ "network-online.target" ];
-              wantedBy = [ "multi-user.target" ];
-              serviceConfig = {
-                Type = "oneshot";
-                RemainAfterExit = true;
-                TimeoutStartSec = 60;
-                ExecStartPre = "${lib.getExe pkgs.bash} -c 'until ${lib.getExe pkgs.tailscale} status > /dev/null 2>&1; do sleep 2; done'";
-                ExecStart = ''
-                  ${lib.getExe pkgs.tailscale} serve \
-                    --service=svc:office \
-                    --https=443 \
-                    --yes \
-                    http://localhost:${toString collaboraPort}
-                '';
-                ExecStop = "${lib.getExe pkgs.tailscale} serve drain svc:office";
-              };
+              url = "http://localhost:${toString collaboraPort}";
+              after = [ "coolwsd.service" ];
             };
 
             # Self-signed cert for the 127.0.0.1:443 Nextcloud loopback (see the vhost above).

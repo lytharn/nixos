@@ -24,7 +24,7 @@
 
     First-boot bootstrap:
       1. Create + approve the `svc:forge` tailnet service in the Tailscale admin panel once
-         (exactly like svc:cloud/svc:actual).
+         (see clan/tailscale-serve.nix).
       2. `clan machines update serx` — prompts for the admin password. The admin account and
          the runner's registration are created automatically during activation.
   '';
@@ -104,32 +104,11 @@
             # Forgejo's built-in SSH server, tailnet-only.
             networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ sshPort ];
 
-            # Expose Forgejo's web + HTTPS git on the tailnet, mirroring tailscale-serve-actual.
-            # svc:forge needs one-time approval in the Tailscale admin panel before it serves;
-            # ExecStop drains (not clears) to keep that approval across restarts.
-            systemd.services.tailscale-serve-forge = {
+            systemd.services.tailscale-serve-forge = import ../tailscale-serve.nix { inherit lib pkgs; } {
+              name = "forge";
               description = "Tailscale Serve for Forgejo";
-              after = [
-                "tailscaled.service"
-                "network-online.target"
-                "forgejo.service"
-              ];
-              wants = [ "network-online.target" ];
-              wantedBy = [ "multi-user.target" ];
-              serviceConfig = {
-                Type = "oneshot";
-                RemainAfterExit = true;
-                TimeoutStartSec = 60;
-                ExecStartPre = "${lib.getExe pkgs.bash} -c 'until ${lib.getExe pkgs.tailscale} status > /dev/null 2>&1; do sleep 2; done'";
-                ExecStart = ''
-                  ${lib.getExe pkgs.tailscale} serve \
-                    --service=svc:forge \
-                    --https=443 \
-                    --yes \
-                    http://localhost:${toString internalPort}
-                '';
-                ExecStop = "${lib.getExe pkgs.tailscale} serve drain svc:forge";
-              };
+              url = "http://localhost:${toString internalPort}";
+              after = [ "forgejo.service" ];
             };
 
             # Runs jobs on the host, no Docker: the label's `:host` suffix selects that (and keeps
