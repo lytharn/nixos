@@ -9,10 +9,10 @@
 {
   # nix-minecraft's module and overlay serve the minecraft service.
   imports = [
+    ../../clan/common.nix
     ../../clan/restic-secrets.nix
     ../../clan/remotebuilder-secrets.nix
     inputs.nix-minecraft.nixosModules.minecraft-servers
-    inputs.home-manager.nixosModules.home-manager
   ];
 
   nixpkgs.overlays = [ inputs.nix-minecraft.overlay ];
@@ -48,23 +48,6 @@
     powerOnBoot = true;
   };
 
-  time.timeZone = "Europe/Stockholm";
-
-  i18n = {
-    defaultLocale = "en_US.UTF-8";
-    extraLocaleSettings = {
-      LC_ADDRESS = "sv_SE.UTF-8";
-      LC_IDENTIFICATION = "sv_SE.UTF-8";
-      LC_MEASUREMENT = "sv_SE.UTF-8";
-      LC_MONETARY = "sv_SE.UTF-8";
-      LC_NAME = "sv_SE.UTF-8";
-      LC_NUMERIC = "sv_SE.UTF-8";
-      LC_PAPER = "sv_SE.UTF-8";
-      LC_TELEPHONE = "sv_SE.UTF-8";
-      LC_TIME = "sv_SE.UTF-8";
-    };
-  };
-
   users.users.lytharn = {
     isNormalUser = true;
     description = "lytharn";
@@ -75,8 +58,6 @@
     initialPassword = "slaskfisk";
     openssh.authorizedKeys.keys = builtins.attrValues (import ../../lib/ssh-keys.nix);
   };
-
-  nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; [
     fd
@@ -113,10 +94,6 @@
     };
   };
 
-  # System-level fish, for completions of system-installed tools. The login shell stays bash
-  # (tmux starts fish); the user's fish config comes from the fish home module.
-  programs.fish.enable = true;
-
   clan.core.networking.targetHost = "lytharn@serx";
 
   services.openssh = {
@@ -148,19 +125,7 @@
     "lytharn"
   ];
 
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    backupFileExtension = "hm-bak"; # don't fail the first switch on pre-existing dotfiles
-    extraSpecialArgs = {
-      namespace = "slask";
-      inherit inputs;
-    };
-    users.lytharn.imports = [
-      ../../clan/home-modules.nix
-      ../../clan/server-home.nix
-    ];
-  };
+  home-manager.users.lytharn.imports = [ ../../clan/server-home.nix ];
 
   system.stateVersion = "25.05"; # DO NOT TOUCH
 }

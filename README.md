@@ -35,6 +35,8 @@ by directory; everything else is imported explicitly.
   `hardware-configuration.nix` and `disko.nix` from the same directory (disko only acts at
   install). Nothing else in `machines/<host>/` is picked up automatically.
 - [`clan/`](clan/) — clan glue not tied to one machine:
+  - [`common.nix`](clan/common.nix) — the base every machine imports;
+    [`desktop.nix`](clan/desktop.nix) — what the desktops add on top
   - [`clan.nix`](clan/clan.nix) — the aggregator `flake.nix` imports (sets `meta.name`,
     imports the two below)
   - [`inventory.nix`](clan/inventory.nix) — machine tags, service instances, and the servers'

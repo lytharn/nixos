@@ -8,8 +8,8 @@
   # NixOS under WSL (see the README). NixOS-WSL owns boot, the filesystem and networking, so
   # there's no hardware-configuration.nix or disko.nix.
   imports = [
+    ../../clan/common.nix
     inputs.nixos-wsl.nixosModules.default
-    inputs.home-manager.nixosModules.home-manager
   ];
 
   wsl = {
@@ -25,23 +25,6 @@
   # drag in a systemd-resolved that conflicts with it.
   networking.useNetworkd = false;
 
-  time.timeZone = "Europe/Stockholm";
-
-  i18n = {
-    defaultLocale = "en_US.UTF-8";
-    extraLocaleSettings = {
-      LC_ADDRESS = "sv_SE.UTF-8";
-      LC_IDENTIFICATION = "sv_SE.UTF-8";
-      LC_MEASUREMENT = "sv_SE.UTF-8";
-      LC_MONETARY = "sv_SE.UTF-8";
-      LC_NAME = "sv_SE.UTF-8";
-      LC_NUMERIC = "sv_SE.UTF-8";
-      LC_PAPER = "sv_SE.UTF-8";
-      LC_TELEPHONE = "sv_SE.UTF-8";
-      LC_TIME = "sv_SE.UTF-8";
-    };
-  };
-
   # The user itself is created by NixOS-WSL (wsl.defaultUser); this just adds the rest.
   users.users.lytharn = {
     isNormalUser = true;
@@ -55,8 +38,6 @@
   # attaching client's environment, so it applies on the next attach.
   environment.sessionVariables.COLORTERM = "truecolor";
 
-  nixpkgs.config.allowUnfree = true;
-
   environment.systemPackages = with pkgs; [
     fd
     ripgrep
@@ -67,27 +48,11 @@
   # nix-ld provides it (the approach NixOS-WSL's docs recommend over patching the server).
   programs.nix-ld.enable = true;
 
-  # System-level fish, for completions of system-installed tools. The login shell stays bash
-  # (tmux starts fish); the user's fish config comes from the fish home module.
-  programs.fish.enable = true;
-
   # The servers' shell toolkit plus neovim, since this machine gets worked on.
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    backupFileExtension = "hm-bak"; # don't fail the first switch on pre-existing dotfiles
-    extraSpecialArgs = {
-      namespace = "slask";
-      inherit inputs;
-    };
-    users.lytharn = {
-      imports = [
-        ../../clan/home-modules.nix
-        ../../clan/server-home.nix
-      ];
-      # neovim symlinks its lua config out of the flake checkout, defaulting to ~/flake.
-      slask.apps.neovim.enable = true;
-    };
+  home-manager.users.lytharn = {
+    imports = [ ../../clan/server-home.nix ];
+    # neovim symlinks its lua config out of the flake checkout, defaulting to ~/flake.
+    slask.apps.neovim.enable = true;
   };
 
   system.stateVersion = "26.11"; # DO NOT TOUCH
