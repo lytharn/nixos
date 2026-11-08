@@ -1,8 +1,3 @@
-# Inventory: machine tags + service instances. Deploys clan services to machines by tag/role
-# instead of each machine importing a module path in its configuration.nix. `all`/`nixos`/
-# `darwin` are built-in tags; `desktop`/`server`/`wsl` are ours. Local services referenced here are
-# auto-registered as clan.modules.<name> in ./services-modules.nix.
-#
 # Nightly schedule of the always-on servers (local time). The heavy and order-dependent jobs
 # get their times here, as settings of their instances below, so clashes are visible in one
 # place; frequent pollers (mail/sensor/calendar mirrors, nextcloud-cron, deploy-report) keep
@@ -33,8 +28,7 @@
         name = "nix-settings";
         input = "self";
       };
-      # Every host. Store optimisation defaults to "auto" (dedupe on store writes) for the
-      # machines that are off at night; the always-on servers optimise on a nightly timer.
+      # The always-on servers optimise on a timer; the rest keep the default (see the service).
       roles.default.tags = [ "all" ];
       roles.default.machines = {
         serx.settings = {
@@ -75,9 +69,7 @@
         name = "deploy-report";
         input = "self";
       };
-      # Every real host (not wslx: no tailnet, no clan vars) reports what it runs to serx, so
-      # serx can scan the deployed closures. baxx is built on serx, so its paths are already
-      # there and it only registers them.
+      # Not wslx: no tailnet, no clan vars. baxx is built on serx, so it only registers.
       roles.server.machines.serx = { };
       roles.reporter.tags = [
         "desktop"
@@ -91,9 +83,8 @@
         name = "vuln-scan";
         input = "self";
       };
-      # Next to deploy-report's server: diffs each reported host's CVEs against its updated
-      # flake inputs nightly and alerts via ntfy. After the backup, before nix-optimise.
-      # wallpapers is private (no GitHub token on serx) and holds no software anyway.
+      # On deploy-report's server. wallpapers is private (no GitHub token on serx) and holds
+      # no software anyway.
       roles.default.machines.serx.settings = {
         schedule = "02:15";
         keepInputs = [ "wallpapers" ];
@@ -133,8 +124,6 @@
         name = "oom-guard";
         input = "self";
       };
-      # The desktops run swapless (swapDevices = []); zram + oomd keeps a memory spike from
-      # freezing them.
       roles.default.machines = {
         mewx.settings.memoryPercent = 50;
         quex.settings.memoryPercent = 25;
@@ -155,8 +144,7 @@
         name = "tailscale";
         input = "self";
       };
-      # Every real host is on the tailnet. Not the WSL distros: the Windows host runs
-      # Tailscale itself and WSL shares its network.
+      # Not WSL: the Windows host runs Tailscale itself and WSL shares its network.
       roles.default.tags = [
         "desktop"
         "server"
@@ -168,7 +156,8 @@
         name = "actual";
         input = "self";
       };
-      # serx-only: baxx is just the backup target, so target by machine, not the server tag.
+      # The server apps target serx by name: the `server` tag would include baxx, which is
+      # only the backup target.
       roles.default.machines.serx = { };
     };
 
@@ -177,7 +166,7 @@
         name = "home-assistant";
         input = "self";
       };
-      # serx-only (its Thread/OTBR hardware glue stays in serx's configuration.nix).
+      # Its Thread/OTBR hardware glue is in serx's configuration.nix.
       roles.default.machines.serx = { };
     };
 
@@ -186,7 +175,7 @@
         name = "minecraft";
         input = "self";
       };
-      # serx-only (the nix-minecraft module import + overlay stay in serx's configuration.nix).
+      # nix-minecraft's module and overlay are imported in serx's configuration.nix.
       roles.default.machines.serx = { };
     };
 
@@ -195,7 +184,6 @@
         name = "nextcloud";
         input = "self";
       };
-      # serx-only. The service declares its own nextcloud admin-password var generator.
       roles.default.machines.serx = { };
     };
 
@@ -204,10 +192,6 @@
         name = "forgejo";
         input = "self";
       };
-      # serx-only. Declares its own forgejo-runner-token var; its Postgres DB + stateDir are
-      # picked up by the restic client below (pg_dumpall + the forgejo stateDir path).
-      # adminUser/adminEmail drive the declarative admin bootstrap (password = forgejo-admin
-      # var prompt); set adminUser null to skip it and create the admin by hand instead.
       roles.default.machines.serx.settings = {
         adminUser = "lytharn";
         adminEmail = "lytharn@users.noreply.github.com";
@@ -219,7 +203,6 @@
         name = "postgresql-collation";
         input = "self";
       };
-      # serx is the only Postgres host (nextcloud + forgejo).
       roles.default.machines.serx = { };
     };
 
@@ -228,8 +211,7 @@
         name = "matrix";
         input = "self";
       };
-      # serx-only. Declares its own matrix-registration-token var; its online DB backup dir is
-      # picked up by the restic client below, so it must finish before that runs.
+      # Before the restic backup, which ships the dump.
       roles.default.machines.serx.settings.backupSchedule = "01:00";
     };
 
@@ -238,8 +220,7 @@
         name = "ntfy";
         input = "self";
       };
-      # serx-only: the UnifiedPush distributor for Matrix notifications. Not backed up: users
-      # and ACLs are declarative, and its state is only a short-lived message cache.
+      # Not backed up: users and ACLs are declarative, and its state is a short-lived cache.
       roles.default.machines.serx = { };
     };
 
@@ -248,8 +229,6 @@
         name = "mail-mirror";
         input = "self";
       };
-      # serx-only: a read-only local copy of the mailbox for the Hermes agent (which stays
-      # offline; only this service talks to the IMAP server). Login is a clan var prompt.
       roles.default.machines.serx.settings = {
         host = "imap.websupport.se";
         folders = [
@@ -265,8 +244,6 @@
         name = "sensor-mirror";
         input = "self";
       };
-      # serx-only, next to Home Assistant: a temperature/humidity summary file for the Hermes
-      # agent, so the agent never holds a Home Assistant token. The token is a clan var prompt.
       roles.default.machines.serx.settings.readers = [ "hermes" ];
     };
 
@@ -275,9 +252,6 @@
         name = "calendar-feeds";
         input = "self";
       };
-      # serx-only (next to Nextcloud): external iCalendar feeds copied into read-only calendars
-      # shared with lytharn (Noctalia, phones) and hermes (its nc-sync). The feed list is a
-      # clan var prompt, so the URLs stay out of the repo.
       roles.default.machines.serx.settings.shareWith = [
         "lytharn"
         "hermes"
@@ -289,8 +263,7 @@
         name = "hermes";
         input = "self";
       };
-      # serx-only: it has the RAM and iGPU for the local model. Its stateDir (notes, memories,
-      # sessions) is picked up by the restic client below.
+      # serx has the RAM and iGPU for the local model.
       roles.default.machines.serx = { };
     };
 
@@ -299,18 +272,13 @@
         name = "restic";
         input = "self";
       };
-      # serx pushes its backups to baxx's append-only rest-server. The shared restic-secrets
-      # var (clan/restic-secrets.nix) is imported by both machines; each role folds in the
-      # generator deriving its per-host files.
-      # monitor = healthchecks.io dead-man's-switch; each role pings its own check (backup vs
-      # prune/check). The ping URLs are secret clan var prompts (restic-monitor-{client,server}).
       roles.client.machines.serx.settings = {
         monitor = true;
-        schedule = "01:30"; # after the 01:00 Matrix DB backup
+        schedule = "01:30"; # after the Matrix DB backup
       };
       roles.server.machines.baxx.settings = {
-        address = "baxx.gate-catla.ts.net"; # tailnet MagicDNS name serx reaches baxx at
-        dataDir = "/backup"; # dedicated btrfs subvolume (compress=no)
+        address = "baxx.gate-catla.ts.net";
+        dataDir = "/backup"; # its own subvolume, see baxx's disko.nix
         monitor = true;
         pruneSchedule = "Sun 03:00";
       };

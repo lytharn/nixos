@@ -1,8 +1,6 @@
-# NixOS-side glue for Noctalia's Nextcloud CalDAV account: the app-password clan var, wired into
-# the HM module's `calendarPasswordFile` option. Same split as rclone-nextcloud-secrets.nix (HM
-# modules can't see clan vars), and likewise NOT `share = true`: each desktop prompts for its own
-# Nextcloud app password, so one host can be revoked without breaking the other. Imported
-# explicitly by the desktop configs.
+# The app password for Noctalia's Nextcloud CalDAV account, wired into the HM module's
+# `calendarPasswordFile` (HM modules can't see clan vars). Not shared: each desktop has its own
+# app password, so one can be revoked without breaking the others.
 {
   config,
   pkgs,

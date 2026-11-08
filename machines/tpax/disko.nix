@@ -20,7 +20,7 @@
               };
             };
             luks = {
-              size = "100%"; # Use remaning space
+              size = "100%";
               # Full-disk encryption: a laptop can be stolen, and the SSH host key that decrypts
               # tpax's clan vars lives on this partition. Unlocked by passphrase in the initrd
               # (typed with the US console keymap).

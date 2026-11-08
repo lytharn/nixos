@@ -1,13 +1,9 @@
-# Shared Home-Manager profile for the Hyprland desktops (quex, mewx, tpax). Imported into each
-# desktop's home-manager.users.lytharn alongside home-modules.nix; hosts layer on their
-# specifics (quex: zed; mewx/tpax: hyprland scale; each: gh.hostsFile, wired at machine scope
-# where clan.core.vars is visible).
+# Shared Home-Manager profile for the desktops. Each desktop imports it into
+# home-manager.users.lytharn and adds its own specifics.
 { pkgs, inputs, ... }:
 {
   home.username = "lytharn";
   home.homeDirectory = "/home/lytharn";
-  # Shared toolchain for the desktops (dev tools + apps present on all of them).
-  # Host-specific extras live in each machine's home-manager.users.lytharn block.
   home.packages = with pkgs; [
     htop
     # Rust toolchain
@@ -72,8 +68,8 @@
     ghostty.enable = true;
     git = {
       enable = true;
-      # Each desktop signs with its own ~/.ssh/id_ed25519; both are registered as GitHub
-      # signing keys. Not on the servers, which may lack the key and would then fail to commit.
+      # Each desktop signs with its own ~/.ssh/id_ed25519, registered on GitHub as a signing
+      # key. Not on the servers, which may lack the key and would then fail to commit.
       sshSigning = {
         enable = true;
         allowedSigners = builtins.attrValues (import ../lib/ssh-keys.nix);

@@ -97,7 +97,7 @@
           let
             # privateRepos grants access only under a subdir matching the auth user, so a
             # client's repo lives at <dataDir>/<client> and its htpasswd username is <client>.
-            # There is a single client (serx) in this instance.
+            # There is a single client per instance.
             client = lib.head (lib.attrNames roles.client.machines);
             repo = "${settings.dataDir}/${client}";
             # healthchecks.io ping helper for the prune/check job (only used when settings.monitor).
@@ -248,12 +248,11 @@
             ...
           }:
           let
-            # Staging dir for the database dumps produced in backupPrepareCommand.
             staging = "/var/backup/restic-staging";
             # This machine's own name — the rest-server basic-auth user and repo subdir.
             client = config.clan.core.settings.machine.name;
-            # There is a single server (baxx) in this instance; derive its address/port from the
-            # server role rather than hardcoding. Its machine name doubles as the backup job name.
+            # There is a single server per instance. Its machine name doubles as the backup job
+            # name.
             serverName = lib.head (lib.attrNames roles.server.machines);
             serverSettings = roles.server.machines.${serverName}.settings;
             serverAddress = if serverSettings.address == null then serverName else serverSettings.address;
@@ -277,7 +276,6 @@
               );
           in
           {
-            # Nightly push of this machine's service data into the server's append-only REST server.
             services.restic.backups.${jobName} = {
               # restic takes the rest-server basic-auth in the repo URL. Both the URL (with the
               # embedded password, assembled by the restic-backup-secrets generator below) and the
@@ -287,8 +285,7 @@
               # init only creates objects, which the append-only server permits.
               initialize = true;
 
-              # Reference the resolved service path options instead of hardcoded literals, so a
-              # future change to a service's default data location can't silently break the backup.
+              # Service options rather than literals, so a moved data dir can't silently drop out.
               paths = [
                 config.services.nextcloud.home
                 config.services.home-assistant.configDir

@@ -5,11 +5,8 @@
 }:
 
 {
-  # A NixOS distro running under WSL on a Windows box. No hardware-configuration.nix or
-  # disko.nix: NixOS-WSL owns boot, the filesystem and networking. Not reachable over SSH, so
-  # deploy from inside WSL with `sudo nixos-rebuild switch --flake .` rather than
-  # `clan machines update`. Deliberately has no clan vars (it's not on the tailnet — Windows
-  # runs Tailscale and WSL shares its network), so it needs no sops machine key.
+  # NixOS under WSL (see the README). NixOS-WSL owns boot, the filesystem and networking, so
+  # there's no hardware-configuration.nix or disko.nix.
   imports = [
     inputs.nixos-wsl.nixosModules.default
     inputs.home-manager.nixosModules.home-manager
@@ -30,7 +27,6 @@
 
   time.timeZone = "Europe/Stockholm";
 
-  # Select internationalisation properties.
   i18n = {
     defaultLocale = "en_US.UTF-8";
     extraLocaleSettings = {
@@ -59,7 +55,6 @@
   # attaching client's environment, so it applies on the next attach.
   environment.sessionVariables.COLORTERM = "truecolor";
 
-  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; [
@@ -72,14 +67,11 @@
   # nix-ld provides it (the approach NixOS-WSL's docs recommend over patching the server).
   programs.nix-ld.enable = true;
 
-  # System-level fish: completions for system-installed tools (nix, nixos-rebuild, ...) and
-  # man-page-generated ones. Not the login shell (that stays bash; tmux starts fish). The
-  # user-facing fish config (greeting, nix-shell fn) comes from the fish home module
-  # enabled in server-home.nix.
+  # System-level fish, for completions of system-installed tools. The login shell stays bash
+  # (tmux starts fish); the user's fish config comes from the fish home module.
   programs.fish.enable = true;
 
-  # Home-Manager: the servers' shell toolkit (clan/server-home.nix) plus neovim, since this
-  # is a machine that gets worked on — the same set as homes/standalone.
+  # The servers' shell toolkit plus neovim, since this machine gets worked on.
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;

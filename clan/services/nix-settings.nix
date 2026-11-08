@@ -65,7 +65,6 @@
               dates = [ settings.optimiseSchedule ];
             };
 
-            # Automatically delete older generations and garbage collect
             gc = {
               automatic = true;
               dates = settings.gcSchedule;

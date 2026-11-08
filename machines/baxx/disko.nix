@@ -18,11 +18,9 @@
               };
             };
             root = {
-              size = "100%"; # Use remaning space
+              size = "100%";
               content = {
                 type = "btrfs";
-                # Subvolumes must set a mountpoint in order to be mounted,
-                # unless their parent is mounted
                 subvolumes = {
                   "/root" = {
                     mountOptions = [ "compress=zstd" ];

@@ -63,10 +63,8 @@ by directory; everything else is imported explicitly.
 The module namespace is `slask`, passed to every module as the `namespace` argument; the
 Home-Manager modules' options live under `slask.apps.<name>`.
 
-`nixpkgs-collabora` is a **pin, not a second channel**: an older nixos-unstable rev that supplies
-only `collabora-online` on serx ([`clan/services/nextcloud.nix`](clan/services/nextcloud.nix)), because current nixpkgs can't
-build the LibreOffice it needs. It deliberately doesn't follow `nixpkgs`; drop it once nixpkgs
-bumps collabora-online to 26.04.
+`nixpkgs-collabora` is a **pin, not a second channel**; its comment in
+[`flake.nix`](flake.nix) says why and when to drop it.
 
 ## Services (clan inventory)
 

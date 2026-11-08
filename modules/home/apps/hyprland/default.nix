@@ -7,7 +7,6 @@
 }:
 let
   cfg = config.${namespace}.apps.hyprland;
-  # Import the theme palette directly from lib/palette (nothing injects it as lib.${namespace}).
   palette = (import ../../../../lib/palette { }).palette.tokyonight;
 in
 {

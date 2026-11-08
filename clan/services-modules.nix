@@ -1,7 +1,4 @@
-# Auto-registers every local clan service under clan/services/ as `clan.modules.<name>`
-# (referenced from inventory.instances via `module = { name = "<name>"; input = "self"; }`).
-# Mirrors clan/home-modules.nix's readDir discovery, so adding a service is just dropping a
-# file in clan/services/ — no edit here, in clan.nix, or in flake.nix.
+# Registers every clan/services/<name>.nix as `clan.modules.<name>`.
 { lib, ... }:
 let
   servicesDir = ./services;

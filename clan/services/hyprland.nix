@@ -24,9 +24,8 @@
               lib.concatMapStringsSep "\n" (i: "U+${lib.toHexString i}") (lib.range 65381 65439)
             );
 
-            # nixpkgs' unifont stopped installing a BDF (it now ships pcf/otf
-            # plus the upstream .hex source), so regenerate one with unifont's
-            # own hex2bdf. Yields a byte-identical psf to the old unifont.bdf.
+            # nixpkgs' unifont ships no BDF (only pcf/otf and the .hex source), so
+            # build one with unifont's own hex2bdf.
             unifontBdf = pkgs.runCommand "unifont.bdf" { } ''
               ${pkgs.unifont.bin}/bin/hex2bdf \
                 ${pkgs.unifont.doc}/share/unifont/unifont.hex > $out
@@ -42,7 +41,6 @@
             '';
           in
           {
-            # Enable Ly display manager
             services.displayManager.ly = {
               enable = true;
               settings = {
@@ -66,7 +64,7 @@
               "${pkgs.kbd}/bin/setfont -C /dev/tty1 ${matrixConsoleFont}"
             ];
 
-            # This will enable extra things necessary which is not enabled in Home Manager
+            # The system half of Hyprland (session entry, polkit, portals) that HM can't provide.
             programs.hyprland.enable = true;
             # Manage the session with UWSM (Universal Wayland Session Manager).
             # Installs the systemd user units. The uwsm-managed Hyprland session entry
@@ -86,12 +84,6 @@
             # Keep keyring password in sync when changing the login password via `passwd`.
             security.pam.services.passwd.enableGnomeKeyring = true;
 
-            # xdg-desktop-portal works by exposing a series of D-Bus interfaces
-            # known as portals under a well-known name
-            # (org.freedesktop.portal.Desktop) and object path
-            # (/org/freedesktop/portal/desktop).
-            # The portal interfaces include APIs for file access, opening URIs,
-            # printing and others.
             services.dbus.enable = true;
             xdg.portal = {
               enable = true;

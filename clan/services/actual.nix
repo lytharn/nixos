@@ -19,7 +19,6 @@
             internalPort = 5006;
           in
           {
-            # Inspect the service with: journalctl -u actual -f
             services.actual = {
               enable = true;
               # See https://actualbudget.org/docs/config/ for documentation of settings

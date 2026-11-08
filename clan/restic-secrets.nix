@@ -1,19 +1,12 @@
-# Shared clan var for the serx<->baxx restic backup: the repo-encryption password and the
-# rest-server basic-auth password are the same secret on both hosts, so they live in one
-# `share = true` generator, generated once and reused by every machine that declares it
-# (serx as client, baxx as server). Seeded from the *existing* values via prompts so the
-# already-encrypted repo stays readable.
-#
-# Kept in clan/ (not machines/, where clan would treat the dir as a machine) and imported
-# explicitly by the serx and baxx configs.
+# The restic backup's shared secrets (repo password, rest-server basic-auth password), from
+# which each role of clan/services/restic.nix derives its own files. Prompted rather than
+# generated, so the values of the already-encrypted repo carry over.
 { pkgs, ... }:
 {
   clan.core.vars.generators.restic-secrets = {
     share = true;
-    # Repo encryption password: deployed and read at runtime by serx's backup (runs as root).
     files.repo-pass = { };
-    # Rest-server basic-auth password: only consumed inside the per-host derivation generators
-    # (via $in at generate time), never read at runtime, so it isn't deployed to any machine.
+    # Only read by the derived generators, never at runtime.
     files.rest-pass.deploy = false;
     prompts.repo-pass = {
       description = "restic repo encryption password (paste the EXISTING value to preserve repo access)";

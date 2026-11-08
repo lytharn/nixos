@@ -20,7 +20,7 @@
               };
             };
             root = {
-              size = "100%"; # Use remaning space
+              size = "100%";
               content = {
                 type = "btrfs";
                 subvolumes = {

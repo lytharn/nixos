@@ -1,6 +1,4 @@
-# Shared Home-Manager profile for the headless servers (serx, baxx): a minimal shell
-# toolkit. Imported into each server's home-manager.users.lytharn alongside home-modules.nix
-# (which provides the slask.apps.* options).
+# Shared Home-Manager profile for the headless servers: a minimal shell toolkit.
 {
   home.username = "lytharn";
   home.homeDirectory = "/home/lytharn";

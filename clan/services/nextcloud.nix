@@ -73,8 +73,8 @@
               appstoreEnable = false;
               phpExtraExtensions = all: [ all.imagick ];
               phpOptions."opcache.interned_strings_buffer" = "16";
-              # No initial admin: nixpkgs dropped adminpassFile; on a fresh install, create one
-              # with `nextcloud-occ user:add` + `group:adduser admin`.
+              # No initial admin is declared; on a fresh install, create one with
+              # `nextcloud-occ user:add` + `group:adduser admin`.
               config.dbtype = "pgsql";
               settings = {
                 default_phone_region = "SE";
@@ -111,13 +111,8 @@
               };
             };
 
-            # Fix warning:
-            #   "Some headers are not set correctly on your instance - The `Strict-Transport-Security`
-            #    HTTP header is not set (should be at least `15552000` seconds).
-            #    For enhanced security, it is recommended to enable HSTS."
-            # The nextcloud module only emits HSTS when its own `https` is true; we terminate TLS at tailscale,
-            # so add the header here. None of the nextcloud nginx locations redeclare add_header, so server-level
-            # propagation is safe.
+            # HSTS: the nextcloud module only emits it when its own `https` is true, and TLS ends at
+            # tailscale. No nextcloud location redeclares add_header, so server level is safe.
             services.nginx.virtualHosts."cloud.gate-catla.ts.net" = {
               extraConfig = ''
                 add_header Strict-Transport-Security "max-age=15552000; includeSubDomains" always;
@@ -297,21 +292,12 @@
                 '';
             };
 
-            # Memories (photo timeline) needs two external binaries that it normally ships as
-            # prebuilt blobs under bin-ext/. The nixpkgs app tarball has no bin-ext at all, so
-            # both have to be resolved here or the app half-works:
-            #   * exiftool — used for every EXIF read, so without it the timeline indexes nothing.
-            #     Memories version-pins it exactly (BinExt::EXIFTOOL_VER, currently 13.59) and the
-            #     admin panel's self-test fails a mismatch; nixpkgs' exiftool is 13.59 today, so
-            #     this lines up. If a nixpkgs bump breaks that equality the fix is to pin the
-            #     matching exiftool, not to drop this. Note it must stay a *path* — setting
-            #     exiftool_no_local instead makes Memories look for the absent bundled copy.
-            #     Memories copies the binary into a temp dir before running it; nixpkgs' exiftool
-            #     is a perl script with absolute `use lib` paths baked in, so the copy still works.
-            #   * go-vod — the video transcoder. Not packaged at all, hence transcoding stays off
-            #     (also the upstream default; set explicitly so a default flip can't enable a
-            #     binary that isn't there). Videos play as originals, which phone clips do fine.
-            # Indexing needs no timer: Memories registers a TimedJob, driven by nextcloud-cron.
+            # Memories normally ships exiftool and go-vod as prebuilt blobs, which the nixpkgs app
+            # lacks. exiftool must be nixpkgs' (as a path; exiftool_no_local would look for the
+            # missing bundled copy). Memories pins its exact version (BinExt::EXIFTOOL_VER) and its
+            # self-test fails on a mismatch: if a nixpkgs bump breaks that, pin the matching
+            # exiftool rather than dropping this. go-vod isn't packaged, so transcoding is off
+            # explicitly; videos play as originals.
             systemd.services.nextcloud-memories-config = {
               description = "Configure Nextcloud Memories (exiftool path, transcoding)";
               wantedBy = [ "multi-user.target" ];

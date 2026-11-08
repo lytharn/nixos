@@ -6,8 +6,6 @@
 }:
 
 {
-  # clan auto-imports hardware-configuration.nix. modules/nixos/* are not auto-discovered, so
-  # the ones quex uses are imported explicitly, plus home-manager for the HM user config.
   imports = [
     inputs.home-manager.nixosModules.home-manager
     ../../clan/rclone-nextcloud-secrets.nix
@@ -17,28 +15,24 @@
     ../../clan/nix-github-token.nix
   ];
 
-  # Bootloader.
   boot = {
-    kernelPackages = pkgs.linuxPackages_latest; # Use latest kernel.
+    kernelPackages = pkgs.linuxPackages_latest;
     loader = {
       systemd-boot = {
         enable = true;
-        configurationLimit = 10; # Useful to prevent boot partition running out of disk space.
+        configurationLimit = 10;
       };
       efi.canTouchEfiVariables = true;
       timeout = 7;
     };
   };
 
-  networking.hostName = "quex"; # Define your hostname.
+  networking.hostName = "quex";
 
-  # Enable networking
   networking.networkmanager.enable = true;
 
-  # Set your time zone.
   time.timeZone = "Europe/Stockholm";
 
-  # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
   i18n.extraLocaleSettings = {
@@ -53,13 +47,10 @@
     LC_TIME = "sv_SE.UTF-8";
   };
 
-  # Enable CUPS to print documents.
   services.printing.enable = true;
 
-  # Enable SANE for scanning.
   hardware.sane.enable = true;
 
-  # Enable sound with pipewire.
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -78,7 +69,6 @@
     nerd-fonts.hack
   ];
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.lytharn = {
     isNormalUser = true;
     description = "lytharn";
@@ -89,32 +79,24 @@
       "video"
       "scanner" # Access to SANE scanners
     ];
-    # Bootstrap password so console/local login works on a fresh install (mutableUsers is on,
-    # so `passwd` can change it afterwards). Matches serx/baxx; only meaningful at user creation.
+    # Only for the first login on a fresh install; `passwd` changes it (mutableUsers).
     initialPassword = "slaskfisk";
-    # Authorize quex's own self-deploy key so clan can deploy over SSH (as lytharn@quex,
-    # escalating via sudo) from quex itself. PasswordAuthentication is off. The keypair is a
-    # clan var (deploy-ssh) rather than a hand-managed ~/.ssh key, so it survives a reinstall.
+    # The self-deploy key (clan/deploy-ssh-secrets.nix).
     openssh.authorizedKeys.keys = [
       config.clan.core.vars.generators.deploy-ssh.files."id_ed25519.pub".value
     ];
   };
 
-  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # System-level fish: completions for system-installed tools (nix, nixos-rebuild, ...) and
-  # man-page-generated ones. Not the login shell (that stays bash; tmux starts fish). The
-  # user-facing fish config (greeting, nix-shell fn) comes from the fish home module
-  # (slask.apps.fish in desktop-home.nix).
+  # System-level fish, for completions of system-installed tools. The login shell stays bash
+  # (tmux starts fish); the user's fish config comes from the fish home module.
   programs.fish.enable = true;
 
-  # Enable distributed builds on serx
   nix.distributedBuilds = true;
   programs.ssh.knownHosts."serx".publicKey = (import ../../lib/ssh-host-keys.nix).serx;
 
-  # Pin baxx too, so deploying it from here (`clan machines update baxx`) verifies
-  # non-interactively instead of failing on a clean known_hosts.
+  # Pinned so deploying baxx from here verifies on a clean known_hosts.
   programs.ssh.knownHosts."baxx".publicKey = (import ../../lib/ssh-host-keys.nix).baxx;
   nix.buildMachines = [
     {
@@ -123,31 +105,25 @@
       sshKey = config.clan.core.vars.generators.remotebuilder-ssh.files."id_ed25519".path;
       system = pkgs.stdenv.hostPlatform.system;
       supportedFeatures = [
-        "benchmark" # Machine can generate metrics (means the builds usually takes the same amount of time)
-        "big-parallel" # kernel config, libreoffice, evolution, llvm and chromium
-        "kvm" # Everything which builds inside a vm, like NixOS tests
-        "nixos-test" # Machine can run NixOS tests
+        "benchmark"
+        "big-parallel"
+        "kvm"
+        "nixos-test"
       ];
     }
   ];
 
-  # How clan reaches quex for deploys (sudo escalation). quex keeps its existing OpenSSH host
-  # key, so the serx remote-builder pin (knownHosts) is unaffected.
   clan.core.networking.targetHost = "lytharn@quex";
 
-  # Self-deploy (`clan machines update quex` on quex) connects to lytharn@quex over SSH. Point
-  # that loopback at the deploy-ssh var key (authorized above) rather than lytharn's default
-  # ~/.ssh identity, so it works on a fresh install without a hand-placed key.
+  # Self-deploy SSHes to lytharn@quex: use the deploy-ssh key for it.
   programs.ssh.extraConfig = ''
     Host quex
       IdentityFile ${config.clan.core.vars.generators.deploy-ssh.files."id_ed25519".path}
       IdentitiesOnly yes
   '';
 
-  # Pin quex's own host key so self-deploy verifies non-interactively instead of prompting to
-  # trust-on-first-use on a clean known_hosts. This is the same host key that derives quex's
-  # clan-vars age identity (sops/machines/quex), so it's stable across deploys and only changes
-  # on a deliberate host-key rotation. Mirrors the serx pin above.
+  # Pinned so a self-deploy verifies on a clean known_hosts. quex's clan-vars age identity is
+  # derived from this host key, so rotating it means re-keying sops/machines/quex.
   programs.ssh.knownHosts."quex".publicKey = (import ../../lib/ssh-host-keys.nix).quex;
 
   services.openssh = {
@@ -157,17 +133,14 @@
 
   services.flatpak.enable = true;
 
-  # Expose the pinned nixpkgs + home-manager on the legacy NIX_PATH so manix can build its
-  # options caches — it evaluates `import <nixpkgs> {}` and `import <home-manager/docs>`.
-  # (Setting nix.nixPath replaces the default, so nixpkgs=flake:nixpkgs is re-listed here.)
+  # manix builds its options caches from `<nixpkgs>` and `<home-manager/docs>` on the legacy
+  # NIX_PATH. Setting nix.nixPath replaces the default, so nixpkgs is listed again.
   nix.registry.home-manager.flake = inputs.home-manager;
   nix.nixPath = [
     "nixpkgs=flake:nixpkgs"
     "home-manager=flake:home-manager"
   ];
 
-  # Home-Manager for the desktop (see clan/desktop-home.nix for the shared app set). quex adds
-  # zed; the gh hosts.yml path is wired below where clan.core.vars is in scope.
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
@@ -181,7 +154,7 @@
         ../../clan/home-modules.nix
         ../../clan/desktop-home.nix
       ];
-      slask.apps.zed.enable = true; # quex-specific
+      slask.apps.zed.enable = true;
       # quex-specific apps (media, gaming, scanning)
       home.packages = with pkgs; [
         discord
@@ -195,17 +168,12 @@
     };
   };
 
-  # gh's hosts.yml (with the oauth token) comes from a clan var owned by lytharn.
   home-manager.users.lytharn.slask.apps.gh.hostsFile =
     config.clan.core.vars.generators.gh.files.hosts.path;
 
-  # Increase rclone Nextcloud cache
   home-manager.users.lytharn.slask.apps.rclone-nextcloud.cacheSize = "25G";
 
-  # --- clan vars ---
-
-  # GitHub CLI credentials: render hosts.yml from the existing PAT (prompted), owned by lytharn
-  # so the gh home module can symlink it into ~/.config/gh.
+  # gh's hosts.yml, linked into ~/.config/gh by the gh home module.
   clan.core.vars.generators.gh = {
     files.hosts.owner = "lytharn";
     prompts.token = {

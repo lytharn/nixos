@@ -43,7 +43,7 @@
           in
           {
             # Admin commands: `conduwuit` on the host, or `!admin ...` in the admin room (the first
-            # registered account becomes admin). Inspect with: journalctl -u continuwuity -f
+            # registered account becomes admin).
             services.matrix-continuwuity = {
               enable = true;
               settings.global = {
@@ -97,7 +97,7 @@
             systemd.tmpfiles.rules = [ "d ${backupDir} 0700 ${cfg.user} ${cfg.group} - -" ];
             systemd.services.continuwuity.serviceConfig.ReadWritePaths = [ backupDir ];
 
-            # Nightly online DB backup, ahead of the restic run (01:30) that ships backupDir off-site.
+            # Nightly online DB backup, ahead of the restic run that ships backupDir off-site.
             # Continuwuity runs the backup asynchronously on SIGUSR2; wait for a new backup to land.
             systemd.services.continuwuity-db-backup = {
               description = "Online backup of the Continuwuity database";

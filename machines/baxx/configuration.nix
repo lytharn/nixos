@@ -5,16 +5,11 @@
 }:
 
 {
-  # hardware-configuration.nix and disko.nix are auto-imported by clan
-  # (see clan-core nixosModules/machineModules/forName.nix). Only extra modules go here — the
-  # shared restic secrets generator (clan/restic-secrets.nix, also imported by serx). The
-  # restic rest-server itself is now the restic inventory service (server role → baxx).
   imports = [
     ../../clan/restic-secrets.nix
     inputs.home-manager.nixosModules.home-manager
   ];
 
-  # Bootloader.
   boot = {
     # Default (LTS) kernel rather than _latest: this box is off-site and hard to reach,
     # so favour a conservative kernel that is least likely to strand it on a bad boot.
@@ -22,7 +17,7 @@
     loader = {
       systemd-boot = {
         enable = true;
-        configurationLimit = 10; # Useful to prevent boot partition running out of disk space.
+        configurationLimit = 10;
       };
       efi.canTouchEfiVariables = true;
       timeout = 3;
@@ -34,7 +29,6 @@
 
   time.timeZone = "Europe/Stockholm";
 
-  # Select internationalisation properties.
   i18n = {
     defaultLocale = "en_US.UTF-8";
     extraLocaleSettings = {
@@ -58,11 +52,9 @@
       "wheel"
     ];
     initialPassword = "slaskfisk";
-    # The desktops' personal keys (lib/ssh-keys.nix).
     openssh.authorizedKeys.keys = builtins.attrValues (import ../../lib/ssh-keys.nix);
   };
 
-  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; [
@@ -70,32 +62,21 @@
     ripgrep
   ];
 
-  # System-level fish: completions for system-installed tools (nix, nixos-rebuild, ...) and
-  # man-page-generated ones. Not the login shell (that stays bash; tmux starts fish). The
-  # user-facing fish config (greeting, nix-shell fn) comes from the fish home module
-  # enabled in server-home.nix.
+  # System-level fish, for completions of system-installed tools. The login shell stays bash
+  # (tmux starts fish); the user's fish config comes from the fish home module.
   programs.fish.enable = true;
 
-  # How clan reaches baxx for deploys (as lytharn, escalating via sudo): it's off-site and
-  # only reachable over Tailscale, so target its MagicDNS name.
+  # Off-site, so only reachable by its tailnet name.
   clan.core.networking.targetHost = "lytharn@baxx";
 
-  # Build baxx's closure on serx instead of on baxx itself. baxx is low-power (Intel N, 16 GB)
-  # so evaluating + building its own system is slow and OOM-prone; clan uploads the flake to
-  # serx, evaluates and builds there, then `nix copy`s only the runtime closure here and
-  # activates — so baxx's SSD never accumulates build-only deps or intermediates. If serx is
-  # unreachable, override per-invocation: `clan machines update baxx --build-host localhost`
-  # builds on the deploying desktop instead.
+  # Evaluate and build on serx, which copies only the runtime closure here: baxx is low-power
+  # and building is slow and OOM-prone. If serx is down, deploy with `--build-host localhost`.
   clan.core.networking.buildHost = "lytharn@serx";
-  # The serx→baxx closure copy runs *from* serx (`nix copy --to ssh://lytharn@baxx`), but baxx
-  # only trusts the mewx/quex lytharn keys, not serx's. Forwarding the deploying desktop's SSH
-  # agent through serx lets that copy authenticate as the desktop, reusing the existing trust —
-  # no standing serx→baxx key to provision.
+  # serx's copy authenticates through the deploying desktop's forwarded agent, since baxx trusts
+  # only the desktops' keys.
   clan.core.networking.forwardAgent = true;
-  # That copy lands as `lytharn`, and paths serx built from source (not yet in the public cache)
-  # are unsigned; baxx's nix-daemon rejects unsigned paths from an untrusted user (clan's
-  # `--no-check-sigs` is ignored by the receiving daemon for such users). Trust lytharn as a nix
-  # user so the copy is accepted. root stays trusted (merged in automatically).
+  # serx's copy lands as lytharn, and the paths it built from source are unsigned, which the
+  # daemon rejects from an untrusted user (it ignores clan's --no-check-sigs for them).
   nix.settings.trusted-users = [ "lytharn" ];
 
   services.openssh = {
@@ -103,7 +84,6 @@
     settings.PasswordAuthentication = false;
   };
 
-  # Home-Manager for the shell tooling used when logged in to baxx (see clan/server-home.nix).
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;

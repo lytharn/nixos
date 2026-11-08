@@ -8,7 +8,6 @@
 let
   cfg = config.${namespace}.apps.claude;
 
-  # Import the theme palette directly from lib/palette (nothing injects it as lib.${namespace}).
   palette = (import ../../../../lib/palette { }).palette.tokyonight;
 
   # Claude Code takes "#rrggbb"; the palette stores bare hex.

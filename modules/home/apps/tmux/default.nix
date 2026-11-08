@@ -8,23 +8,11 @@
 let
   cfg = config.${namespace}.apps.tmux;
 
-  # tmux-jump lands the copy-mode cursor by replaying cursor-right once per
-  # character of capture-pane's output. That drifts from where tmux actually
-  # moves: on tmux >= 3.7 with mode-keys vi the cursor no longer rests past
-  # the end of a line, multi-codepoint graphemes (emoji, ZWJ, combining marks)
-  # are several characters but one cell, and the scroll restore trips over
-  # vi's sticky end-of-line column when the top row is blank. Analysed in the
-  # upstream issue on cursor landing (and previously fixed here with a local
-  # patch -- see git history).
-  #
-  # Upstream fixed it in PR #50 (merged 2026-10-31): move to the target row
-  # with cursor-down first, then along the row with jump-forward, counting
-  # only the cells holding the target character. This tracks upstream master
-  # past that merge, which also brings in the custom jump keys and case
-  # options (nixpkgs pins a 2020-06-26 rev). The cell widths assume a tmux
-  # built with utf8proc, which nixpkgs' tmux is (the follow-up PR #51, which
-  # queries tmux for widths, only matters for builds without it). Go back to
-  # plain tmuxPlugins.jump once nixpkgs has bumped past the merge.
+  # nixpkgs' tmux-jump (a 2020 rev) lands the copy-mode cursor in the wrong
+  # place on tmux >= 3.7 with vi keys and with multi-codepoint graphemes.
+  # Upstream master has the fix (it counts cells, assuming a tmux built with
+  # utf8proc, which nixpkgs' is). Go back to plain tmuxPlugins.jump once
+  # nixpkgs packages a rev from 2026-10-31 or later.
   jumpPlugin = pkgs.tmuxPlugins.jump.overrideAttrs {
     version = "0-unstable-2026-10-31";
     src = pkgs.fetchFromGitHub {

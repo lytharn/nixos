@@ -7,11 +7,7 @@
 }:
 
 {
-  # clan auto-imports hardware-configuration.nix and disko.nix. Everything else is imported
-  # explicitly: the shared restic secrets generator (see clan/restic-secrets.nix; the restic
-  # backup itself is now the restic inventory service), the shared remotebuilder SSH key (its
-  # public half is authorized below), nix-minecraft's nixos module (its overlay below supplies
-  # pkgs.fabricServers to the minecraft inventory service), and home-manager.
+  # nix-minecraft's module and overlay serve the minecraft service.
   imports = [
     ../../clan/restic-secrets.nix
     ../../clan/remotebuilder-secrets.nix
@@ -21,13 +17,12 @@
 
   nixpkgs.overlays = [ inputs.nix-minecraft.overlay ];
 
-  # Bootloader.
   boot = {
-    kernelPackages = pkgs.linuxPackages_latest; # Use latest kernel.
+    kernelPackages = pkgs.linuxPackages_latest;
     loader = {
       systemd-boot = {
         enable = true;
-        configurationLimit = 10; # Useful to prevent boot partition running out of disk space.
+        configurationLimit = 10;
       };
       efi.canTouchEfiVariables = true;
       timeout = 3;
@@ -55,7 +50,6 @@
 
   time.timeZone = "Europe/Stockholm";
 
-  # Select internationalisation properties.
   i18n = {
     defaultLocale = "en_US.UTF-8";
     extraLocaleSettings = {
@@ -79,11 +73,9 @@
       "wheel"
     ];
     initialPassword = "slaskfisk";
-    # The desktops' personal keys (lib/ssh-keys.nix).
     openssh.authorizedKeys.keys = builtins.attrValues (import ../../lib/ssh-keys.nix);
   };
 
-  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; [
@@ -121,15 +113,10 @@
     };
   };
 
-  # System-level fish: completions for system-installed tools (nix, nixos-rebuild, ...) and
-  # man-page-generated ones. Not the login shell (that stays bash; tmux starts fish). The
-  # user-facing fish config (greeting, nix-shell fn) comes from the fish home module
-  # enabled in server-home.nix.
+  # System-level fish, for completions of system-installed tools. The login shell stays bash
+  # (tmux starts fish); the user's fish config comes from the fish home module.
   programs.fish.enable = true;
 
-  # How clan reaches serx for deploys (as lytharn, escalating via sudo). serx keeps its
-  # existing OpenSSH host key, so the quex/mewx remote-builder pin (knownHosts."serx") and
-  # clan's host-key-based vars decryption both keep working.
   clan.core.networking.targetHost = "lytharn@serx";
 
   services.openssh = {
@@ -137,24 +124,18 @@
     settings.PasswordAuthentication = false;
   };
 
-  # serx is the clan buildHost for baxx and mewx (see their configuration.nix): it builds their
-  # closures and then opens its *own* SSH connection to `lytharn@<host>` to `nix copy` the result
-  # over. Pin those hosts' keys here so that copy verifies non-interactively from a clean serx
-  # install, rather than relying on trust-on-first-use in serx's mutable ~/.ssh/known_hosts (which
-  # would force `--host-key-check accept-new` on the first deploy after any serx reinstall).
-  # Mirrors how the desktops pin serx for the remote-builder SSH.
+  # The hosts serx is the buildHost for: it SSHes to them itself to copy the closure over, which
+  # must verify on a clean install.
   programs.ssh.knownHosts = {
     "baxx".publicKey = (import ../../lib/ssh-host-keys.nix).baxx;
     "mewx".publicKey = (import ../../lib/ssh-host-keys.nix).mewx;
   };
 
-  # Enable this machine to be a remote builder
   users.users.remotebuilder = {
     isSystemUser = true;
     group = "remotebuilder";
     useDefaultShell = true;
-    # Shared remotebuilder key (clan/remotebuilder-secrets.nix): the desktops hold the private
-    # half, this is its public half. `.value` reads the plaintext public var committed under vars/.
+    # The desktops' distributed-build key (clan/remotebuilder-secrets.nix).
     openssh.authorizedKeys.keys = [
       (lib.removeSuffix "\n"
         config.clan.core.vars.generators.remotebuilder-ssh.files."id_ed25519.pub".value
@@ -167,7 +148,6 @@
     "lytharn"
   ];
 
-  # Home-Manager for the shell tooling used when logged in to serx (see clan/server-home.nix).
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;

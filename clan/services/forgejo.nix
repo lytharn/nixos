@@ -101,7 +101,7 @@
               };
             };
 
-            # Forgejo's built-in SSH server, tailnet-only (mirrors restic's tailnet-only port).
+            # Forgejo's built-in SSH server, tailnet-only.
             networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ sshPort ];
 
             # Expose Forgejo's web + HTTPS git on the tailnet, mirroring tailscale-serve-actual.
@@ -132,12 +132,9 @@
               };
             };
 
-            # Native Actions runner: host execution, no Docker (the `native:host` label — its
-            # `:host` suffix is what selects host execution and keeps the module from requiring a
-            # container runtime). hostPackages is the PATH for `:host` jobs; we take the module's
-            # default set and add nix + direnv, since our CI is "run nix inside a flake" and nix
-            # itself does the real work (talking to serx's nix daemon), so the list stays short
-            # (git is always included by the module). Workflows target it with `runs-on: native`.
+            # Runs jobs on the host, no Docker: the label's `:host` suffix selects that (and keeps
+            # the module from requiring a container runtime). Jobs run nix against serx's daemon,
+            # so hostPackages only adds nix + direnv. Workflows use `runs-on: native`.
             services.forgejo-runner.instances.serx = {
               enable = true;
               settings = {
@@ -198,11 +195,9 @@
               };
             };
 
-            # The runner's shared secret (40 hex chars, Forgejo's offline-registration format): its
-            # token, registered on the Forgejo side by forgejo-runner-register. forgejo-runner
-            # derives the runner's UUID from the secret's first 16 characters, as raw bytes; the
-            # uuid is public (committed) because the module needs it inline, which leaves 24 of
-            # the 40 characters (96 bits) secret. Rotate with
+            # The runner's shared secret, in Forgejo's offline-registration format. The runner
+            # derives its UUID from the first 16 characters; that part is public (the module
+            # needs the uuid inline), leaving 24 characters (96 bits) secret. Rotate with
             # `clan vars generate serx --regenerate forgejo-runner` + deploy.
             clan.core.vars.generators.forgejo-runner = {
               files.secret.owner = config.services.forgejo.user; # read by the register oneshot

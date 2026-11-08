@@ -13,10 +13,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # GTK apps (e.g. the SSH/sudo askpass zenity popup) have no theme configured
-    # otherwise and fall back to stock Adwaita light. Prefer dark to match the
-    # TokyoNight desktop and keep mewx/quex consistent (this used to be per-machine
-    # imperative dconf state that had drifted).
+    # GTK apps (e.g. the SSH/sudo askpass zenity popup) otherwise fall back to
+    # Adwaita light. Prefer dark, to match the TokyoNight desktop.
     gtk = {
       enable = true;
       # settings.ini flag that plain GTK3 apps read for dark Adwaita. Not set for

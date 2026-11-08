@@ -15,13 +15,11 @@
     # local rebuilds of JREs and server bundles.
     nix-minecraft.url = "github:Infinidoge/nix-minecraft";
 
-    # Collabora Online (Nextcloud Office on serx), pinned to the last nixos-unstable rev where
-    # it builds: nixpkgs has moved to gcc 16, and the libreoffice-collabora 25.04 this version
-    # pins doesn't compile under it (USHRT_MAX used without <climits> in comphelper/errcode.hxx),
-    # which otherwise fails serx's entire build. This rev is still in the binary cache, so the
-    # pin costs a download rather than a multi-hour LibreOffice rebuild. No `follows = "nixpkgs"`
-    # here on purpose — the older rev is the whole point. Drop the pin once nixpkgs bumps
-    # collabora-online to 26.04 (NixOS/nixpkgs#557042).
+    # Only supplies collabora-online (Nextcloud Office on serx), pinned to the last
+    # nixos-unstable rev where it builds: the libreoffice-collabora 25.04 it needs doesn't
+    # compile under gcc 16 (USHRT_MAX without <climits> in comphelper/errcode.hxx). The rev is
+    # still cached, so this costs a download, not a LibreOffice rebuild. Deliberately doesn't
+    # follow nixpkgs. Drop it once nixpkgs bumps collabora-online to 26.04.
     nixpkgs-collabora.url = "github:nixos/nixpkgs/801bef6abd86b91e51083066b83fb354a11fc640";
 
     # Hermes Agent (Nous Research): its NixOS module, used by clan/services/hermes.nix on serx.
@@ -38,8 +36,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Git hooks (nixfmt on staged files, commit-message line lengths), installed into
-    # .git/hooks by the dev shell and also run by `nix flake check`. See ./git-hooks.nix.
+    # See ./git-hooks.nix.
     git-hooks = {
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -81,9 +78,6 @@
           inherit (inputs) git-hooks;
         };
 
-      # clan owns the machine lifecycle. It auto-discovers machines/<name>/ and wires each
-      # machine's configuration.nix / hardware-configuration.nix / disko.nix, and bundles its
-      # own disko + sops-nix. We expose its nixosConfigurations plus the CLI outputs.
       clan = inputs.clan-core.lib.clan {
         self = inputs.self;
         # Match the module args our shared modules/* expect.
@@ -91,8 +85,7 @@
           inherit inputs;
           namespace = "slask";
         };
-        # lib.clan's argument is a clan-class module, so it takes `imports`. All clan config
-        # (meta, inventory, local services) lives in clan/ to keep flake.nix a thin wrapper.
+        # lib.clan's argument is a clan-class module, so it takes `imports`.
         imports = [ ./clan/clan.nix ];
       };
 

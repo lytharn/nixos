@@ -31,7 +31,6 @@
             user = "lytharn";
           in
           {
-            # Inspect the service with: journalctl -u ntfy-sh -f
             services.ntfy-sh = {
               enable = true;
               settings = {

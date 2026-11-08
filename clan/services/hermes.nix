@@ -46,7 +46,7 @@
             slots = 2;
 
             # Pinned to a Hugging Face commit, so the file can't change under the hash. serx builds
-            # its own config, so a deploy downloads it straight onto serx (~21 GB).
+            # its own config, so a deploy downloads it straight onto serx.
             model = pkgs.fetchurl {
               url = "https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF/resolve/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf";
               hash = "sha256-rA4sEYngVfqjbv82FYDnnFvW+Odr/7TOVH8WfVPjGmE=";

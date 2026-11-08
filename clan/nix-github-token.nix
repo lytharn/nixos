@@ -1,15 +1,7 @@
-# Declarative GitHub token for Nix's fetcher, so a private flake input (the `wallpapers` repo)
-# can be fetched at build time. The `gh` credential helper only covers `git clone`; Nix's
-# `github:` fetcher authenticates via the `access-tokens` nix.conf setting instead. We keep the
-# token out of the world-readable Nix store by rendering it into a clan-var file (owner root,
-# group-readable to the desktop user — see the files.token block below) and pulling it in with
-# `nix.extraOptions = "!include <path>"` — the leading `!` makes the include
-# optional, so a machine that doesn't have the var deployed yet still parses nix.conf fine (and
-# the very first build passes the token via `--option access-tokens` out-of-band).
-#
-# Imported by the desktops (quex, mewx, tpax) — the machines that evaluate the flake locally and so
-# fetch the private input. `share = true`: it's a single token, entered once and reused. Use a
-# dedicated fine-grained PAT scoped to just Contents:read on the private repo, not a powerful one.
+# GitHub token for Nix's own fetcher, which the private `wallpapers` input needs (the `gh`
+# credential helper only covers `git clone`). It goes into nix.conf as `access-tokens` through
+# an `!include` of the var file, keeping it out of the world-readable store. The README's
+# "Private flake inputs" section covers the token's scope and the first-build bootstrap.
 {
   config,
   pkgs,
@@ -18,12 +10,9 @@
 {
   clan.core.vars.generators.nix-github-token = {
     share = true;
-    # Readable by the dedicated `nix-github-token` group (only `lytharn` is a member,
-    # below), not just root: the `!include` below lands in the *system* nix.conf, but
-    # `nix flake update` resolves inputs in the invoking user's client process, which must
-    # read this file to authenticate the private `wallpapers` github: fetch. root-only (the
-    # sops default) 404s the update; a one-member group keeps the token least-privilege
-    # while letting the desktop owner re-lock the input declaratively.
+    # Not root-only (the sops default): `nix flake update` fetches in the invoking user's
+    # process, which must read the token, or updating the private input 404s. A one-member
+    # group keeps it from the rest of `users`.
     files.token = {
       owner = "root";
       group = "nix-github-token";
@@ -40,14 +29,10 @@
     '';
   };
 
-  # Dedicated one-member group that owns the deployed token file (see files.token above),
-  # so read access is scoped to `lytharn` alone rather than the whole `users` group. This
-  # module is imported only by the desktops (quex, mewx, tpax), which all define `lytharn`;
-  # `extraGroups` is list-merged with each machine's own user definition.
   users.groups.nix-github-token = { };
   users.users.lytharn.extraGroups = [ "nix-github-token" ];
 
-  # `!include` (optional include) keeps nix.conf valid even before the var lands on disk.
+  # `!include` is optional, so nix.conf stays valid before the var lands on disk.
   nix.extraOptions = ''
     !include ${config.clan.core.vars.generators.nix-github-token.files.token.path}
   '';

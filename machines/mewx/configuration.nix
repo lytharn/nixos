@@ -6,8 +6,6 @@
 }:
 
 {
-  # clan auto-imports hardware-configuration.nix. modules/nixos/* are not auto-discovered, so
-  # the ones mewx uses are imported explicitly, plus home-manager for the HM user config.
   imports = [
     inputs.home-manager.nixosModules.home-manager
     ../../clan/rclone-nextcloud-secrets.nix
@@ -16,26 +14,22 @@
     ../../clan/nix-github-token.nix
   ];
 
-  # Bootloader.
   boot = {
     loader = {
       systemd-boot = {
         enable = true;
-        configurationLimit = 10; # Useful to prevent boot partition running out of disk space.
+        configurationLimit = 10;
       };
       efi.canTouchEfiVariables = true;
     };
   };
 
-  networking.hostName = "mewx"; # Define your hostname.
+  networking.hostName = "mewx";
 
-  # Enable networking
   networking.networkmanager.enable = true;
 
-  # Set your time zone.
   time.timeZone = "Europe/Stockholm";
 
-  # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
   i18n.extraLocaleSettings = {
@@ -50,10 +44,8 @@
     LC_TIME = "sv_SE.UTF-8";
   };
 
-  # Enable CUPS to print documents.
   services.printing.enable = true;
 
-  # Enable sound with pipewire.
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -63,33 +55,17 @@
     pulse.enable = true;
   };
 
-  # Enable OpenGL
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
   };
 
-  # Enable firmware updates
-  #
-  # USAGE:
-  # To display all devices detected by fwupd:
-  # $ fwupdmgr get-devices
-  #
-  # To download the latest metadata from the Linux Vendor firmware Service (LVFS):
-  # $ fwupdmgr refresh
-  #
-  # To list updates available for any devices on the system:
-  # $ fwupdmgr get-updates
-  #
-  # To install updates:
-  # $ fwupdmgr update
   services.fwupd.enable = true;
 
   fonts.packages = with pkgs; [
     nerd-fonts.hack
   ];
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.lytharn = {
     isNormalUser = true;
     description = "lytharn";
@@ -97,41 +73,27 @@
       "networkmanager"
       "wheel"
     ];
-    # Bootstrap password so console/local login works on a fresh install (mutableUsers is on,
-    # so `passwd` can change it afterwards). Matches serx/baxx; only meaningful at user creation.
+    # Only for the first login on a fresh install; `passwd` changes it (mutableUsers).
     initialPassword = "slaskfisk";
-    # Authorize mewx's own key so clan can deploy over SSH (as lytharn@mewx, escalating via
-    # sudo) from mewx itself. PasswordAuthentication is off.
+    # For self-deploy, and for serx's closure copy via the forwarded agent (buildHost below).
     openssh.authorizedKeys.keys = [ (import ../../lib/ssh-keys.nix).mewx ];
   };
 
-  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # System-level fish: completions for system-installed tools (nix, nixos-rebuild, ...) and
-  # man-page-generated ones. Not the login shell (that stays bash; tmux starts fish). The
-  # user-facing fish config (greeting, nix-shell fn) comes from the fish home module
-  # (slask.apps.fish in desktop-home.nix).
+  # System-level fish, for completions of system-installed tools. The login shell stays bash
+  # (tmux starts fish); the user's fish config comes from the fish home module.
   programs.fish.enable = true;
 
-  # How clan reaches mewx for deploys (sudo escalation). mewx keeps its existing OpenSSH host
-  # key, so the serx remote-builder pin (knownHosts) is unaffected.
   clan.core.networking.targetHost = "lytharn@mewx";
 
-  # Build mewx's closure on serx rather than locally. mewx is an old, low-RAM laptop, so
-  # offloading evaluation + build to serx (clan uploads the flake, evals + builds there, then
-  # nix-copies only the runtime closure back here and activates) spares mewx's RAM/CPU/SSD and
-  # slow uplink. `nix.buildMachines` below only ever offloaded *compilation*, not eval — buildHost
-  # moves eval too. Requires serx reachable, which it is on the home tailnet; override with
-  # `clan machines update mewx --build-host localhost` when off-network. The serx->mewx closure
-  # copy authenticates via mewx's own forwarded agent (mewx already trusts its own lytharn key),
-  # so forwardAgent must be on, and serx pins mewx's host key for that copy.
+  # Evaluate and build on serx, which copies only the runtime closure back: mewx is an old,
+  # low-RAM laptop. Off the home network, deploy with `--build-host localhost`. serx's copy
+  # back authenticates with mewx's own key through the forwarded agent.
   clan.core.networking.buildHost = "lytharn@serx";
   clan.core.networking.forwardAgent = true;
-  # serx copies the closure it built here as `lytharn`; paths serx built from source (not yet in
-  # the public cache) are unsigned, and mewx's nix-daemon rejects unsigned paths from an untrusted
-  # user (clan's `nix copy --no-check-sigs` is ignored by the receiving daemon for such users). So
-  # trust lytharn as a nix user, as serx does. root stays trusted (merged in automatically).
+  # serx's copy lands as lytharn, and the paths it built from source are unsigned, which the
+  # daemon rejects from an untrusted user (it ignores clan's --no-check-sigs for them).
   nix.settings.trusted-users = [ "lytharn" ];
 
   services.openssh = {
@@ -139,25 +101,14 @@
     settings.PasswordAuthentication = false;
   };
 
-  # Distributed builds on serx. mewx's *system* build now runs on serx via buildHost above, so
-  # this no longer serves deploys — its remaining job is offloading from-source compilation of
-  # ad-hoc local nix builds, chiefly uncached dev-shell dependencies (`nix develop` for projects
-  # on this machine), to serx while on the home tailnet. Note the limits: cached deps are just
-  # substituted by mewx (serx uninvolved), and a project's own in-shell build (cargo/make/etc.)
-  # isn't a nix build so it stays on mewx. nix silently skips serx when unreachable, so it's
-  # harmless off-network.
+  # For local nix builds (e.g. uncached dev-shell dependencies); deploys build on serx anyway.
   nix.distributedBuilds = true;
   programs.ssh.knownHosts."serx".publicKey = (import ../../lib/ssh-host-keys.nix).serx;
 
-  # Pin baxx too, so deploying it from here (`clan machines update baxx`) verifies
-  # non-interactively instead of failing on a clean known_hosts.
+  # Pinned so deploying baxx from here verifies on a clean known_hosts.
   programs.ssh.knownHosts."baxx".publicKey = (import ../../lib/ssh-host-keys.nix).baxx;
 
-  # Pin mewx's own host key so a self-deploy (`clan machines update mewx` run here, which SSHes
-  # to lytharn@mewx) verifies non-interactively instead of a trust-on-first-use prompt on a clean
-  # known_hosts. This is the same key serx already pins for the buildHost closure copy
-  # (machines/serx/configuration.nix); it's stable across deploys and changes only on a deliberate
-  # host-key rotation. Mirrors quex's self-pin.
+  # Pinned so a self-deploy verifies on a clean known_hosts.
   programs.ssh.knownHosts."mewx".publicKey = (import ../../lib/ssh-host-keys.nix).mewx;
   nix.buildMachines = [
     {
@@ -166,25 +117,22 @@
       sshKey = config.clan.core.vars.generators.remotebuilder-ssh.files."id_ed25519".path;
       system = pkgs.stdenv.hostPlatform.system;
       supportedFeatures = [
-        "benchmark" # Machine can generate metrics (means the builds usually takes the same amount of time)
-        "big-parallel" # kernel config, libreoffice, evolution, llvm and chromium
-        "kvm" # Everything which builds inside a vm, like NixOS tests
-        "nixos-test" # Machine can run NixOS tests
+        "benchmark"
+        "big-parallel"
+        "kvm"
+        "nixos-test"
       ];
     }
   ];
 
-  # Expose the pinned nixpkgs + home-manager on the legacy NIX_PATH so manix can build its
-  # options caches — it evaluates `import <nixpkgs> {}` and `import <home-manager/docs>`.
-  # (Setting nix.nixPath replaces the default, so nixpkgs=flake:nixpkgs is re-listed here.)
+  # manix builds its options caches from `<nixpkgs>` and `<home-manager/docs>` on the legacy
+  # NIX_PATH. Setting nix.nixPath replaces the default, so nixpkgs is listed again.
   nix.registry.home-manager.flake = inputs.home-manager;
   nix.nixPath = [
     "nixpkgs=flake:nixpkgs"
     "home-manager=flake:home-manager"
   ];
 
-  # Home-Manager for the desktop (see clan/desktop-home.nix for the shared app set). mewx sets
-  # the hyprland scale; the gh hosts.yml path is wired below where clan.core.vars is in scope.
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
@@ -198,18 +146,14 @@
         ../../clan/home-modules.nix
         ../../clan/desktop-home.nix
       ];
-      slask.apps.hyprland.scale = "1"; # mewx-specific
+      slask.apps.hyprland.scale = "1";
     };
   };
 
-  # gh's hosts.yml (with the oauth token) comes from a clan var owned by lytharn.
   home-manager.users.lytharn.slask.apps.gh.hostsFile =
     config.clan.core.vars.generators.gh.files.hosts.path;
 
-  # --- clan vars ---
-
-  # GitHub CLI credentials: render hosts.yml from the existing PAT (prompted), owned by lytharn
-  # so the gh home module can symlink it into ~/.config/gh.
+  # gh's hosts.yml, linked into ~/.config/gh by the gh home module.
   clan.core.vars.generators.gh = {
     files.hosts.owner = "lytharn";
     prompts.token = {

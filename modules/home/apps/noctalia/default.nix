@@ -6,7 +6,6 @@
 }:
 let
   cfg = config.${namespace}.apps.noctalia;
-  # Import the theme palette directly from lib/palette (nothing injects it as lib.${namespace}).
   palette = (import ../../../../lib/palette { }).palette.tokyonight;
   hex = c: "#${c}";
 in

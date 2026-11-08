@@ -27,18 +27,11 @@
 
             users.users.hass.extraGroups = [ "bluetooth" ];
 
-            # matterjs-server (Matter.js controller). Drop-in successor to the archived
-            # python-matter-server: same WebSocket API on the same default (127.0.0.1:5580,
-            # /ws), so HA's `matter` integration connects unchanged, and it auto-migrates
-            # the legacy python storage on startup. OTA is handled internally (no external
-            # chip-ota-provider-app), and the old PAA-cert parsing bug was
-            # python/cryptography-specific, so no patch is needed here.
+            # Matter controller. Serves HA's `matter` integration on its default (127.0.0.1:5580)
+            # and handles OTA itself.
             services.matterjs-server.enable = true;
-            # Pin the fabric's vendor ID to 4939 (0x134b, the Home Assistant vendor ID).
-            # python-matter-server commissioned our devices under vendor 4939; matterjs-server
-            # otherwise defaults to 0xfff1, which does not match the existing fabric — the
-            # legacy loader would find no matching fabric and orphan every commissioned
-            # device. Keeping this pinned is what makes the migrated fabric keep working.
+            # The fabric's devices were commissioned under the Home Assistant vendor ID (4939);
+            # matterjs-server's default (0xfff1) would match no fabric and orphan every device.
             services.matterjs-server.extraArgs = [
               "--vendorid=4939"
               # Push UTC time, time zone and DST (from the host, NTP-synced by timesyncd) to
