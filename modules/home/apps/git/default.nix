@@ -7,12 +7,23 @@
 }:
 let
   cfg = config.${namespace}.apps.git;
-  email = "lytharn@users.noreply.github.com";
   withDifftastic = "-c diff.external=${lib.getExe config.programs.difftastic.package}";
 in
 {
   options.${namespace}.apps.git = {
     enable = lib.mkEnableOption "git";
+
+    email = lib.mkOption {
+      type = lib.types.str;
+      default = "lytharn@users.noreply.github.com";
+      description = "The commit author/committer email (`user.email`).";
+    };
+
+    name = lib.mkOption {
+      type = lib.types.str;
+      default = "lytharn";
+      description = "The commit author/committer name (`user.name`).";
+    };
 
     sshSigning = {
       enable = lib.mkEnableOption "signing every commit and tag with ~/.ssh/id_ed25519";
@@ -22,7 +33,7 @@ in
         default = [ ];
         example = [ "ssh-ed25519 AAAA..." ];
         description = ''
-          SSH public keys trusted as ${email} when verifying signatures locally
+          SSH public keys trusted as `email` when verifying signatures locally
           (`git log --show-signature`, `git verify-commit`).
         '';
       };
@@ -111,8 +122,8 @@ in
               rerere.enabled = true;
               # Sort tags as versions: v1.9 before v1.10.
               tag.sort = "version:refname";
-              user.email = email;
-              user.name = "lytharn";
+              user.email = cfg.email;
+              user.name = cfg.name;
               # Conflict markers also show the common ancestor, with lines shared by both sides moved
               # out.
               merge.conflictstyle = "zdiff3";
@@ -137,7 +148,7 @@ in
           settings.gpg.ssh.allowedSignersFile = "${config.xdg.configHome}/git/allowed_signers";
         };
         xdg.configFile."git/allowed_signers".text = lib.concatMapStrings (
-          key: "${email} namespaces=\"git\" ${key}\n"
+          key: "${cfg.email} namespaces=\"git\" ${key}\n"
         ) cfg.sshSigning.allowedSigners;
       })
     ]
