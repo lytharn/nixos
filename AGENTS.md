@@ -15,10 +15,10 @@ file holds only rules and behaviour, and doesn't repeat what the README says.
   file: re-`git add` it and commit again.
 - **Keep `wslx` and the standalone home free of clan vars** (no `clan.core.vars` references;
   wslx would need a sops machine key), and keep distro-specific assumptions out of
-  `homes/standalone/`.
-- **A new NixOS service is a `clan.service` module wired through `clan/inventory.nix`**, never
+  [`homes/standalone/`](homes/standalone/).
+- **A new NixOS service is a `clan.service` module wired through [`clan/inventory.nix`](clan/inventory.nix)**, never
   a module imported by a machine. Declare its secrets inside its `nixosModule` (README: Adding
-  a service). Check the nightly timeline at the top of `clan/inventory.nix` before scheduling a
+  a service). Check the nightly timeline at the top of [`clan/inventory.nix`](clan/inventory.nix) before scheduling a
   heavy server job.
 
 ## Comments and docs: one source per fact
@@ -38,6 +38,10 @@ edited and goes stale in the others. Write as little prose as the code needs.
 - **README.md is for facts and procedures, AGENTS.md for agent rules.** Neither describes a
   service's internals (that goes in the service file, as a comment or `manifest.readme`), and
   they don't copy from each other; link instead.
+- **Link repo files from the docs** (`` [`clan/inventory.nix`](clan/inventory.nix) ``, and
+  `[text](#section)` for README sections) instead of writing a bare path: the lychee
+  pre-commit hook then fails the commit when a file or section is renamed or removed. It
+  can't check plain paths, or paths in code comments.
 - **When you change something, grep for it.** Search the old name/value/behaviour across
   comments, README.md and AGENTS.md, and fix or delete every stale mention in the same commit.
   Deleting a redundant comment is usually better than updating it.
@@ -60,7 +64,7 @@ The mechanics are in the README (Deploying). How to act on them:
 
 ## Claude Code's own config
 
-Claude Code is configured declaratively in `modules/home/apps/claude/default.nix` (desktops
+Claude Code is configured declaratively in [`modules/home/apps/claude/default.nix`](modules/home/apps/claude/default.nix) (desktops
 only). Don't hand-write files under `~/.claude/` or a repo-root `.mcp.json`; they're generated
 and get clobbered.
 

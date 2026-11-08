@@ -28,54 +28,58 @@ Plus a standalone (non-NixOS) Home-Manager config for a foreign distro — see
 
 ## Repository layout
 
-`flake.nix` is plain outputs (the inputs are listed there). clan auto-discovers **machines**
+[`flake.nix`](flake.nix) is plain outputs (the inputs are listed there). clan auto-discovers **machines**
 by directory; everything else is imported explicitly.
 
 - `machines/<host>/configuration.nix` — a host's NixOS config. clan also auto-imports
   `hardware-configuration.nix` and `disko.nix` from the same directory (disko only acts at
   install). Nothing else in `machines/<host>/` is picked up automatically.
-- `clan/` — clan glue not tied to one machine:
-  - `clan.nix` — the aggregator `flake.nix` imports (sets `meta.name`, imports the two below)
-  - `inventory.nix` — machine tags, service instances, and the servers' nightly timeline
-  - `services-modules.nix` + `services/` — the NixOS services (see
-    [Services](#services-clan-inventory))
-  - `home-modules.nix` — imports every Home-Manager module; `desktop-home.nix` /
-    `server-home.nix` — the shared app sets per host class
-  - shared vars generators such as `restic-secrets.nix` (see [Secrets](#secret-management-clan-vars))
+- [`clan/`](clan/) — clan glue not tied to one machine:
+  - [`clan.nix`](clan/clan.nix) — the aggregator `flake.nix` imports (sets `meta.name`,
+    imports the two below)
+  - [`inventory.nix`](clan/inventory.nix) — machine tags, service instances, and the servers'
+    nightly timeline
+  - [`services-modules.nix`](clan/services-modules.nix) + [`services/`](clan/services/) — the
+    NixOS services (see [Services](#services-clan-inventory))
+  - [`home-modules.nix`](clan/home-modules.nix) — imports every Home-Manager module;
+    [`desktop-home.nix`](clan/desktop-home.nix) / [`server-home.nix`](clan/server-home.nix) —
+    the shared app sets per host class
+  - shared vars generators such as [`restic-secrets.nix`](clan/restic-secrets.nix) (see
+    [Secrets](#secret-management-clan-vars))
 - `modules/home/apps/<name>/default.nix` — Home-Manager modules (see
   [Adding a Home-Manager module](#adding-a-home-manager-module)).
 - `homes/<name>/` — standalone (non-NixOS) Home-Manager configs, built by `mkHome` in
-  `flake.nix` into `homeConfigurations.<name>`; one `mkHome { home = ./homes/<name>; }` line
-  each. Currently just [`standalone`](#standalone-home-manager-non-nixos).
-- `lib/palette/` — the tokyonight palette, imported directly by the themed modules.
-- `lib/ssh-keys.nix` — the desktops' personal SSH public keys (the hand-managed
+  [`flake.nix`](flake.nix) into `homeConfigurations.<name>`; one
+  `mkHome { home = ./homes/<name>; }` line each. Currently just [`standalone`](#standalone-home-manager-non-nixos).
+- [`lib/palette/`](lib/palette/) — the tokyonight palette, imported directly by the themed modules.
+- [`lib/ssh-keys.nix`](lib/ssh-keys.nix) — the desktops' personal SSH public keys (the hand-managed
   `~/.ssh/id_ed25519`): the one place that lists which keys may log in and sign commits.
-- `lib/ssh-host-keys.nix` — the hosts' SSH **host** keys, the source of every
+- [`lib/ssh-host-keys.nix`](lib/ssh-host-keys.nix) — the hosts' SSH **host** keys, the source of every
   `programs.ssh.knownHosts` pin. Kept apart from `ssh-keys.nix`, whose entries are all trusted.
-- `sops/` + `vars/` — clan's encrypted secret store.
-- `shells/default/` — the dev shell (see [The clan CLI](#the-clan-cli)); `git-hooks.nix` — the
+- [`sops/`](sops/) + [`vars/`](vars/) — clan's encrypted secret store.
+- [`shells/default/`](shells/default/) — the dev shell (see [The clan CLI](#the-clan-cli)); [`git-hooks.nix`](git-hooks.nix) — the
   git hooks it installs, also exposed as `checks.<system>.git-hooks`.
 
 The module namespace is `slask`, passed to every module as the `namespace` argument; the
 Home-Manager modules' options live under `slask.apps.<name>`.
 
 `nixpkgs-collabora` is a **pin, not a second channel**: an older nixos-unstable rev that supplies
-only `collabora-online` on serx (`clan/services/nextcloud.nix`), because current nixpkgs can't
+only `collabora-online` on serx ([`clan/services/nextcloud.nix`](clan/services/nextcloud.nix)), because current nixpkgs can't
 build the LibreOffice it needs. It deliberately doesn't follow `nixpkgs`; drop it once nixpkgs
 bumps collabora-online to 26.04.
 
 ## Services (clan inventory)
 
-What runs on which host is wired through clan's **inventory** (in `clan/`), not per-machine
+What runs on which host is wired through clan's **inventory** (in [`clan/`](clan/)), not per-machine
 imports. Three pieces:
 
-- **Tags** — `clan/inventory.nix` gives each machine capability tags. `all`/`nixos`/`darwin`
+- **Tags** — [`clan/inventory.nix`](clan/inventory.nix) gives each machine capability tags. `all`/`nixos`/`darwin`
   are built in; `desktop` (mewx, quex, tpax), `server` (serx, baxx) and `wsl` (wslx) are ours.
 - **Service modules** — reusable `clan.service` modules in `clan/services/<name>.nix`, each
-  auto-registered as `clan.modules.<name>` by `clan/services-modules.nix` (a `readDir` over the
-  directory, mirroring `clan/home-modules.nix`). Dropping a file in is all it takes — no edit to
-  `flake.nix` or `clan/clan.nix`.
-- **Instances** — `clan/inventory.nix` also maps each service onto machines, by tag or by name:
+  auto-registered as `clan.modules.<name>` by [`clan/services-modules.nix`](clan/services-modules.nix) (a `readDir` over the
+  directory, mirroring [`clan/home-modules.nix`](clan/home-modules.nix)). Dropping a file in is all it takes — no edit to
+  [`flake.nix`](flake.nix) or [`clan/clan.nix`](clan/clan.nix).
+- **Instances** — [`clan/inventory.nix`](clan/inventory.nix) also maps each service onto machines, by tag or by name:
 
   ```nix
   instances.steam = {
@@ -94,7 +98,7 @@ imports. Three pieces:
 
 The servers' heavy or order-dependent nightly jobs (database dump, backup, prune, store
 optimise/GC, scrub, security scan) get their times as instance settings in
-`clan/inventory.nix`, under a timeline comment at its top. Check it before scheduling
+[`clan/inventory.nix`](clan/inventory.nix), under a timeline comment at its top. Check it before scheduling
 something new there.
 
 ### Adding a service
@@ -103,13 +107,13 @@ something new there.
    `manifest.{name,description,readme}` and `roles.<role>.perInstance.nixosModule = { ... }`
    holding the actual NixOS config. If it needs a secret, declare its
    `clan.core.vars.generators.<name>` **inside** the `nixosModule`, so the var lives with the
-   service and is scoped to the machines that run it (see `clan/services/{tailscale,nextcloud}.nix`).
+   service and is scoped to the machines that run it (see [`clan/services/tailscale.nix`](clan/services/tailscale.nix), [`clan/services/nextcloud.nix`](clan/services/nextcloud.nix)).
 2. `git add` it (the flake only sees tracked files).
-3. Add an `instances.<name>` block in `clan/inventory.nix` targeting the right tag/machines.
+3. Add an `instances.<name>` block in [`clan/inventory.nix`](clan/inventory.nix) targeting the right tag/machines.
 
 ### Client/server services (roles)
 
-A service can define more than one role. `clan/services/restic.nix` has `roles.client` (serx,
+A service can define more than one role. [`clan/services/restic.nix`](clan/services/restic.nix) has `roles.client` (serx,
 which pushes a nightly backup) and `roles.server` (baxx, the append-only rest-server that prunes
 locally). Each role's `perInstance` sees the others via `roles.<other>.machines`, so the client
 derives the server's address from `roles.server.machines` instead of hardcoding it. Per-role
@@ -127,14 +131,14 @@ instances.restic = {
 ```
 
 This mirrors clan's own official services (e.g. `borgbackup`). Canonical minimal shapes:
-`clan/services/{neovim,steam}.nix`.
+[`clan/services/neovim.nix`](clan/services/neovim.nix), [`clan/services/steam.nix`](clan/services/steam.nix).
 
 ### Adding a Home-Manager module
 
 Write `modules/home/apps/<name>/default.nix` with an `enable` option under
-`${namespace}.apps.<name>` (canonical shape: `modules/home/apps/git/default.nix`) and `git add`
-it. `clan/home-modules.nix` already imports every module, so enable it in a host's
-`home-manager.users.lytharn.slask.apps` block (or in `clan/desktop-home.nix` /
+`${namespace}.apps.<name>` (canonical shape: [`modules/home/apps/git/default.nix`](modules/home/apps/git/default.nix)) and `git add`
+it. [`clan/home-modules.nix`](clan/home-modules.nix) already imports every module, so enable it in a host's
+`home-manager.users.lytharn.slask.apps` block (or in [`clan/desktop-home.nix`](clan/desktop-home.nix) /
 `server-home.nix`). A module that needs a secret takes a file-path option that the caller
 points at a clan var; it never reads vars itself, so it also works in the standalone home.
 
@@ -145,31 +149,32 @@ How each piece works is documented in its service file; this is the map.
 - **Distributed builds.** The desktops offload compilation to `serx` (`nix.buildMachines`, as the
   `remotebuilder` user), falling back to building locally when it's unreachable.
 - **Tailscale-fronted services on serx** run plain HTTP on localhost behind `tailscale serve`,
-  which terminates TLS (see `clan/services/nextcloud.nix` for the settings that compensate).
-- **Backups serx → baxx** (`clan/services/restic.nix`): serx pushes a nightly restic backup into
+  which terminates TLS (see [`clan/services/nextcloud.nix`](clan/services/nextcloud.nix) for the settings that compensate).
+- **Backups serx → baxx** ([`clan/services/restic.nix`](clan/services/restic.nix)): serx pushes a nightly restic backup into
   an **append-only** rest-server on baxx, so serx can't delete and pruning runs on baxx. The
   repo is encrypted client-side. Both sides ping healthchecks.io as a dead-man's-switch.
 - **Deploy reports and the CVE scan:** see [Security updates](#security-updates).
-- **Matrix + ntfy on serx** (`clan/services/{matrix,ntfy}.nix`): a tailnet-only Continuwuity
+- **Matrix + ntfy on serx** ([`clan/services/matrix.nix`](clan/services/matrix.nix), [`clan/services/ntfy.nix`](clan/services/ntfy.nix)): a tailnet-only Continuwuity
   homeserver (federation off; the first account, `@lytharn`, is admin) and ntfy as the phones'
   UnifiedPush distributor. Host alerts go to the ntfy `alerts` topic (shared `ntfy-alerts` var,
-  `clan/ntfy-alerts.nix`), e.g. from `clan/services/btrfs-health.nix`.
-- **Calendar feeds on serx** (`clan/services/calendar-feeds.nix`) copy external feeds into
+  [`clan/ntfy-alerts.nix`](clan/ntfy-alerts.nix)), e.g. from [`clan/services/btrfs-health.nix`](clan/services/btrfs-health.nix).
+- **Calendar feeds on serx** ([`clan/services/calendar-feeds.nix`](clan/services/calendar-feeds.nix)) copy external feeds into
   calendars shared from a `feeds` Nextcloud account, so every CalDAV client sees them. The feed
   list is the `calendar-feeds` var prompt; change it with `clan vars generate serx --regenerate
   calendar-feeds` and deploy.
-- **Hermes on serx** (`clan/services/hermes.nix`): a local LLM behind a Matrix bot that answers
+- **Hermes on serx** ([`clan/services/hermes.nix`](clan/services/hermes.nix)): a local LLM behind a Matrix bot that answers
   only `@lytharn`'s DM, sandboxed to localhost. It reads Nextcloud through its own non-admin
   account (only what's shared with it) and read-only mirrors of mail and indoor sensors
-  (`clan/services/{mail,sensor}-mirror.nix`). `ssh serx` → `hermes` gives the CLI. The model is
+  ([`clan/services/mail-mirror.nix`](clan/services/mail-mirror.nix), [`clan/services/sensor-mirror.nix`](clan/services/sensor-mirror.nix)). `ssh serx` → `hermes` gives the CLI. The model is
   a pinned download (~21 GB); to switch without re-downloading a file already on serx, run
   `nix-store --add-fixed sha256 <file>` there first.
 
 ## The clan CLI
 
 `clan` is provided by the dev shell — `nix develop`, or automatically via direnv on `cd`.
-Entering it also installs the repo's git hooks (`git-hooks.nix`): nixfmt on staged Nix files,
-and a commit-message check (subject and body lines at most 72 chars, blank second line). Skip
+Entering it also installs the repo's git hooks ([`git-hooks.nix`](git-hooks.nix)): nixfmt on
+staged Nix files, a link check of README.md and AGENTS.md (lychee, local links only), and a
+commit-message check (subject and body lines at most 72 chars, blank second line). Skip
 them for one commit with `git commit --no-verify`.
 
 ```bash
@@ -227,7 +232,7 @@ generates any missing vars across the fleet. It works for the host you're sittin
 6. Commit the generated `machines/<host>/hardware-configuration.nix`.
 7. **Re-enroll Tailscale.** A wipe/reinstall clears `/var/lib/tailscale`, so the host is no
    longer on the tailnet and the shipped auth key is only a placeholder (keys expire, so no
-   real one is baked in — see `clan/services/tailscale.nix`). `tailscaled-autoconnect.service`
+   real one is baked in — see [`clan/services/tailscale.nix`](clan/services/tailscale.nix)). `tailscaled-autoconnect.service`
    will fail on the first rebuild; re-enroll once, manually, on the host:
    ```bash
    sudo tailscale up --reset --accept-routes   # opens a login URL to approve the node
@@ -236,7 +241,7 @@ generates any missing vars across the fleet. It works for the host you're sittin
    name if you didn't delete it from the admin console. After this the autoconnect unit no-ops.
 8. **Update the pinned SSH host key.** Host keys aren't clan vars, so a (re)installed host has
    a new one, and the other hosts pin it (`programs.ssh.knownHosts`) from
-   `lib/ssh-host-keys.nix`: until it's updated, connecting to the host from them fails host-key
+   [`lib/ssh-host-keys.nix`](lib/ssh-host-keys.nix): until it's updated, connecting to the host from them fails host-key
    verification. Replace (or, for a new host others connect to, add) its entry:
    ```bash
    ssh-keyscan -t ed25519 <host> 2>/dev/null | cut -d' ' -f2-
@@ -249,9 +254,9 @@ generates any missing vars across the fleet. It works for the host you're sittin
    ```bash
    install -Dm600 <backup> ~/.ssh/id_ed25519 && ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
    ```
-   and check the `.pub` matches the host's entry in `lib/ssh-keys.nix`. If the key is lost
+   and check the `.pub` matches the host's entry in [`lib/ssh-keys.nix`](lib/ssh-keys.nix). If the key is lost
    instead, generate a new one (`ssh-keygen -t ed25519 -C lytharn@users.noreply.github.com`),
-   replace the host's entry in `lib/ssh-keys.nix`, deploy serx and baxx from the other desktop
+   replace the host's entry in [`lib/ssh-keys.nix`](lib/ssh-keys.nix), deploy serx and baxx from the other desktop
    (this one can't reach them yet), for mewx also deploy mewx itself locally with `sudo
    nixos-rebuild switch --flake .` (it authorizes its own key), and re-add the key on GitHub
    under both *Authentication* and *Signing* keys.
@@ -269,9 +274,9 @@ updating would fix known vulnerabilities:
 
 - **Deploy reports.** After every switch (and hourly as a retry) each desktop/server reports
   the system it's running, plus the flake source it was built from, to serx
-  (`clan/services/deploy-report.nix`). New hosts with the `desktop` or `server` tag join
+  ([`clan/services/deploy-report.nix`](clan/services/deploy-report.nix)). New hosts with the `desktop` or `server` tag join
   automatically; wslx is deliberately left out.
-- **Nightly scan on serx** (`clan/services/vuln-scan.nix`). For each reported host it
+- **Nightly scan on serx** ([`clan/services/vuln-scan.nix`](clan/services/vuln-scan.nix)). For each reported host it
   scans the running system with [vulnix](https://github.com/nix-community/vulnix), rebuilds
   the same config with its flake inputs updated, scans that too, and compares the two. Only
   the difference counts (vulnix's raw output is mostly false matches). Results:
@@ -301,7 +306,7 @@ ssh -t serx sudo systemctl start vuln-scan
 
 ## NixOS on WSL (`wslx`)
 
-`machines/wslx/` is a full NixOS running as a WSL distro, via the
+[`machines/wslx/`](machines/wslx/) is a full NixOS running as a WSL distro, via the
 [NixOS-WSL](https://github.com/nix-community/NixOS-WSL) module. It gets the servers' shell
 toolkit plus neovim (the same set as the standalone home), and nothing else: no Tailscale
 (Windows runs it, and WSL shares its network) and no clan vars, so it has no sops machine key.
@@ -337,7 +342,7 @@ from inside WSL.
    wsl -d NixOS
    ```
    The last command opens a shell as `lytharn`. Re-clone the flake into `/home/lytharn/flake` (the old checkout stays in `/home/nixos`).
-4. **Leave direnv off for the checkout.** direnv will offer to load the repo's `.envrc`; don't
+4. **Leave direnv off for the checkout.** direnv will offer to load the repo's [`.envrc`](.envrc); don't
    `direnv allow` it (or run `direnv deny` in `~/flake` if you did). The dev shell is for the
    desktops: it brings the `clan` CLI and fetches Hyprland + Neovim for the Lua LSP configs,
    none of which wslx uses, and nix-direnv pins all of it against garbage collection.
@@ -350,10 +355,10 @@ cd ~/flake && sudo nixos-rebuild switch --flake .
 
 ## Standalone Home Manager (non-NixOS)
 
-`homes/standalone/` is a Home-Manager-only config for a machine that has Nix but isn't
+[`homes/standalone/`](homes/standalone/) is a Home-Manager-only config for a machine that has Nix but isn't
 NixOS. It's deliberately distro-agnostic — nothing in it is tied to a particular
 distribution, and `targets.genericLinux.enable` is what papers over the differences — so it
-should apply unchanged anywhere Nix runs. It's built by `mkHome` in `flake.nix` and exposed
+should apply unchanged anywhere Nix runs. It's built by `mkHome` in [`flake.nix`](flake.nix) and exposed
 as `homeConfigurations.standalone`.
 
 It gets the same shell toolkit as the headless servers (bat, direnv, eza, fish, fzf, git,
@@ -377,7 +382,7 @@ is not involved with these hosts at all.
 2. **Clone this flake to `~/flake`.** The path matters: the neovim module symlinks its lua
    config out of the working checkout (so `:Lazy update` can write `lazy-lock.json`), and it
    defaults to `~/flake`. Clone elsewhere only if you also set `slask.apps.neovim.flakePath`
-   in `homes/standalone/default.nix`.
+   in [`homes/standalone/default.nix`](homes/standalone/default.nix).
    ```bash
    git clone https://github.com/lytharn/nixos ~/flake && cd ~/flake
    ```
@@ -393,7 +398,7 @@ is not involved with these hosts at all.
    from `~/.bashrc` / `~/.profile`, which only get sourced on a fresh login.
 
 5. **Leave direnv off for the checkout.** Once direnv is installed it will offer to load the
-   repo's `.envrc`; don't `direnv allow` it (or run `direnv deny` in `~/flake` if you did).
+   repo's [`.envrc`](.envrc); don't `direnv allow` it (or run `direnv deny` in `~/flake` if you did).
    The dev shell is for the NixOS desktops: it brings the `clan` CLI and fetches Hyprland +
    Neovim for the Lua LSP configs, none of which this home uses, and nix-direnv pins all of
    it against garbage collection.
@@ -434,8 +439,8 @@ generations` prints each one's store path, so `<that-path>/activate` reverts to 
 ## Secret management (clan vars)
 
 Secrets are declared as `clan.core.vars.generators.<name>` blocks in a machine's config and
-generated with `clan vars generate <host>`. Ciphertext is committed under `vars/`; the key
-registry lives under `sops/`. Each machine decrypts its own vars with its **SSH host key**
+generated with `clan vars generate <host>`. Ciphertext is committed under [`vars/`](vars/); the key
+registry lives under [`sops/`](sops/). Each machine decrypts its own vars with its **SSH host key**
 (imported as an age key at activation) — nothing to provision beyond OpenSSH being enabled.
 
 ### Admin users (who can generate/edit vars)
@@ -476,9 +481,9 @@ Add or edit a `clan.core.vars.generators.<name>` block, then:
 ```bash
 clan vars generate <host>          # runs new/changed generators (prompts if needed)
 ```
-Shared-across-machines secrets use `share = true` (see `clan/restic-secrets.nix`); a consumer
+Shared-across-machines secrets use `share = true` (see [`clan/restic-secrets.nix`](clan/restic-secrets.nix)); a consumer
 that needs a shared secret in a different shape derives per-host files from it via generator
-`dependencies` (e.g. the `client`/`server` roles in `clan/services/restic.nix`, which turn the
+`dependencies` (e.g. the `client`/`server` roles in [`clan/services/restic.nix`](clan/services/restic.nix), which turn the
 shared restic password into a repo URL on serx and an htpasswd line on baxx).
 
 ### Private flake inputs (GitHub access token)
@@ -486,7 +491,7 @@ shared restic password into a repo URL on serx and an htpasswd line on baxx).
 The desktop wallpaper comes from a **private** flake input (`wallpapers`, `flake = false`). Nix's
 own fetcher — not the `gh` credential helper, which only covers `git clone` — needs a GitHub
 token to fetch it, supplied via the `access-tokens` nix.conf setting. That token is a shared clan
-var (`clan/nix-github-token.nix`, owner root) pulled into nix.conf with an **optional** `!include`,
+var ([`clan/nix-github-token.nix`](clan/nix-github-token.nix), owner root) pulled into nix.conf with an **optional** `!include`,
 keeping it out of the world-readable store. Use a dedicated fine-grained PAT with just
 **Contents: read** on the private repo — it's deployed to every desktop.
 

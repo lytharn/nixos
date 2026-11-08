@@ -1,11 +1,14 @@
 # Git hooks for this repo, via git-hooks.nix. Exposed as `checks.<system>.git-hooks` (so
 # `nix flake check` runs the file hooks over the whole tree) and installed into .git/hooks by
 # the dev shell's shellHook, so they're active wherever direnv / `nix develop` has loaded it.
-#   - pre-commit: nixfmt on staged .nix files, the same formatter `nix fmt` uses.
+#   - pre-commit: nixfmt on staged .nix files, the same formatter `nix fmt` uses; lychee on
+#     the top-level docs, checking repo-file links and #anchors (offline: external URLs would
+#     make commits slow and network-dependent, and the sandboxed check has no network).
 #   - commit-msg: subject <= 72 chars, blank second line, body lines <= 72 chars.
 # Bypass a single commit with `git commit --no-verify`.
 { pkgs, git-hooks }:
 let
+  inherit (pkgs) lib;
   # Lines without a space (a URL, a long path) can't be wrapped, so they're exempt. Comment
   # lines and anything below the `commit -v` scissors line are stripped by git, so skipped.
   checkCommitMsg = pkgs.writeShellScript "check-commit-msg" ''
@@ -29,6 +32,12 @@ git-hooks.lib.${pkgs.stdenv.hostPlatform.system}.run {
   src = ./.;
   hooks = {
     nixfmt.enable = true;
+    lychee = {
+      enable = true;
+      files = "^(README|AGENTS)\\.md$";
+      # lychee won't start without CA certs, even offline, and the sandboxed check has none.
+      entry = lib.mkForce "${pkgs.coreutils}/bin/env SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt ${lib.getExe pkgs.lychee} --offline --include-fragments --no-progress";
+    };
     commit-msg-format = {
       enable = true;
       name = "commit message format";
