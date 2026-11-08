@@ -170,6 +170,14 @@ clan machines update <host>
 > answered), and the popup requires someone **at that machine** — if nobody is, hand over
 > `! clan machines update <host>` instead.
 
+> **Reboot `serx`/`baxx` after a deploy that needs it.** A switch doesn't load a new kernel.
+> After updating either, compare `readlink /run/booted-system/kernel` with
+> `readlink /run/current-system/kernel` over SSH. If they differ, offer to reboot (serx's
+> reboot briefly takes down all its services and the remote builder). Their `sudo` needs a
+> password and the askpass popup doesn't cover a plain `ssh` command, so hand over
+> `! ssh -t <host> sudo systemctl reboot`, baxx before serx. Afterwards check that the
+> kernels match and that `systemctl --failed` is empty.
+
 Self-deploy works because each desktop authorizes its own `lytharn` key
 (`machines/<host>/configuration.nix`); only *cross*-desktop deploys are unauthorized. Where the
 build runs follows each host's `clan.core.networking.buildHost`: unset ⇒ build on the target
