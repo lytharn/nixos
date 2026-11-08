@@ -1,4 +1,4 @@
-return { -- Useful plugin to show you pending keybinds.
+return {
   "folke/which-key.nvim",
   event = "VeryLazy",
   opts = {
@@ -12,7 +12,9 @@ return { -- Useful plugin to show you pending keybinds.
         { "<leader>h", group = "[H]unk" },
         { "<leader>j", group = "[J]ump" },
         { "<leader>l", group = "[L]ivePreview" },
-        { "<leader>o", group = "[O]open" },
+        { "<leader>n", group = "Swap with [N]ext" },
+        { "<leader>o", group = "[O]pen" },
+        { "<leader>p", group = "Swap with [P]revious" },
         { "<leader>q", group = "[Q]uickfix" },
         { "<leader>s", group = "[S]earch" },
         { "<leader>t", group = "[T]oggle" },

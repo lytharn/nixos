@@ -1,17 +1,11 @@
 return {
   "nvim-lualine/lualine.nvim",
   dependencies = {
-    -- Enable nice icons
     "nvim-tree/nvim-web-devicons",
-
-    -- Enable progress of LSP
-    "arkav/lualine-lsp-progress",
-
-    -- Enable code context
+    -- Code context in the winbar
     {
       "SmiteshP/nvim-navic",
       opts = {
-        -- Add colors to icons and text as defined by highlight groups NavicIcons*
         highlight = true,
         separator = "  ",
         lsp = { auto_attach = true },
@@ -24,7 +18,7 @@ return {
     },
     sections = {
       lualine_c = {
-        "lsp_progress",
+        "lsp_status",
       },
     },
     winbar = {

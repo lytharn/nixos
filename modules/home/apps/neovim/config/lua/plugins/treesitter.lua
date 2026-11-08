@@ -1,12 +1,5 @@
--- Treesitter, post-archival of nvim-treesitter (Apr 2026).
---
--- We no longer use the archived nvim-treesitter parser aggregator:
---   * Parsers + queries are provided reproducibly by Nix (see the neovim
---     home module: modules/home/apps/neovim/default.nix), placed on the
---     runtimepath under $XDG_DATA_HOME/nvim/site.
---   * Highlighting is Neovim 0.12's built-in treesitter (vim.treesitter.start).
---   * Text objects come from nvim-treesitter-textobjects, which is still
---     maintained, runs on core treesitter, and ships its own textobjects.scm.
+-- Parsers and queries come from Nix (modules/home/apps/neovim/default.nix), highlighting
+-- from Neovim's built-in treesitter, and text objects from nvim-treesitter-textobjects.
 return {
   "nvim-treesitter/nvim-treesitter-textobjects",
   branch = "main",
@@ -17,15 +10,10 @@ return {
     vim.g.no_plugin_maps = true
   end,
   config = function()
-    -- Enable treesitter highlighting for any filetype that has a parser
-    -- (the Nix-provided ones, plus Neovim's built-ins) *and* highlight queries
-    -- to go with it. The query check is not redundant: vim.treesitter.start()
-    -- clears 'syntax', so starting it for a parser-only grammar (nixpkgs ships
-    -- tree-sitter-gitignore and tree-sitter-xml with no queries/ at all) trades
-    -- Neovim's perfectly good legacy syntax file for no highlighting whatsoever.
-    -- query.get() returns nil when a language has no query files and throws
-    -- when the language has no parser, so the pcall covers both: either way the
-    -- buffer keeps legacy syntax highlighting.
+    -- Treesitter highlighting wherever a parser *and* highlight queries exist.
+    -- vim.treesitter.start() clears 'syntax', so a parser without queries would
+    -- leave no highlighting at all. query.get() returns nil without queries and
+    -- throws without a parser; either way the buffer keeps legacy syntax.
     vim.api.nvim_create_autocmd("FileType", {
       group = vim.api.nvim_create_augroup("lytharn-treesitter-highlight", { clear = true }),
       callback = function(args)
@@ -38,24 +26,17 @@ return {
       end,
     })
 
-    -- Some Nix-provided grammar queries were authored for nvim-treesitter and
-    -- use its `#is-not?` predicate (e.g. tree-sitter-nix's highlights.scm does
-    -- `(#is-not? @variable.builtin local)`). Core treesitter has no handler for
-    -- it, so without this every matching buffer throws "No handler for is-not?"
-    -- mid-highlight. We dropped nvim-treesitter's locals machinery, so register
-    -- a pragmatic stub: treat every node as "not a local", i.e. `#is-not? local`
-    -- always passes -> builtins/keywords stay highlighted even when a local of
-    -- the same name shadows them (`let map = ...`), which is rare and cosmetic.
-    -- (`is-not?` is the only non-core predicate any of our grammars use.)
+    -- Some grammars' queries (e.g. tree-sitter-nix's) use nvim-treesitter's
+    -- `#is-not? local` predicate, which core treesitter lacks, so every matching
+    -- buffer would throw. Stub: nothing is a local, so a builtin shadowed by a
+    -- local of the same name stays highlighted as a builtin (rare, cosmetic).
     pcall(vim.treesitter.query.add_predicate, "is-not?", function()
       return true
     end, { force = true })
 
-    -- On the `main` branch, setup() only takes `select`/`move` options;
-    -- keymaps are defined manually below via the module APIs.
+    -- On the `main` branch, setup() only takes options; keymaps are set below.
     require("nvim-treesitter-textobjects").setup({
       select = {
-        -- Automatically jump forward to textobj.
         lookahead = true,
       },
       move = {
@@ -116,28 +97,28 @@ return {
       goto_next_start = {
         ["]f"] = { "@call.outer", "Next function call start" },
         ["]m"] = { "@function.outer", "Next method/function def start" },
-        ["]c"] = { "@class.outer", "Next class start" },
+        ["]k"] = { "@class.outer", "Next class start" },
         ["]i"] = { "@conditional.outer", "Next conditional start" },
         ["]l"] = { "@loop.outer", "Next loop start" },
       },
       goto_next_end = {
         ["]F"] = { "@call.outer", "Next function call end" },
         ["]M"] = { "@function.outer", "Next method/function def end" },
-        ["]C"] = { "@class.outer", "Next class end" },
+        ["]K"] = { "@class.outer", "Next class end" },
         ["]I"] = { "@conditional.outer", "Next conditional end" },
         ["]L"] = { "@loop.outer", "Next loop end" },
       },
       goto_previous_start = {
         ["[f"] = { "@call.outer", "Prev function call start" },
         ["[m"] = { "@function.outer", "Prev method/function def start" },
-        ["[c"] = { "@class.outer", "Prev class start" },
+        ["[k"] = { "@class.outer", "Prev class start" },
         ["[i"] = { "@conditional.outer", "Prev conditional start" },
         ["[l"] = { "@loop.outer", "Prev loop start" },
       },
       goto_previous_end = {
         ["[F"] = { "@call.outer", "Prev function call end" },
         ["[M"] = { "@function.outer", "Prev method/function def end" },
-        ["[C"] = { "@class.outer", "Prev class end" },
+        ["[K"] = { "@class.outer", "Prev class end" },
         ["[I"] = { "@conditional.outer", "Prev conditional end" },
         ["[L"] = { "@loop.outer", "Prev loop end" },
       },
@@ -155,7 +136,7 @@ return {
     vim.keymap.set({ "n", "x", "o" }, ";", repeatable_move.repeat_last_move)
     vim.keymap.set({ "n", "x", "o" }, ",", repeatable_move.repeat_last_move_opposite)
 
-    -- Maintain builtin f, F, t, T also repeatable with ; and ,
+    -- Keep f, F, t, T repeatable with ; and , too
     vim.keymap.set({ "n", "x", "o" }, "f", repeatable_move.builtin_f_expr, { expr = true })
     vim.keymap.set({ "n", "x", "o" }, "F", repeatable_move.builtin_F_expr, { expr = true })
     vim.keymap.set({ "n", "x", "o" }, "t", repeatable_move.builtin_t_expr, { expr = true })

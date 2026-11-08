@@ -13,7 +13,7 @@ return {
       { "<leader>dl", function() require("dap").step_into() end,                                            desc = "Step into" },
       { "<leader>dh", function() require("dap").step_out() end,                                             desc = "Step out" },
       { "<leader>dj", function() require("dap").step_over() end,                                            desc = "Step over" },
-      { "<leader>dk", function() require("dap").step_back() end,                                            desc = "Step over" },
+      { "<leader>dk", function() require("dap").step_back() end,                                            desc = "Step back" },
       { "<leader>dz", function() require("dap").run_to_cursor() end,                                        desc = "Run to cursor" },
       { "<leader>dc", function() require("dap").continue() end,                                             desc = "Continue" },
       { "<leader>db", function() require("dap").toggle_breakpoint() end,                                    desc = "Toggle breakpoint" },

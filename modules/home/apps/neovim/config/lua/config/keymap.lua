@@ -11,8 +11,8 @@ vim.keymap.set("n", "<leader>qo", "<cmd>copen<CR><C-w>p", { desc = "Open quickfi
 vim.keymap.set("n", "<A-j>", "<cmd>cnext<CR>", { desc = "Next quickfix item" })     -- Default ]q
 vim.keymap.set("n", "<A-k>", "<cmd>cprev<CR>", { desc = "Previous quickfix item" }) -- Default [q
 
--- Do not copy what is replaced with paste
-vim.keymap.set("v", "p", '"_dP')
+-- Don't yank the text a paste replaces (what visual P does)
+vim.keymap.set("x", "p", "P")
 
 -- Stay in indent mode
 vim.keymap.set("v", "<", "<gv")

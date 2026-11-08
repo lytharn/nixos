@@ -8,25 +8,15 @@
 let
   cfg = config.${namespace}.apps.neovim;
 
-  # Treesitter parsers + queries, provided reproducibly by Nix instead of the
-  # archived nvim-treesitter (which used to compile them at runtime). Placed on
-  # the runtimepath under $XDG_DATA_HOME/nvim/site; highlighting is Neovim
-  # 0.12's built-in treesitter (see lua/plugins/treesitter.lua).
+  # Treesitter parsers + queries from Nix, put on the runtimepath under
+  # $XDG_DATA_HOME/nvim/site for Neovim's built-in treesitter.
   tsg = pkgs.tree-sitter.builtGrammars;
 
-  # Neovim-language name -> nixpkgs grammar. Each grammar supplies both its
-  # parser and its own queries, kept as a matched set from a single source so
-  # the two can never drift. (Pairing a Nix parser with Neovim 0.12's *bundled*
-  # queries instead breaks whenever the two grammar revisions disagree — e.g.
-  # lua's `operator:` field, absent from the tree-sitter-grammars fork nixpkgs
-  # ships, made every lua buffer throw. Grammar-own queries sidestep that.)
-  # luadoc/luap/vimdoc are intentionally dropped: no standalone nixpkgs grammar;
-  # vimdoc keeps Neovim's legacy help highlighting.
-  #
-  # Revisit if upstream settles on a canonical parser+query story for core
-  # treesitter (post nvim-treesitter archival): neovim/neovim#39006. If Neovim
-  # starts shipping/curating queries that pair with a known parser set, the
-  # grammar-own-queries approach here can likely be simplified or dropped.
+  # Neovim language name -> nixpkgs grammar. Each grammar's parser is paired
+  # with that grammar's own queries: Neovim's bundled queries break whenever
+  # they target a different grammar revision than the parser (e.g. lua's
+  # `operator:` field made every lua buffer throw). Revisit if Neovim starts
+  # shipping queries matched to a known parser set.
   grammars = {
     bash = tsg.tree-sitter-bash;
     c = tsg.tree-sitter-c;
@@ -38,11 +28,6 @@ let
     git_rebase = tsg.tree-sitter-git-rebase;
     gitattributes = tsg.tree-sitter-gitattributes;
     gitcommit = tsg.tree-sitter-gitcommit;
-    # Parser-only in nixpkgs — the grammar ships no queries/ at all, so this
-    # buys no highlighting today and the FileType hook in lua/plugins/
-    # treesitter.lua deliberately leaves such buffers on legacy syntax. Kept so
-    # it starts working if upstream ever adds queries. Same for xml below.
-    gitignore = tsg.tree-sitter-gitignore;
     hyprlang = tsg.tree-sitter-hyprlang;
     json = tsg.tree-sitter-json;
     lua = tsg.tree-sitter-lua;
@@ -56,21 +41,13 @@ let
     rust = tsg.tree-sitter-rust;
     toml = tsg.tree-sitter-toml;
     vim = tsg.tree-sitter-vim;
-    xml = tsg.tree-sitter-xml;
     yaml = tsg.tree-sitter-yaml;
   };
 
-  # Grammars whose upstream queries are written to be *concatenated* after
-  # another language's rather than to stand alone. tree-sitter-cpp is the
-  # canonical case: its highlights.scm only adds the C++-specific rules and
-  # leaves (string_literal)/(comment)/(number_literal) to tree-sitter-c's,
-  # which the tree-sitter CLI loads first (see the grammar's tree-sitter.json).
-  # Neovim has no such notion of a grammar's query set — it loads exactly
-  # queries/<lang>/<name>.scm — and expresses inheritance with an
-  # `; inherits: <lang>` modeline that upstream files don't carry. Without it a
-  # cpp buffer gets the C++ rules only, so plain strings/comments/numbers come
-  # out unhighlighted. Prepend the modeline as we harvest. Inherited queries are
-  # loaded *before* the language's own, so cpp-specific rules still win.
+  # Grammars whose queries only extend another language's: tree-sitter-cpp's
+  # highlights.scm leaves strings, comments and numbers to tree-sitter-c's.
+  # Neovim expresses that with an `; inherits: <lang>` modeline, which upstream
+  # files don't carry, so it's prepended here.
   queryInherits = {
     cpp = "c";
   };
@@ -123,10 +100,7 @@ in
     home.packages = with pkgs; [
       neovim
 
-      # LSP servers. lua/plugins/lsp.lua configures these but leaves
-      # mason-tool-installer's ensure_installed empty, so they are launched
-      # from PATH rather than installed by mason (whose prebuilt binaries
-      # don't run on NixOS anyway).
+      # LSP servers, configured in lua/plugins/lsp.lua and started from PATH.
       clang-tools # Includes clangd, clang-format and clang-tidy
       lua-language-server
       marksman
