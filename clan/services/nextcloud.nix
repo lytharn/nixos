@@ -36,7 +36,7 @@
           {
             services.nextcloud = {
               enable = true;
-              package = pkgs.nextcloud34;
+              package = pkgs.nextcloud35;
               hostName = "cloud.gate-catla.ts.net";
               # TLS is terminated by tailscale serve; nextcloud's nginx vhost runs plain HTTP on localhost.
               https = false;
@@ -60,7 +60,7 @@
               # prevents drift outside the flake. autoUpdateApps only touches store apps, so it's
               # dropped as a no-op.
               extraApps = {
-                inherit (pkgs.nextcloud34Packages.apps)
+                inherit (pkgs.nextcloud35Packages.apps)
                   notes
                   tasks
                   calendar
