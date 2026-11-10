@@ -30,14 +30,28 @@ class UpdatedBuildError(RuntimeError):
 def run(cmd, **kwargs):
     p = subprocess.run(cmd, capture_output=True, text=True, **kwargs)
     if p.returncode != 0:
+        # The failed builders' own logs; the tail of stderr is mostly their dependents failing.
+        detail = "\n".join(b[-1500:] for b in failed_builds(p.stderr)) or p.stderr.strip()[-1500:]
         raise RuntimeError(f"{error_summary(p.stderr) or f'{cmd[0]} exited {p.returncode}'}\n"
-                           f"{p.stderr.strip()[-1500:]}")
+                           f"{detail}")
     return p.stdout
 
 
+def failed_builds(stderr):
+    """Nix's "error:" blocks for derivations whose own builder failed, not a dependency."""
+    blocks = re.split(r"^(?=error:)", stderr, flags=re.M)
+    return [b.strip() for b in blocks if "Reason: builder failed" in b]
+
+
 def error_summary(stderr):
-    """Nix's last "error:" line; the stack trace before it is rarely the point. A bare "error:"
-    (e.g. failed assertions) gets the first line with content after it."""
+    """The derivation(s) whose builder failed, else Nix's last "error:" line; the stack trace
+    before it is rarely the point. A bare "error:" (e.g. failed assertions) gets the first line
+    with content after it."""
+    failed = [m.group(1) for b in failed_builds(stderr)
+              if (m := re.search(r"Cannot build '/nix/store/[^-]+-(.+?)\.drv'", b))]
+    if failed:
+        more = f" (+{len(failed) - 1} more)" if len(failed) > 1 else ""
+        return f"error: {failed[0]} failed to build{more}"
     lines = [line.strip() for line in stderr.splitlines()]
     starts = [i for i, line in enumerate(lines) if line.startswith("error:")]
     if not starts:
