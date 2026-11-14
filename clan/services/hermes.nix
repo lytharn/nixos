@@ -319,6 +319,19 @@
 
             services.hermes-agent = {
               enable = true;
+              # upstream-workaround: https://github.com/NousResearch/hermes-agent/issues/154275
+              # nix/pm-packages.nix patches `patchelf` with a fix that only applies to 0.19.2,
+              # while nixpkgs' `patchelf` is 0.15.2. patchelfUnstable already contains that fix,
+              # so it goes in with the patch step skipped. Drop this once the issue is fixed.
+              package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+                pmPackages = lib.filterAttrs (_: lib.isDerivation) (
+                  pkgs.callPackage "${inputs.hermes-agent}/nix/pm-packages.nix" {
+                    patchelf = pkgs.patchelfUnstable // {
+                      overrideAttrs = _: pkgs.patchelfUnstable;
+                    };
+                  }
+                );
+              };
               # The module's default, but `documents` requires it to be set explicitly.
               workingDirectory = "${cfg.stateDir}/workspace";
               extraPackages = with pkgs; [
