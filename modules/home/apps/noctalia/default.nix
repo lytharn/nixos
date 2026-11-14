@@ -23,6 +23,9 @@ in
         (a clan var) so the password never lands in the Nix store.
       '';
     };
+
+    # Needs services.upower on the host, which is where Noctalia reads the battery from.
+    battery = lib.mkEnableOption "the battery widget in the bar (laptops)";
   };
 
   config = lib.mkIf cfg.enable {
@@ -143,6 +146,9 @@ in
             "cpu"
             "ram"
             "network"
+          ]
+          ++ lib.optional cfg.battery "battery"
+          ++ [
             "weather"
             "clock" # click opens the calendar
             "tray"
@@ -177,6 +183,7 @@ in
             color = hex palette.yellow;
           };
           network.color = hex palette.purple;
+          battery.color = hex palette.magenta2;
           weather.color = hex palette.orange;
           clock = {
             format = "{:%a %b %d  %H:%M}";

@@ -31,7 +31,10 @@
     "video"
   ];
 
-  home-manager.users.lytharn.slask.apps.hyprland.scale = "1";
+  home-manager.users.lytharn.slask.apps = {
+    hyprland.scale = "1";
+    noctalia.battery = true;
+  };
 
   system.stateVersion = "26.11"; # DO NOT TOUCH
 }

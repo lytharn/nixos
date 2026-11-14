@@ -6,6 +6,7 @@
   networking.hostName = "mewx";
 
   services.fwupd.enable = true;
+  services.upower.enable = true; # battery state for the bar
 
   # For self-deploy, and for serx's closure copy via the forwarded agent (buildHost below).
   users.users.lytharn.openssh.authorizedKeys.keys = [ (import ../../lib/ssh-keys.nix).mewx ];
@@ -19,7 +20,10 @@
   # daemon rejects from an untrusted user (it ignores clan's --no-check-sigs for them).
   nix.settings.trusted-users = [ "lytharn" ];
 
-  home-manager.users.lytharn.slask.apps.hyprland.scale = "1";
+  home-manager.users.lytharn.slask.apps = {
+    hyprland.scale = "1";
+    noctalia.battery = true;
+  };
 
   system.stateVersion = "23.05"; # DO NOT TOUCH
 }
