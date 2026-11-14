@@ -293,10 +293,11 @@ updating would fix known vulnerabilities:
   written by the local model, so treat it as a reading aid: the ntfy alert and `report.json`
   are the source of truth.
 
-**Acting on it:** `nix flake update`, fix whatever doesn't build, commit and push, then deploy
-each host. serx/baxx/the desktop you're at go via `clan machines update <host>`; every other
-desktop deploys itself (see [Deploying](#deploying)). The next night's scan should then come
-back quiet.
+**Acting on it:** `nix flake update`, fix whatever doesn't build, drop the upstream
+workarounds that are fixed (`grep -rn upstream-workaround`, then check each link), commit and
+push, then deploy each host. serx/baxx/the desktop you're at go via `clan machines update
+<host>`; every other desktop deploys itself (see [Deploying](#deploying)). The next night's
+scan should then come back quiet.
 
 **Run the scan now** instead of waiting for the night (it blocks until done, a few minutes
 when nothing needs rebuilding):

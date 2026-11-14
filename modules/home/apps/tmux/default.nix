@@ -8,6 +8,7 @@
 let
   cfg = config.${namespace}.apps.tmux;
 
+  # upstream-workaround: https://github.com/NixOS/nixpkgs (tmuxPlugins.jump)
   # nixpkgs' tmux-jump (a 2020 rev) lands the copy-mode cursor in the wrong
   # place on tmux >= 3.7 with vi keys and with multi-codepoint graphemes.
   # Upstream master has the fix (it counts cells, assuming a tmux built with

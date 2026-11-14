@@ -1,8 +1,11 @@
 # AGENTS.md
 
-Rules for coding agents working in this repo. **README.md holds the facts** (hosts, layout,
-services, secrets, how the hosts connect, procedures): read it before changing anything. This
-file holds only rules and behaviour, and doesn't repeat what the README says.
+Rules for coding agents working in this repo. **[README.md](README.md) holds the facts** (hosts,
+layout, services, secrets, how the hosts connect, procedures): read it before changing anything
+(Claude Code loads it via the import below). This file holds only rules and behaviour, and
+doesn't repeat what the README says.
+
+@README.md
 
 ## Working in the repo
 
@@ -45,6 +48,10 @@ edited and goes stale in the others. Write as little prose as the code needs.
 - **When you change something, grep for it.** Search the old name/value/behaviour across
   comments, README.md and AGENTS.md, and fix or delete every stale mention in the same commit.
   Deleting a redundant comment is usually better than updating it.
+- **Tag every workaround for an upstream bug** with a `# upstream-workaround: <link>` comment
+  line (the issue or PR to watch, else the upstream repo), followed by why it's needed and what
+  shows it can go. The tag is the list: the update procedure
+  ([Security updates](README.md#security-updates)) greps for it.
 - Keep comments short; most should be a line or two. Don't rewrite existing comments that are
   correct just to shorten them, unless you're already editing that code.
 

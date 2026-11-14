@@ -15,6 +15,7 @@ let
   # The rebuild is not a one-off: it fires whenever the nixpkgs pin moves, manix changes
   # version, or -u is passed.
   #
+  # upstream-workaround: https://github.com/nix-community/manix (unreported)
   # Still present on nix-community/manix master and unreported there as of 2026-08-09;
   # drop this override once it is fixed upstream (--replace-fail will then fail loudly).
   hmBuildArgs = ".arg(\"-E\")\n        .arg(include_str!(\"nix/hm-options.nix\"))";
