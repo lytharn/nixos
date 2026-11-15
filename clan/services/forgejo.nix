@@ -106,6 +106,8 @@
                 };
                 # Single-user forge: no open sign-ups. The admin is created via the CLI (see readme).
                 service.DISABLE_REGISTRATION = true;
+                # `git push` to a missing repo of your own creates it.
+                repository.ENABLE_PUSH_CREATE_USER = true;
                 # GitHub-Actions-compatible CI (the runner below picks up the jobs).
                 actions.ENABLED = true;
               };
