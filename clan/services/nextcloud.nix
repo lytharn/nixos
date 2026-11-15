@@ -32,6 +32,14 @@
             pkgsCollabora = import inputs.nixpkgs-collabora {
               inherit (pkgs.stdenv.hostPlatform) system;
             };
+            # Spell-check languages; keep in sync with services.collabora-online.settings.allowed_languages.
+            collaboraDicts = pkgs.symlinkJoin {
+              name = "collabora-hunspell-dicts";
+              paths = with pkgs.hunspellDicts; [
+                sv_SE
+                en_US
+              ];
+            };
           in
           {
             services.nextcloud = {
@@ -178,8 +186,22 @@
                 ssl.enable = false;
                 ssl.termination = true;
                 ssl.ssl_verification = "false";
+                # Each language here slows down every document load.
+                allowed_languages = "sv_SE en_US";
               };
             };
+
+            # Spell checking needs the dictionaries in two places. Inside the jail the kits look in
+            # /usr/share/hunspell, which the systemplate script doesn't populate, so copy them in
+            # (copies, not symlinks: the jail can't see the rest of the store).
+            systemd.services.coolwsd-systemplate-setup.postStart = ''
+              dicts=/var/lib/cool/systemplate/usr/share/hunspell
+              rm -rf "$dicts"
+              mkdir -p "$dicts"
+              cp -L --no-preserve=mode ${collaboraDicts}/share/hunspell/* "$dicts"/
+            '';
+            # forkit preloads the dictionaries outside the jail, where there's no /usr/share/hunspell.
+            systemd.services.coolwsd.environment.DICPATH = "${collaboraDicts}/share/hunspell";
 
             systemd.services.tailscale-serve-office = import ../tailscale-serve.nix { inherit lib pkgs; } {
               name = "office";
