@@ -195,6 +195,7 @@
       roles.default.machines.serx.settings = {
         adminUser = "lytharn";
         adminEmail = "lytharn@users.noreply.github.com";
+        sshKeys = import ../lib/ssh-keys.nix;
       };
     };
 

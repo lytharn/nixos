@@ -20,7 +20,9 @@
     create` once, on first boot, using the `forgejo-admin` password prompt var. It only creates
     when the account is absent, so it never clobbers a password later changed in the UI (rotate
     with the UI or `forgejo admin user change-password`). Leave `adminUser` null to skip it and
-    create the admin manually instead.
+    create the admin manually instead. Its SSH keys are the `sshKeys` role option, synced
+    through the API (the CLI can't add keys) by forgejo-ssh-keys, which owns the keys titled
+    `nix: <name>` and leaves keys added in the UI alone.
 
     First-boot bootstrap:
       1. Create + approve the `svc:forge` tailnet service in the Tailscale admin panel once
@@ -50,6 +52,14 @@
             type = lib.types.nullOr lib.types.str;
             default = null;
             description = "Email for the declarative admin user; required when adminUser is set.";
+          };
+          sshKeys = lib.mkOption {
+            type = lib.types.attrsOf lib.types.str;
+            default = { };
+            example = {
+              laptop = "ssh-ed25519 AAAA...";
+            };
+            description = "SSH public keys of adminUser, by name, for git over SSH. Requires adminUser.";
           };
         };
       };
@@ -199,6 +209,10 @@
                 assertion = settings.adminUser != null -> settings.adminEmail != null;
                 message = "slask/forgejo: adminEmail must be set when adminUser is set.";
               }
+              {
+                assertion = settings.sshKeys != { } -> settings.adminUser != null;
+                message = "slask/forgejo: sshKeys needs adminUser.";
+              }
             ];
 
             # Declarative admin bootstrap. Runs as the forgejo user after forgejo.service (so the
@@ -238,6 +252,69 @@
                       --password "$(cat ${pwFile})" \
                       --must-change-password=false
                   fi
+                '';
+            };
+
+            # The API token lives in stateDir, not a clan var: generate-access-token can only mint
+            # a new one, so it's created on first run and re-minted only if it stops working.
+            systemd.services.forgejo-ssh-keys = lib.mkIf (settings.sshKeys != { }) {
+              description = "Sync the SSH keys of Forgejo user ${settings.adminUser}";
+              after = [ "forgejo-admin-user.service" ];
+              requires = [ "forgejo-admin-user.service" ];
+              wantedBy = [ "multi-user.target" ];
+              environment = {
+                FORGEJO_WORK_DIR = config.services.forgejo.stateDir;
+                FORGEJO_CUSTOM = config.services.forgejo.customDir;
+              };
+              path = [
+                config.services.forgejo.package
+                pkgs.curl
+                pkgs.jq
+              ];
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+                User = config.services.forgejo.user;
+                Group = config.services.forgejo.group;
+                UMask = "0077";
+              };
+              script =
+                let
+                  wanted = pkgs.writeText "forgejo-ssh-keys.json" (
+                    builtins.toJSON (lib.mapAttrs' (n: lib.nameValuePair "nix: ${n}") settings.sshKeys)
+                  );
+                in
+                ''
+                  api=http://localhost:${toString internalPort}/api/v1
+                  auth=${config.services.forgejo.stateDir}/ssh-key-sync.header
+                  call() { curl -sSf -H @"$auth" -H 'Content-Type: application/json' "$@"; }
+
+                  if ! [ -s "$auth" ] || ! call "$api/user" >/dev/null 2>&1; then
+                    token=$(forgejo admin user generate-access-token --raw \
+                      -u ${lib.escapeShellArg settings.adminUser} \
+                      -t "ssh-key-sync-$(date +%s)" --scopes write:user)
+                    printf 'Authorization: token %s\n' "$token" > "$auth"
+                  fi
+
+                  # Keys are compared by type + material, ignoring the comment.
+                  have=$(call "$api/user/keys?limit=50")
+                  jq -r --slurpfile want ${wanted} '
+                    def material: split(" ")[0:2];
+                    .[] | select(.title | startswith("nix: "))
+                    | select((($want[0][.title] // "") | material) != (.key | material)) | .id
+                  ' <<<"$have" | while read -r id; do
+                    call -X DELETE "$api/user/keys/$id"
+                  done
+
+                  have=$(call "$api/user/keys?limit=50")
+                  jq -c --argjson have "$have" '
+                    def material: split(" ")[0:2];
+                    to_entries[]
+                    | select(.value | material | IN($have[].key | material) | not)
+                    | {title: .key, key: .value}
+                  ' ${wanted} | while read -r body; do
+                    call -X POST "$api/user/keys" -d "$body" >/dev/null
+                  done
                 '';
             };
 
