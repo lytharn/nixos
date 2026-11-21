@@ -299,6 +299,11 @@ push, then deploy each host. serx/baxx/the desktop you're at go via `clan machin
 <host>`; every other desktop deploys itself (see [Deploying](#deploying)). The next night's
 scan should then come back quiet.
 
+In Claude Code, [`/update-all`](.claude/skills/update-all/SKILL.md) runs this procedure with a
+build of every host first and checks after each deploy. Each other desktop then runs
+[`/catch-up`](.claude/skills/catch-up/SKILL.md), which pulls and deploys without touching
+`flake.lock`. [`/fleet-status`](.claude/skills/fleet-status/SKILL.md) shows which hosts are behind.
+
 **Run the scan now** instead of waiting for the night (it blocks until done, a few minutes
 when nothing needs rebuilding):
 ```bash
