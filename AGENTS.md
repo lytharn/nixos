@@ -9,6 +9,11 @@ doesn't repeat what the README says.
 
 ## Working in the repo
 
+- **Rules that must always hold are enforced by
+  [`.claude/hooks/guard.sh`](.claude/hooks/guard.sh)**, a PreToolUse hook that denies a command
+  or makes it ask, and says why. Add new must-hold rules there, not as prose here.
+- **Push only when the user says so.** Committing when asked doesn't include pushing; the
+  guard makes `git push` ask.
 - **`git add` new files before evaluating.** This is a `git+file` flake, so Nix sees only
   tracked files; an untracked new file gives "path does not exist" or "does not provide
   attribute …". Staging is enough.
@@ -59,8 +64,8 @@ edited and goes stale in the others. Write as little prose as the code needs.
 
 The mechanics are in the README (Deploying). How to act on them:
 
-- **Never offer to deploy another desktop** from the one you're on; it fails on SSH auth. A
-  change touching several desktops gets deployed from each in turn, by the user.
+- **Deploy only this desktop and the servers** (the guard denies the others). A change
+  touching several desktops gets deployed from each in turn, by the user running `/catch-up`.
 - **Run the deploy yourself, don't hand it back.** `sudo` on the desktops isn't passwordless,
   but an askpass popup asks for the password. Run `clan machines update <host>` in the
   **background** (it can outlast a foreground timeout, and the popup needs time). The popup
@@ -86,10 +91,8 @@ and get clobbered.
 
 ## Hermes on serx
 
-- **Never make the Hermes CLI talk to Matrix** (`hermes cron run`, `hermes send`): it logs in
-  with the gateway's credentials and invalidates its token, so the gateway stops syncing until
-  `systemctl restart hermes-agent`. Test a cron job with a one-off copy instead (`hermes cron
-  create '2m' … --repeat 1`). `cron create/list/remove` are safe.
+- **The Hermes CLI must never talk to Matrix**; the guard denies those commands and gives the
+  safe way to test a cron job. `cron create/list/remove` are safe.
 - A Hermes session's system prompt is frozen at session start: after deploying a change to its
   prompts or its `AGENTS.md` document (in `hermes.nix`), tell the user to send `!new` in the
   Hermes DM.
